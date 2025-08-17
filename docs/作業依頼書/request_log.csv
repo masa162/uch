@@ -1,0 +1,2 @@
+RequestID,Title,Status,Requester,Assignee,CreatedDate,CompletedDate,RequestFile
+WR250816-001,開発環境の最終セットアップと安定化,Done,Gemini CLI PM,,2025-08-16,2025-08-16,docs/作業依頼書/WR250816-001_dev_env_setup.md

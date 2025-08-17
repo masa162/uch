@@ -1,0 +1,32 @@
+TaskID,Title,Status,Priority,Type,TargetDate,CreatedDate,CompletedDate,Assignee,TaskFile
+TSK-001,旧プロジェクト(uchi)からの移行計画策定,完了,高,計画,2025-08-16,2025-08-16,Gemini CLI PM,docs/management/tasks/TSK-001_uchi_migration_plan.md
+TSK-002,データベース設計の移行,完了,高,機能追加,2025-08-16,2025-08-16,Gemini CLI PM,docs/management/tasks/TSK-002_db_schema_migration.md
+TSK-003,コアライブラリの導入,完了,高,機能追加,2025-08-16,2025-08-16,Gemini CLI PM,docs/management/tasks/TSK-003_install_core_deps.md
+TSK-007,Userモデルへのpasswordフィールド追加,完了,高,機能追加,2025-08-16,2025-08-16,Gemini CLI PM,docs/management/tasks/TSK-007_add_password_to_user.md
+TSK-004,認証情報設定の準備,完了,高,設定,2025-08-16,2025-08-16,Gemini CLI PM,docs/management/tasks/TSK-004_prepare_env_vars.md
+TSK-005,認証機能の中核を実装,完了,高,機能追加,2025-08-16,2025-08-16,Gemini CLI PM,docs/management/tasks/TSK-005_implement_auth_core.md
+TSK-006,画像ホスティングの設定,完了,中,設定,2025-08-16,2025-08-16,Gemini CLI PM,docs/management/tasks/TSK-006_configure_image_hosting.md
+TSK-008,UI/UXの実装計画策定,完了,高,計画,2025-08-17,2025-08-17,Gemini CLI PM,docs/management/tasks/TSK-008_ui_ux_planning.md
+TSK-009,OGP画像・ファビコンの配置,完了,中,設定,2025-08-17,2025-08-17,Gemini CLI PM,docs/management/tasks/TSK-009_ogp_favicon_placement.md
+TSK-010,基本レイアウト（サイドバーとメインコンテンツ）の構築,完了,高,機能追加,2025-08-17,2025-08-17,Gemini CLI PM,docs/management/tasks/TSK-010_base_layout_construction.md
+TSK-011,サイドバー共通コンポーネントの実装,完了,高,機能追加,2025-08-17,2025-08-17,Gemini CLI PM,docs/management/tasks/TSK-011_sidebar_components_implementation.md
+TSK-012,Tailwind CSSとDaisyUIの設定,完了,高,設定,2025-08-17,2025-08-17,Gemini CLI PM,docs/management/tasks/TSK-012_tailwind_daisyui_setup.md
+TSK-013,ルートレイアウトの再構築,完了,高,機能追加,2025-08-17,2025-08-17,Gemini CLI PM,docs/management/tasks/TSK-013_rebuild_root_layout.md
+TSK-015,サイドバーコンポーネントの移植,完了,高,機能追加,2025-08-17,2025-08-17,Gemini CLI PM,docs/management/tasks/TSK-015_migrate_sidebar_component.md
+TSK-014,共通UIコンポーネントの移植,完了,高,機能追加,2025-08-17,2025-08-17,Gemini CLI PM,docs/management/tasks/TSK-014_migrate_common_ui_components.md
+TSK-016,トップページ（Home）の再構築,完了,高,機能追加,2025-08-17,2025-08-17,Gemini CLI PM,docs/management/tasks/TSK-016_rebuild_homepage.md
+TSK-017,バックエンド連携の実装計画策定,完了,高,計画,2025-08-17,2025-08-17,Gemini CLI PM,docs/management/tasks/TSK-017_backend_integration_planning.md
+TSK-018,認証関連APIの実装,完了,高,機能追加,2025-08-17,2025-08-17,Gemini CLI PM,docs/management/tasks/TSK-018_auth_api_implementation.md
+TSK-019,サイトパスワード認証APIの実装,完了,高,機能追加,2025-08-17,2025-08-17,Gemini CLI PM,docs/management/tasks/TSK-019_site_password_api_implementation.md
+TSK-020,記事投稿・管理APIの実装 (CRUD),完了,高,機能追加,2025-08-17,2025-08-17,Gemini CLI PM,docs/management/tasks/TSK-020_article_crud_api_implementation.md
+TSK-021,記事インタラクションAPIの実装 (コメント、いいね),完了,高,機能追加,2025-08-17,2025-08-17,Gemini CLI PM,docs/management/tasks/TSK-021_article_interaction_api_implementation.md
+TSK-022,記事発見APIの実装 (検索、タグ、アーカイブ),完了,高,機能追加,2025-08-17,2025-08-17,Gemini CLI PM,docs/management/tasks/TSK-022_article_discovery_api_implementation.md
+TSK-023,画像アップロードAPIの実装,完了,中,機能追加,2025-08-17,2025-08-17,Gemini CLI PM,docs/management/tasks/TSK-023_image_upload_api_implementation.md
+TSK-024,ヘルスチェックAPIの実装,完了,低,機能追加,2025-08-17,2025-08-17,Gemini CLI PM,docs/management/tasks/TSK-024_health_check_api_implementation.md
+TSK-025,認証UIとAPIの連携,完了,高,機能追加,2025-08-17,2025-08-17,Gemini CLI PM,docs/management/tasks/TSK-025_auth_ui_api_integration.md
+TSK-026,トップページと記事一覧のデータ連携,完了,高,機能追加,2025-08-17,2025-08-17,Gemini CLI PM,docs/management/tasks/TSK-026_homepage_article_list_data_integration.md
+TSK-027,記事投稿UIとAPIの連携,完了,高,機能追加,2025-08-17,2025-08-17,Gemini CLI PM,docs/management/tasks/TSK-027_article_post_ui_api_integration.md
+TSK-028,記事詳細・コメント・いいねのUI連携,完了,高,機能追加,2025-08-17,2025-08-17,Gemini CLI PM,docs/management/tasks/TSK-028_article_detail_comment_like_ui_integration.md
+TSK-029,サイドバーのデータ連携,完了,高,機能追加,2025-08-17,2025-08-17,Gemini CLI PM,docs/management/tasks/TSK-029_sidebar_data_integration.md
+TSK-030,検索・タグ・アーカイブページのUI連携,完了,高,機能追加,2025-08-17,2025-08-17,Gemini CLI PM,docs/management/tasks/TSK-030_search_tag_archive_ui_integration.md
+TSK-031,テスト、デプロイ、および新機能開発の計画策定,未着手,高,計画,,2025-08-17,,Gemini CLI PM,docs/management/tasks/TSK-031_testing_deployment_new_features_planning.md
