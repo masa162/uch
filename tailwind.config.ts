@@ -29,44 +29,42 @@ const config: Config = {
   },
   plugins: [
     require('@tailwindcss/typography'),
-    require('daisyui')
+    require('daisyui')({ // ここでdaisyuiの設定を直接渡す
+      themes: [
+        {
+          uchinokiroku: {
+            "primary": "#7cbf8c",
+            "secondary": "#f3eac2", 
+            "accent": "#9d856a",
+            "neutral": "#2a2e37",
+            "base-100": "#ffffff",
+            "base-200": "#f7f8fa",
+            "base-300": "#d6eadd",
+            "info": "#3abff8",
+            "success": "#7cbf8c",
+            "warning": "#fbbd23",
+            "error": "#f87272",
+          }
+        },
+        {
+          dark: {
+            "primary": "#7cbf8c",
+            "secondary": "#f3eac2", 
+            "accent": "#9d856a",
+            "neutral": "#1f2937",
+            "base-100": "#111827",
+            "base-200": "#1f2937",
+            "base-300": "#374151",
+            "info": "#3abff8",
+            "success": "#7cbf8c",
+            "warning": "#fbbd23",
+            "error": "#f87272",
+          }
+        }
+      ],
+      base: true,
+      styled: true,
+      utils: true,
+    }),
   ],
-  daisyui: {
-    themes: [
-      {
-        uchinokiroku: {
-          "primary": "#7cbf8c",
-          "secondary": "#f3eac2", 
-          "accent": "#9d856a",
-          "neutral": "#2a2e37",
-          "base-100": "#ffffff",
-          "base-200": "#f7f8fa",
-          "base-300": "#d6eadd",
-          "info": "#3abff8",
-          "success": "#7cbf8c",
-          "warning": "#fbbd23",
-          "error": "#f87272",
-        }
-      },
-      {
-        dark: {
-          "primary": "#7cbf8c",
-          "secondary": "#f3eac2", 
-          "accent": "#9d856a",
-          "neutral": "#1f2937",
-          "base-100": "#111827",
-          "base-200": "#1f2937",
-          "base-300": "#374151",
-          "info": "#3abff8",
-          "success": "#7cbf8c",
-          "warning": "#fbbd23",
-          "error": "#f87272",
-        }
-      }
-    ],
-    base: true,
-    styled: true,
-    utils: true,
-  },
-}
-export default config
+};

@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Dockerビルド用にstandaloneモードを有効化
+  // 開発環境ではstandaloneモードを無効化
   output: 'standalone',
 
   // Next.jsの厳格モードを有効にします。開発中に潜在的な問題を検出するのに役立ちます。

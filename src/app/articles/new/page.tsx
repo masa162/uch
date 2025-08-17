@@ -13,7 +13,7 @@ const articleSchema = z.object({
   content: z.string().min(1, '記事の内容を入力してください'),
   tags: z.string().optional(),
   heroImage: z.string().optional(),
-  isPublished: z.boolean().default(true),
+  isPublished: z.boolean().optional(),
 })
 
 type ArticleFormData = z.infer<typeof articleSchema>
@@ -49,7 +49,7 @@ export default function NewArticlePage() {
         content: data.content,
         tags,
         heroImage: data.heroImage || undefined,
-        isPublished: isDraft ? false : data.isPublished,
+        isPublished: isDraft ? false : (data.isPublished ?? true),
       }
 
       const response = await fetch('/api/articles', {

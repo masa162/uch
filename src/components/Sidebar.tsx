@@ -52,7 +52,7 @@ export default function Sidebar() {
   }
 
   return (
-    <aside className="w-1/4 hidden lg:block">
+    <aside className="w-64">
       <div className="sticky top-6">
         {/* サイトロゴ - TOPページリンク */}
         <div className="w-fit mx-auto mt-4 mb-4">

@@ -49,32 +49,22 @@ export default function AuthForm() {
 
         // 登録成功後、自動的にログイン
         const signInResult = await signIn('credentials', {
-          redirect: false,
+          redirect: true,
+          callbackUrl: '/',
           email: data.email,
           password: data.password,
         });
-
-        if (signInResult?.error) {
-          setError('登録は成功しましたが、ログインに失敗しました。再度ログインしてください。');
-        } else {
-          router.push('/');
-        }
       } catch (error) {
         setError('登録に失敗しました。ネットワーク接続を確認してください。');
       }
     } else {
-      // ログイン処理
-      const result = await signIn('credentials', {
-        redirect: false,
+      // ログイン処理 - NextAuth.jsの認証フローに任せる
+      await signIn('credentials', {
+        redirect: true,
+        callbackUrl: '/',
         email: data.email,
         password: data.password,
       });
-
-      if (result?.error) {
-        setError('ログインに失敗しました。メールアドレスまたはパスワードが間違っています。');
-      } else {
-        router.push('/');
-      }
     }
   };
 
@@ -84,6 +74,16 @@ export default function AuthForm() {
 
   const handleLineSignIn = async () => {
     await signIn('line', { callbackUrl: '/' });
+  };
+
+  const handleDevLogin = async () => {
+    // 開発環境用のダミーログイン
+    await signIn('credentials', {
+      redirect: true,
+      callbackUrl: '/',
+      email: 'dev@example.com',
+      password: 'password',
+    });
   };
 
   const handleForgotPassword = async () => {
@@ -186,6 +186,12 @@ export default function AuthForm() {
             className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
           >
             LINEでログイン
+          </button>
+          <button
+            onClick={handleDevLogin}
+            className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+          >
+            開発環境でログイン
           </button>
         </div>
       </div>

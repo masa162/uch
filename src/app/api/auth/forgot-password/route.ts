@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
     })
 
     // メール送信設定
-    const transporter = nodemailer.createTransporter({
+    const transporter = nodemailer.createTransport({
       host: process.env.EMAIL_SERVER_HOST,
       port: Number(process.env.EMAIL_SERVER_PORT),
       auth: {

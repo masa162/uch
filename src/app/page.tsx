@@ -16,11 +16,16 @@ interface Article {
   }
 }
 
-export default function Home() {
-  const [hasPassword, setHasPassword] = useState(false)
+export default function Home() { console.log('Home component rendered'); console.log('Home component rendered');
+  const [hasPassword, setHasPassword] = useState(process.env.NODE_ENV === 'development' ? true : false)
   const [recentArticles, setRecentArticles] = useState<Article[]>([])
   const [loading, setLoading] = useState(false)
+  const [mounted, setMounted] = useState(false)
   const { data: session, status } = useSession()
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
     const fetchRecentArticles = async () => {
@@ -43,11 +48,7 @@ export default function Home() {
     fetchRecentArticles()
   }, [session])
 
-  if (!hasPassword) {
-    return <PasswordGate onSuccess={() => setHasPassword(true)} />
-  }
-
-  if (status === 'loading') {
+  console.log('Home: !mounted'); if (!mounted) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -58,7 +59,22 @@ export default function Home() {
     )
   }
 
-  if (!session) {
+    console.log('Home: !hasPassword'); if (!hasPassword && process.env.NODE_ENV !== 'development') {
+    return <PasswordGate onSuccess={() => setHasPassword(true)} />
+  }
+
+  console.log('Home: status loading'); if (status === 'loading') {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900 mx-auto mb-4"></div>
+          <p>読み込み中...</p>
+        </div>
+      </div>
+    )
+  }
+
+  console.log('Home: !session'); if (!session && process.env.NODE_ENV !== 'development') {
     return (
       <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
         <AuthForm />
@@ -76,7 +92,7 @@ export default function Home() {
             </div>
             <div className="flex items-center space-x-4">
               <span className="text-gray-700">
-                こんにちは、{session.user?.email}さん
+                こんにちは、{session?.user?.email}さん
               </span>
               <button
                 onClick={() => signOut()}
@@ -104,7 +120,7 @@ export default function Home() {
             {loading ? (
               <div className="text-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-2"></div>
-                <p className="text-gray-600">読み込み中...</p>
+                <p>読み込み中...</p>
               </div>
             ) : recentArticles.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
