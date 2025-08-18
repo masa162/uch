@@ -1,9 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useSession } from 'next-auth/react'
+import { useAuth } from '@/contexts/AuthContext'
 import { useParams, useRouter } from 'next/navigation'
 import AuthenticatedLayout from '@/components/AuthenticatedLayout'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
 interface Article {
   id: string
@@ -39,7 +41,7 @@ interface Comment {
 
 export default function ArticleDetailPage() {
   const { slug } = useParams()
-  const { data: session } = useSession()
+  const { user } = useAuth()
   const router = useRouter()
   const [article, setArticle] = useState<Article | null>(null)
   const [comments, setComments] = useState<Comment[]>([])
@@ -50,7 +52,7 @@ export default function ArticleDetailPage() {
 
   useEffect(() => {
     const fetchArticle = async () => {
-      if (!session || !slug) return
+      if (!user || !slug) return
 
       try {
         const response = await fetch(`/api/articles/${slug}`)
@@ -70,11 +72,11 @@ export default function ArticleDetailPage() {
     }
 
     fetchArticle()
-  }, [session, slug, router])
+  }, [user, slug, router])
 
   useEffect(() => {
     const fetchComments = async () => {
-      if (!session || !slug) return
+      if (!user || !slug) return
 
       try {
         const response = await fetch(`/api/articles/${slug}/comments`)
@@ -88,10 +90,10 @@ export default function ArticleDetailPage() {
     }
 
     fetchComments()
-  }, [session, slug])
+  }, [user, slug])
 
   const handleLike = async () => {
-    if (!session || !article || likingArticle) return
+    if (!user || !article || likingArticle) return
 
     setLikingArticle(true)
     try {
@@ -120,7 +122,7 @@ export default function ArticleDetailPage() {
 
   const handleCommentSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!session || !commentText.trim() || submittingComment) return
+    if (!user || !commentText.trim() || submittingComment) return
 
     setSubmittingComment(true)
     try {
@@ -157,7 +159,7 @@ export default function ArticleDetailPage() {
     }
   }
 
-  if (!session) {
+  if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <p>ログインが必要です</p>
@@ -275,9 +277,26 @@ export default function ArticleDetailPage() {
 
         {/* 記事内容 */}
         <div className="prose prose-lg max-w-none mb-12">
-          <div className="whitespace-pre-wrap text-gray-800 leading-relaxed">
+          <ReactMarkdown 
+            remarkPlugins={[remarkGfm]}
+            components={{
+              h1: ({children}) => <h1 className="text-4xl font-bold mt-8 mb-4 text-gray-900">{children}</h1>,
+              h2: ({children}) => <h2 className="text-3xl font-bold mt-6 mb-3 text-gray-900">{children}</h2>,
+              h3: ({children}) => <h3 className="text-2xl font-bold mt-4 mb-2 text-gray-900">{children}</h3>,
+              p: ({children}) => <p className="mb-4 leading-relaxed text-gray-800">{children}</p>,
+              ul: ({children}) => <ul className="list-disc list-inside mb-4 ml-4">{children}</ul>,
+              ol: ({children}) => <ol className="list-decimal list-inside mb-4 ml-4">{children}</ol>,
+              li: ({children}) => <li className="mb-1">{children}</li>,
+              blockquote: ({children}) => <blockquote className="border-l-4 border-primary pl-4 italic text-gray-700 my-4">{children}</blockquote>,
+              code: ({children}) => <code className="bg-gray-100 px-2 py-1 rounded text-sm font-mono">{children}</code>,
+              pre: ({children}) => <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto text-sm font-mono">{children}</pre>,
+              hr: () => <hr className="my-8 border-gray-300" />,
+              strong: ({children}) => <strong className="font-bold text-gray-900">{children}</strong>,
+              em: ({children}) => <em className="italic">{children}</em>,
+            }}
+          >
             {article.content}
-          </div>
+          </ReactMarkdown>
         </div>
 
         {/* コメントセクション */}

@@ -127,8 +127,8 @@ export const authOptions: NextAuthOptions = {
       return baseUrl;
     },
   },
-  pages: process.env.NODE_ENV === 'development' ? {} : {
-    signIn: "/auth/login",
+  pages: {
+    signIn: "/auth/signin",
   },
 };
 

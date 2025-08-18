@@ -9,14 +9,23 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions) as Session | null
     
-    if (!session?.user?.email) {
+    // 開発環境で認証をスキップする場合のダミーユーザー
+    const isDevelopmentSkipAuth = process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_SKIP_AUTH === 'true'
+    const currentUser = session?.user || (isDevelopmentSkipAuth ? {
+      id: 'dev-user',
+      email: 'dev@example.com',
+      name: '開発ユーザー',
+      image: null
+    } : null)
+    
+    if (!currentUser?.email) {
       return NextResponse.json(
         { message: 'ログインが必要です' },
         { status: 401 }
       )
     }
 
-    const { title, content, description, tags, heroImageUrl } = await request.json()
+    const { title, content, tags, heroImage, isPublished, description } = await request.json()
 
     // バリデーション
     if (!title?.trim() || !content?.trim()) {
@@ -26,16 +35,28 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // ユーザー取得
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id }
+    // ユーザー取得または作成（開発環境用）
+    let user = await prisma.user.findUnique({
+      where: { id: currentUser.id }
     })
 
     if (!user) {
-      return NextResponse.json(
-        { message: 'ユーザーが見つかりません' },
-        { status: 404 }
-      )
+      if (isDevelopmentSkipAuth) {
+        // 開発環境でダミーユーザーを作成
+        user = await prisma.user.create({
+          data: {
+            id: currentUser.id,
+            email: currentUser.email,
+            name: currentUser.name,
+            image: currentUser.image
+          }
+        })
+      } else {
+        return NextResponse.json(
+          { message: 'ユーザーが見つかりません' },
+          { status: 404 }
+        )
+      }
     }
 
     // スラッグ生成（日付ベース、分かりやすい形式）
@@ -74,10 +95,10 @@ export async function POST(request: NextRequest) {
         content: content.trim(),
         description: description?.trim() || null,
         tags: Array.isArray(tags) ? tags : [],
-        heroImageUrl: heroImageUrl?.trim() || null,
+        heroImageUrl: heroImage?.trim() || null,
         pubDate: new Date(),
         authorId: user.id,
-        isPublished: true,
+        isPublished: isPublished ?? true,
       },
       include: {
         author: {
@@ -90,7 +111,7 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    return NextResponse.json(article, { status: 201 })
+    return NextResponse.json({ article }, { status: 201 })
   } catch (error) {
     console.error('Article creation error:', error)
     return NextResponse.json(

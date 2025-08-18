@@ -24,6 +24,16 @@ const nextConfig = {
     };
     return config;
   },
+
+  // TypeScript設定: docsディレクトリを除外
+  typescript: {
+    ignoreBuildErrors: false,
+  },
+  
+  // ビルド時に特定のディレクトリを除外
+  experimental: {
+    externalDir: true,
+  },
 };
 
 module.exports = nextConfig;

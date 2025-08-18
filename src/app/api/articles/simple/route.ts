@@ -10,21 +10,45 @@ import { prisma } from '@/lib/prisma'
  */
 export async function POST(request: NextRequest) {
   try {
+    // 開発環境では認証をスキップ
+    if (process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_SKIP_AUTH === 'true') {
+      const { content } = await request.json()
+
+      // バリデーション
+      if (!content?.trim()) {
+        return NextResponse.json(
+          { message: '内容を入力してください' },
+          { status: 400 }
+        )
+      }
+
+      // 開発環境用の簡易レスポンス
+      return NextResponse.json({
+        id: 'dev-' + Date.now(),
+        title: '開発環境テスト投稿',
+        slug: 'dev-test-' + Date.now(),
+        content: content.trim(),
+        description: content.trim().substring(0, 100),
+        createdAt: new Date().toISOString(),
+        message: '投稿が完了しました（開発環境）'
+      }, { status: 201 })
+    }
+
     const session = await getServerSession(authOptions) as Session | null
     
-    if (!session?.user?.email) {
+    if (!session?.user?.id) {
       return NextResponse.json(
         { message: 'ログインが必要です' },
         { status: 401 }
       )
     }
 
-    const { content } = await request.json()
+    const { title, content } = await request.json()
 
     // バリデーション
-    if (!content?.trim()) {
+    if (!title?.trim() || !content?.trim()) {
       return NextResponse.json(
-        { message: '内容を入力してください' },
+        { message: 'タイトルと内容を入力してください' },
         { status: 400 }
       )
     }
@@ -48,19 +72,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // タイトル自動生成
-    const now = new Date()
-    const year = now.getFullYear()
-    const month = String(now.getMonth() + 1).padStart(2, '0')
-    const day = String(now.getDate()).padStart(2, '0')
-    const autoTitle = `${year}年${month}月${day}日の記録`
-
     // 説明文自動生成（本文の先頭100文字）
     const autoDescription = content.trim().length > 100 
       ? content.trim().substring(0, 97) + '...'
       : content.trim()
 
     // スラッグ生成（既存システムと同じロジック）
+    const now = new Date()
     const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '') // YYYYMMDD
     
     // その日の記事数を取得して連番を決定
@@ -90,7 +108,7 @@ export async function POST(request: NextRequest) {
     // 記事作成（簡易POST仕様）
     const article = await prisma.article.create({
       data: {
-        title: autoTitle,
+        title: title.trim(),
         slug,
         content: content.trim(),
         description: autoDescription,

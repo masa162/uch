@@ -29,8 +29,28 @@ TSK-027,記事投稿UIとAPIの連携,完了,高,機能追加,2025-08-17,2025-08
 TSK-028,記事詳細・コメント・いいねのUI連携,完了,高,機能追加,2025-08-17,2025-08-17,Gemini CLI PM,docs/management/tasks/TSK-028_article_detail_comment_like_ui_integration.md
 TSK-029,サイドバーのデータ連携,完了,高,機能追加,2025-08-17,2025-08-17,Gemini CLI PM,docs/management/tasks/TSK-029_sidebar_data_integration.md
 TSK-030,検索・タグ・アーカイブページのUI連携,完了,高,機能追加,2025-08-17,2025-08-17,Gemini CLI PM,docs/management/tasks/TSK-030_search_tag_archive_ui_integration.md
-TSK-031,テスト、デプロイ、および新機能開発の計画策定,未着手,高,計画,,2025-08-17,,Gemini CLI PM,docs/management/tasks/TSK-031_testing_deployment_new_features_planning.md
-TSK-032,アプリケーション機能の復旧とビルドエラーの根本原因解決,未着手,高,バグ修正,,2025-08-17,,Gemini CLI PM / Claude Code,docs/management/tasks/TSK-032_application_feature_restoration.md
+TSK-031,テスト、デプロイ、および新機能開発の計画策定,進行中,高,計画,,2025-08-17,,Gemini CLI PM,docs/management/tasks/TSK-031_testing_deployment_new_features_planning.md
+TSK-032,アプリケーション機能の復旧とビルドエラーの根本原因解決,完了,高,バグ修正,,2025-08-17,2025-08-17,Gemini CLI PM / Claude Code,docs/management/tasks/TSK-032_application_feature_restoration.md
 TSK-033,環境クリーンアップと不要資産の棚卸し,完了,高,保守,,2025-08-17,2025-08-17,Gemini CLI PM / Claude Code,docs/management/tasks/TSK-033_environment_cleanup.md
 TSK-034,レガシー資産のクリーンアップと棚卸し,完了,高,保守,,2025-08-17,2025-08-17,Gemini CLI PM / Claude Code,docs/management/tasks/TSK-034_cleanup_legacy_assets.md
 TSK-035,ローカル環境での認証完全除外,完了,最優先,設定,,2025-08-17,2025-08-17,Gemini CLI PM / Claude Code,docs/management/tasks/TSK-035_disable_local_auth.md
+TSK-036,新規記事投稿APIの契約不一致に起因するエラーの調査と修正,完了,最高,バグ修正,,2025-08-17,2025-08-17,Gemini CLI PM,docs/management/tasks/TSK-036_fix_article_api_mismatch.md
+TSK-037,簡易投稿APIの仕様不整合エラーの調査と修正,完了,最高,バグ修正,,2025-08-17,2025-08-17,Gemini CLI PM,docs/management/tasks/TSK-037_fix_simple_article_api_mismatch.md
+TSK-038,旧サイト(uchinokiroku.com)のUI/UX再現,キャンセル,高,UI/UX,,2025-08-17,,Gemini CLI PM / Claude Code,docs/management/tasks/TSK-038_reproduce_legacy_uiux.md
+TSK-039,daisyUIテーマの導入と認証後ダッシュボードUIの再現,完了,最高,UI/UX,,2025-08-17,2025-08-17,Gemini CLI PM / Claude Code,docs/management/tasks/TSK-039_implement_daisyui_dashboard.md
+TSK-040,記事管理(CRUD)機能の基本実装,完了,最高,機能追加,,2025-08-18,2025-08-18,Gemini CLI PM / Claude Code,docs/management/tasks/TSK-040_implement_article_crud.md
+TSK-041,テスト戦略の策定と基本方針の定義,完了,高,計画,,2025-08-18,2025-08-18,Gemini CLI PM,docs/management/tasks/TSK-041_define_test_strategy.md
+TSK-042,テスト環境の構築と基本テストの実装,未着手,低,テスト,,2025-08-18,,Gemini CLI PM / Claude Code,docs/management/tasks/TSK-042_implement_basic_tests.md
+TSK-043,VPS本番環境への初回デプロイ準備と手動デプロイの実施,未着手,高,デプロイ,,2025-08-18,,Gemini CLI PM / Claude Code,docs/management/tasks/TSK-043_vps_initial_deployment.md
+TSK-UIUX-001,Tailwind CSS と DaisyUI の設定継承,完了,高,UI/UX,2025-08-17,2025-08-17,Gemini CLI PM / Claude Code,docs/management/tasks/TSK-UIUX-001_tailwind_daisyui_setup.md
+TSK-UIUX-002,グローバルスタイルの継承,完了,高,UI/UX,2025-08-17,2025-08-17,Gemini CLI PM / Claude Code,docs/management/tasks/TSK-UIUX-002_global_styles_inheritance.md
+TSK-UIUX-003,フォント設定の継承,完了,高,UI/UX,2025-08-17,2025-08-17,Gemini CLI PM / Claude Code,docs/management/tasks/TSK-UIUX-003_font_settings_inheritance.md
+TSK-UIUX-004,`Providers.tsx` の移植と統合,完了,高,UI/UX,2025-08-17,2025-08-17,Gemini CLI PM / Claude Code,docs/management/tasks/TSK-UIUX-004_providers_migration.md
+TSK-UIUX-005,`PasswordGate.tsx` の移植と統合,完了,高,UI/UX,2025-08-17,2025-08-17,Gemini CLI PM / Claude Code,docs/management/tasks/TSK-UIUX-005_passwordgate_migration.md
+TSK-UIUX-006,`AuthForm.tsx` の移植と統合,完了,高,UI/UX,2025-08-17,2025-08-17,Gemini CLI PM / Claude Code,docs/management/tasks/TSK-UIUX-006_authform_migration.md
+TSK-UIUX-007,`AuthenticatedLayout.tsx` の移植と統合,完了,高,UI/UX,2025-08-17,2025-08-17,Gemini CLI PM / Claude Code,docs/management/tasks/TSK-UIUX-007_authenticatedlayout_migration.md
+TSK-UIUX-008,`Sidebar.tsx` の移植と統合,完了,高,UI/UX,2025-08-17,2025-08-17,Gemini CLI PM / Claude Code,docs/management/tasks/TSK-UIUX-008_sidebar_migration.md
+TSK-UIUX-009,`MarkdownPreview.tsx` の移植と統合,完了,高,UI/UX,2025-08-17,2025-08-17,Gemini CLI PM / Claude Code,docs/management/tasks/TSK-UIUX-009_markdownpreview_migration.md
+TSK-UIUX-010,`TagSelector.tsx` の移植と統合,完了,高,UI/UX,2025-08-17,2025-08-17,Gemini CLI PM / Claude Code,docs/management/tasks/TSK-UIUX-010_tagselector_migration.md
+TSK-UIUX-011,ルートレイアウト (`src/app/layout.tsx`) の調整,完了,高,UI/UX,2025-08-17,2025-08-17,Gemini CLI PM / Claude Code,docs/management/tasks/TSK-UIUX-011_root_layout_adjustment.md
+TSK-UIUX-012,トップページ (`src/app/page.tsx`) の調整,完了,高,UI/UX,2025-08-17,2025-08-17,Gemini CLI PM / Claude Code,docs/management/tasks/TSK-UIUX-012_homepage_adjustment.md

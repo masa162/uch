@@ -1,336 +1,271 @@
 'use client'
 
 import { useState } from 'react'
-import { useSession } from 'next-auth/react'
+import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import * as z from 'zod'
 import AuthenticatedLayout from '@/components/AuthenticatedLayout'
+import Link from 'next/link'
 
-const articleSchema = z.object({
-  title: z.string().min(1, '記事のタイトルを入力してください'),
-  content: z.string().min(1, '記事の内容を入力してください'),
-  tags: z.string().optional(),
-  heroImage: z.string().optional(),
-  isPublished: z.boolean().optional(),
-})
-
-type ArticleFormData = z.infer<typeof articleSchema>
+interface ArticleFormData {
+  title: string
+  description: string
+  content: string
+  tags: string
+  isPublished: boolean
+}
 
 export default function NewArticlePage() {
-  const { data: session } = useSession()
+  const { user } = useAuth()
   const router = useRouter()
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [isDraft, setIsDraft] = useState(false)
-  const [uploadingImage, setUploadingImage] = useState(false)
-
-  const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm<ArticleFormData>({
-    resolver: zodResolver(articleSchema),
-    defaultValues: {
-      isPublished: true,
-    }
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  
+  const [formData, setFormData] = useState<ArticleFormData>({
+    title: '',
+    description: '',
+    content: '',
+    tags: '',
+    isPublished: true
   })
 
-  const heroImageValue = watch('heroImage')
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value, type } = e.target
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
+    }))
+  }
 
-  const onSubmit = async (data: ArticleFormData) => {
-    if (!session) return
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (!formData.title.trim()) {
+      setError('タイトルを入力してください')
+      return
+    }
 
-    setIsSubmitting(true)
+    if (!formData.content.trim()) {
+      setError('本文を入力してください')
+      return
+    }
+
     try {
-      // タグの処理
-      const tags = data.tags 
-        ? data.tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0)
-        : []
+      setLoading(true)
+      setError(null)
 
-      const payload = {
-        title: data.title,
-        content: data.content,
-        tags,
-        heroImage: data.heroImage || undefined,
-        isPublished: isDraft ? false : (data.isPublished ?? true),
-      }
+      // タグを配列に変換
+      const tags = formData.tags
+        .split(',')
+        .map(tag => tag.trim())
+        .filter(tag => tag.length > 0)
 
       const response = await fetch('/api/articles', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          ...formData,
+          tags,
+          pubDate: new Date().toISOString()
+        }),
       })
 
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.message || '記事の投稿に失敗しました')
+        throw new Error(errorData.error || '記事の作成に失敗しました')
       }
 
       const result = await response.json()
       
-      if (isDraft) {
-        alert('下書きとして保存しました！')
-        router.push('/articles')
-      } else {
-        alert('記事を投稿しました！')
-        router.push(`/articles/${result.slug}`)
-      }
-    } catch (error) {
-      console.error('Article submission error:', error)
-      alert(error instanceof Error ? error.message : '記事の投稿に失敗しました')
+      // 作成成功後、記事詳細ページにリダイレクト
+      router.push(`/articles/${result.article.slug}`)
+      
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'エラーが発生しました')
     } finally {
-      setIsSubmitting(false)
+      setLoading(false)
     }
   }
 
-  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (!file) return
-
-    setUploadingImage(true)
-    try {
-      const formData = new FormData()
-      formData.append('file', file)
-
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      })
-
-      if (!response.ok) {
-        throw new Error('画像のアップロードに失敗しました')
-      }
-
-      const result = await response.json()
-      setValue('heroImage', result.url)
-    } catch (error) {
-      console.error('Image upload error:', error)
-      alert('画像のアップロードに失敗しました')
-    } finally {
-      setUploadingImage(false)
-    }
-  }
-
-  const handleSimplePost = async () => {
-    const title = (document.getElementById('simple-title') as HTMLInputElement)?.value
-    const content = (document.getElementById('simple-content') as HTMLTextAreaElement)?.value
-
-    if (!title || !content) {
-      alert('タイトルと内容を入力してください')
-      return
-    }
-
-    setIsSubmitting(true)
-    try {
-      const response = await fetch('/api/articles/simple', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ title, content }),
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.message || '簡易投稿に失敗しました')
-      }
-
-      const result = await response.json()
-      alert('投稿しました！')
-      router.push(`/articles/${result.slug}`)
-    } catch (error) {
-      console.error('Simple post error:', error)
-      alert(error instanceof Error ? error.message : '簡易投稿に失敗しました')
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
-
-  if (!session) {
+  if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p>ログインが必要です</p>
-      </div>
+      <AuthenticatedLayout>
+        <div className="text-center py-8">
+          <div className="alert alert-error max-w-md mx-auto">
+            <span>⚠️ ログインが必要です</span>
+          </div>
+        </div>
+      </AuthenticatedLayout>
     )
   }
 
   return (
     <AuthenticatedLayout>
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">新しい記事を書く</h1>
-          
-          {/* タブ切り替え */}
-          <div className="border-b border-gray-200 mb-6">
-            <nav className="-mb-px flex space-x-8">
-              <button
-                className="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm"
-                onClick={() => document.getElementById('detailed-form')?.scrollIntoView()}
-              >
-                詳細フォーム
-              </button>
-              <button
-                className="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm"
-                onClick={() => document.getElementById('simple-form')?.scrollIntoView()}
-              >
-                簡易投稿
-              </button>
-            </nav>
+      <div className="max-w-4xl mx-auto space-y-6">
+        {/* ヘッダー */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">✍️ 新しい記事を書く</h1>
+            <p className="text-gray-600">家族の大切な思い出を残しましょう</p>
           </div>
+          <Link 
+            href="/articles"
+            className="btn btn-outline"
+          >
+            ← 記事一覧に戻る
+          </Link>
         </div>
 
-        {/* 簡易投稿フォーム */}
-        <div id="simple-form" className="mb-12 bg-blue-50 p-6 rounded-lg">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">📝 簡易投稿</h2>
-          <p className="text-gray-600 mb-4">タイトルと内容だけで手軽に投稿できます</p>
-          
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="simple-title" className="block text-sm font-medium text-gray-700 mb-1">
-                タイトル
-              </label>
-              <input
-                id="simple-title"
-                type="text"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="今日の出来事..."
-              />
-            </div>
-            
-            <div>
-              <label htmlFor="simple-content" className="block text-sm font-medium text-gray-700 mb-1">
-                内容
-              </label>
-              <textarea
-                id="simple-content"
-                rows={4}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="今日はこんなことがありました..."
-              />
-            </div>
-            
-            <button
-              onClick={handleSimplePost}
-              disabled={isSubmitting}
-              className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50"
-            >
-              {isSubmitting ? '投稿中...' : '今すぐ投稿'}
-            </button>
+        {/* エラーメッセージ */}
+        {error && (
+          <div className="alert alert-error">
+            <span>⚠️ {error}</span>
           </div>
-        </div>
+        )}
 
-        {/* 詳細フォーム */}
-        <div id="detailed-form">
-          <h2 className="text-xl font-semibold text-gray-900 mb-6">📖 詳細フォーム</h2>
-          
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            {/* タイトル */}
-            <div>
-              <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
-                タイトル *
-              </label>
-              <input
-                id="title"
-                type="text"
-                {...register('title')}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="記事のタイトルを入力してください"
-              />
-              {errors.title && <p className="mt-1 text-sm text-red-600">{errors.title.message}</p>}
-            </div>
-
-            {/* ヒーロー画像 */}
-            <div>
-              <label htmlFor="heroImage" className="block text-sm font-medium text-gray-700 mb-1">
-                ヒーロー画像
-              </label>
-              <div className="space-y-2">
+        {/* 記事作成フォーム */}
+        <div className="card bg-base-100 shadow-lg">
+          <div className="card-body">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* タイトル */}
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text font-semibold text-base">タイトル *</span>
+                </label>
                 <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                  type="text"
+                  name="title"
+                  value={formData.title}
+                  onChange={handleInputChange}
+                  placeholder="記事のタイトルを入力してください"
+                  className="input input-bordered w-full focus:input-primary"
+                  required
                 />
-                {uploadingImage && <p className="text-sm text-gray-600">アップロード中...</p>}
-                {heroImageValue && (
-                  <div className="mt-2">
-                    <img src={heroImageValue} alt="Hero" className="w-full max-w-md h-48 object-cover rounded-md" />
-                  </div>
-                )}
               </div>
-            </div>
 
-            {/* 内容 */}
-            <div>
-              <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-1">
-                内容 *
-              </label>
-              <textarea
-                id="content"
-                rows={12}
-                {...register('content')}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="記事の内容を入力してください..."
-              />
-              {errors.content && <p className="mt-1 text-sm text-red-600">{errors.content.message}</p>}
-            </div>
-
-            {/* タグ */}
-            <div>
-              <label htmlFor="tags" className="block text-sm font-medium text-gray-700 mb-1">
-                タグ
-              </label>
-              <input
-                id="tags"
-                type="text"
-                {...register('tags')}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="タグをカンマ区切りで入力（例: 家族, 旅行, 思い出）"
-              />
-            </div>
-
-            {/* 投稿オプション */}
-            <div className="flex items-center space-x-4">
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  {...register('isPublished')}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              {/* 説明 */}
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text font-semibold text-base">説明</span>
+                </label>
+                <textarea
+                  name="description"
+                  value={formData.description}
+                  onChange={handleInputChange}
+                  placeholder="記事の概要や説明を入力してください"
+                  className="textarea textarea-bordered w-full focus:textarea-primary"
+                  rows={3}
                 />
-                <span className="ml-2 text-sm text-gray-700">すぐに公開する</span>
-              </label>
-            </div>
+                <label className="label">
+                  <span className="label-text-alt text-gray-500">読者が記事の内容を理解しやすくなります</span>
+                </label>
+              </div>
 
-            {/* 送信ボタン */}
-            <div className="flex space-x-4">
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 disabled:opacity-50"
-              >
-                {isSubmitting ? '投稿中...' : '投稿する'}
-              </button>
-              
-              <button
-                type="button"
-                onClick={() => {
-                  setIsDraft(true)
-                  handleSubmit(onSubmit)()
-                }}
-                disabled={isSubmitting}
-                className="bg-gray-600 text-white px-6 py-2 rounded-md hover:bg-gray-700 disabled:opacity-50"
-              >
-                下書き保存
-              </button>
-              
-              <button
-                type="button"
-                onClick={() => router.push('/articles')}
-                className="bg-gray-300 text-gray-700 px-6 py-2 rounded-md hover:bg-gray-400"
-              >
-                キャンセル
-              </button>
-            </div>
-          </form>
+              {/* タグ */}
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text font-semibold text-base">タグ</span>
+                </label>
+                <input
+                  type="text"
+                  name="tags"
+                  value={formData.tags}
+                  onChange={handleInputChange}
+                  placeholder="家族, 旅行, 料理 (カンマ区切りで入力)"
+                  className="input input-bordered w-full focus:input-primary"
+                />
+                <label className="label">
+                  <span className="label-text-alt text-gray-500">カンマ区切りで複数のタグを入力できます</span>
+                </label>
+              </div>
+
+              {/* 本文 */}
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text font-semibold text-base">本文 *</span>
+                </label>
+                <textarea
+                  name="content"
+                  value={formData.content}
+                  onChange={handleInputChange}
+                  placeholder="記事の本文を入力してください...
+
+家族との大切な思い出や日常の出来事を、心を込めて綴ってみてください。
+マークダウン記法を使って、見出しやリスト、リンクなども自由に使えます。"
+                  className="textarea textarea-bordered w-full font-serif text-lg leading-relaxed focus:textarea-primary"
+                  rows={20}
+                  required
+                  style={{ minHeight: '400px' }}
+                />
+                <label className="label">
+                  <span className="label-text-alt text-gray-500">
+                    マークダウン形式で入力できます（# 見出し、**太字**、- リストなど）
+                  </span>
+                </label>
+              </div>
+
+              {/* 公開設定 */}
+              <div className="form-control">
+                <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                  <div>
+                    <span className="label-text font-semibold text-base">公開設定</span>
+                    <p className="text-sm text-gray-500 mt-1">
+                      {formData.isPublished 
+                        ? '✅ 記事を公開して、みんなに共有します' 
+                        : '📝 下書きとして保存し、後で公開できます'
+                      }
+                    </p>
+                  </div>
+                  <input
+                    type="checkbox"
+                    name="isPublished"
+                    checked={formData.isPublished}
+                    onChange={handleInputChange}
+                    className="checkbox checkbox-primary checkbox-lg"
+                  />
+                </div>
+              </div>
+
+              {/* アクションボタン */}
+              <div className="flex justify-end space-x-4 pt-6 border-t">
+                <Link 
+                  href="/articles"
+                  className="btn btn-outline btn-lg"
+                >
+                  キャンセル
+                </Link>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="btn btn-primary btn-lg"
+                >
+                  {loading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                      保存中...
+                    </>
+                  ) : (
+                    formData.isPublished ? '🚀 記事を公開' : '📝 下書き保存'
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        {/* ヘルプ */}
+        <div className="card bg-base-200">
+          <div className="card-body">
+            <h3 className="card-title text-lg">💡 記事作成のヒント</h3>
+            <ul className="list-disc list-inside space-y-2 text-sm text-gray-600">
+              <li>タイトルは分かりやすく、内容を端的に表現しましょう</li>
+              <li>説明文で記事の概要を伝えると、読者が理解しやすくなります</li>
+              <li>タグは関連するキーワードをカンマ区切りで入力してください</li>
+              <li>本文は読みやすく、段落を意識して書くと良いでしょう</li>
+              <li>下書きとして保存して、後で編集することもできます</li>
+            </ul>
+          </div>
         </div>
       </div>
     </AuthenticatedLayout>

@@ -1,149 +1,233 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useSession } from 'next-auth/react'
+import { useAuth } from '@/contexts/AuthContext'
 import AuthenticatedLayout from '@/components/AuthenticatedLayout'
+import Link from 'next/link'
 
 interface Article {
   id: string
   title: string
   slug: string
+  description: string | null
+  content: string
   pubDate: string
+  authorId: string
+  heroImageUrl: string | null
+  tags: string[]
+  isPublished: boolean
   author: {
     name: string | null
+    email: string | null
+  }
+  _count: {
+    comments: number
+    likes: number
   }
 }
 
 export default function ArticlesPage() {
+  const { user } = useAuth()
   const [articles, setArticles] = useState<Article[]>([])
   const [loading, setLoading] = useState(true)
-  const [page, setPage] = useState(1)
-  const [hasMore, setHasMore] = useState(true)
-  const { data: session } = useSession()
+  const [error, setError] = useState<string | null>(null)
 
-  const fetchArticles = async (pageNum: number = 1, reset: boolean = false) => {
-    if (!session) return
+  useEffect(() => {
+    fetchArticles()
+  }, [])
 
-    setLoading(true)
+  const fetchArticles = async () => {
     try {
-      const response = await fetch(`/api/articles?page=${pageNum}&limit=10`)
-      if (response.ok) {
-        const data = await response.json()
-        const newArticles = data.articles || []
-        
-        if (reset) {
-          setArticles(newArticles)
-        } else {
-          setArticles(prev => [...prev, ...newArticles])
-        }
-        
-        setHasMore(newArticles.length === 10)
+      setLoading(true)
+      const response = await fetch('/api/articles')
+      if (!response.ok) {
+        throw new Error('記事の取得に失敗しました')
       }
-    } catch (error) {
-      console.error('Failed to fetch articles:', error)
+      const data = await response.json()
+      setArticles(data.articles || [])
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'エラーが発生しました')
     } finally {
       setLoading(false)
     }
   }
 
-  useEffect(() => {
-    fetchArticles(1, true)
-  }, [session])
-
-  const loadMore = () => {
-    const nextPage = page + 1
-    setPage(nextPage)
-    fetchArticles(nextPage, false)
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('ja-JP', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    })
   }
 
-  if (!session) {
+  if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p>ログインが必要です</p>
-      </div>
+      <AuthenticatedLayout>
+        <div className="flex justify-center items-center min-h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-gray-600">記事を読み込み中...</p>
+          </div>
+        </div>
+      </AuthenticatedLayout>
+    )
+  }
+
+  if (error) {
+    return (
+      <AuthenticatedLayout>
+        <div className="text-center py-8">
+          <div className="alert alert-error max-w-md mx-auto">
+            <span>⚠️ {error}</span>
+          </div>
+          <button 
+            onClick={fetchArticles}
+            className="btn btn-primary mt-4"
+          >
+            再試行
+          </button>
+        </div>
+      </AuthenticatedLayout>
     )
   }
 
   return (
     <AuthenticatedLayout>
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">記事一覧</h1>
-          <button
-            onClick={() => window.location.href = '/articles/new'}
-            className="bg-primary text-white px-6 py-2 rounded-md hover:bg-primary-dark"
+      <div className="space-y-6">
+        {/* ヘッダー */}
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold">📚 記事一覧</h1>
+            <p className="text-gray-600">みんなの思い出を共有しましょう</p>
+          </div>
+          <Link 
+            href="/articles/new"
+            className="btn btn-primary"
           >
-            新しい記事を書く
-          </button>
+            ✍️ 新しい記事を書く
+          </Link>
         </div>
 
-        {loading && page === 1 ? (
+        {/* 記事一覧 */}
+        {articles.length === 0 ? (
           <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4"></div>
-            <p className="text-gray-600">読み込み中...</p>
-          </div>
-        ) : articles.length === 0 ? (
-          <div className="text-center py-12 bg-gray-50 rounded-lg">
-            <div className="text-6xl mb-4">📚</div>
-            <h2 className="text-xl font-semibold text-gray-700 mb-2">まだ記事がありません</h2>
-            <p className="text-gray-600 mb-6">最初の記事を書いて、家族の思い出を残しましょう</p>
-            <button
-              onClick={() => window.location.href = '/articles/new'}
-              className="bg-primary text-white px-6 py-3 rounded-md hover:bg-primary-dark"
+            <div className="text-6xl mb-4">📝</div>
+            <h2 className="text-2xl font-bold mb-2">まだ記事がありません</h2>
+            <p className="text-gray-600 mb-6">最初の記事を書いて、思い出を残しましょう</p>
+            <Link 
+              href="/articles/new"
+              className="btn btn-primary btn-lg"
             >
               最初の記事を書く
-            </button>
+            </Link>
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="grid gap-6">
             {articles.map((article) => (
-              <div
+              <article 
                 key={article.id}
-                className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition cursor-pointer border border-gray-200"
-                onClick={() => window.location.href = `/articles/${article.slug}`}
+                className="card bg-base-100 shadow-lg hover:shadow-xl transition-shadow cursor-pointer"
               >
-                <h2 className="text-xl font-semibold text-gray-800 mb-3 hover:text-primary">
-                  {article.title}
-                </h2>
-                <div className="flex items-center text-sm text-gray-600 space-x-4">
-                  <div className="flex items-center">
-                    <span className="mr-1">👤</span>
-                    <span>{article.author.name || '匿名'}</span>
+                <div className="card-body">
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="flex-1">
+                      <h2 className="card-title text-xl mb-2">
+                        <Link 
+                          href={`/articles/${article.slug}`}
+                          className="hover:text-primary transition-colors"
+                        >
+                          {article.title}
+                        </Link>
+                      </h2>
+                      {article.description && (
+                        <p className="text-gray-600 mb-3">{article.description}</p>
+                      )}
+                    </div>
+                    {article.heroImageUrl && (
+                      <div className="ml-4">
+                        <img 
+                          src={article.heroImageUrl} 
+                          alt={article.title}
+                          className="w-24 h-24 object-cover rounded-lg"
+                        />
+                      </div>
+                    )}
                   </div>
-                  <div className="flex items-center">
-                    <span className="mr-1">📅</span>
-                    <span>{new Date(article.pubDate).toLocaleDateString('ja-JP', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric'
-                    })}</span>
+                  
+                  {/* メタ情報 */}
+                  <div className="flex items-center justify-between text-sm text-gray-500">
+                    <div className="flex items-center space-x-4">
+                      <span>👤 {article.author.name || article.author.email}</span>
+                      <span>📅 {formatDate(article.pubDate)}</span>
+                    </div>
+                    <div className="flex items-center space-x-4">
+                      <span>💬 {article._count.comments}</span>
+                      <span>❤️ {article._count.likes}</span>
+                    </div>
+                  </div>
+
+                  {/* タグ */}
+                  {article.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      {article.tags.map((tag) => (
+                        <span 
+                          key={tag}
+                          className="badge badge-primary badge-outline"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* アクションボタン */}
+                  <div className="card-actions justify-end mt-4">
+                    <Link 
+                      href={`/articles/${article.slug}`}
+                      className="btn btn-outline btn-sm"
+                    >
+                      詳細を見る
+                    </Link>
+                    {user?.email === article.author.email && (
+                      <>
+                        <Link 
+                          href={`/articles/${article.slug}/edit`}
+                          className="btn btn-primary btn-sm"
+                        >
+                          編集
+                        </Link>
+                        <button 
+                          className="btn btn-error btn-sm"
+                          onClick={async () => {
+                            if (confirm(`「${article.title}」を削除しますか？この操作は元に戻せません。`)) {
+                              try {
+                                const response = await fetch(`/api/articles/${article.slug}`, {
+                                  method: 'DELETE',
+                                })
+                                
+                                if (response.ok) {
+                                  alert('記事が削除されました')
+                                  fetchArticles() // 記事一覧を再取得
+                                } else {
+                                  const errorData = await response.json()
+                                  alert(errorData.message || '削除に失敗しました')
+                                }
+                              } catch (err) {
+                                alert('削除中にエラーが発生しました')
+                              }
+                            }
+                          }}
+                        >
+                          削除
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
-              </div>
+              </article>
             ))}
-
-            {hasMore && (
-              <div className="text-center py-6">
-                <button
-                  onClick={loadMore}
-                  disabled={loading}
-                  className="bg-gray-200 text-gray-700 px-6 py-2 rounded-md hover:bg-gray-300 disabled:opacity-50"
-                >
-                  {loading ? '読み込み中...' : 'もっと読む'}
-                </button>
-              </div>
-            )}
           </div>
         )}
-
-        <div className="mt-8 text-center">
-          <button
-            onClick={() => window.location.href = '/'}
-            className="text-gray-600 hover:text-gray-800"
-          >
-            ← ホームに戻る
-          </button>
-        </div>
       </div>
     </AuthenticatedLayout>
   )
