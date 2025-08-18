@@ -5,6 +5,10 @@ const nextConfig = {
 
   // Next.jsの厳格モードを有効にします。開発中に潜在的な問題を検出するのに役立ちます。
   reactStrictMode: true,
+  
+  // フォント最適化を無効化してビルド時のタイムアウトを防ぐ
+  optimizeFonts: false,
+  
   images: {
     remotePatterns: [
       {
