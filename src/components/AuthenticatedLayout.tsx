@@ -1,6 +1,7 @@
 'use client'
 
 import Sidebar from './Sidebar';
+import AuthRequiredModal from './AuthRequiredModal';
 
 type AuthenticatedLayoutProps = {
   children: React.ReactNode;
@@ -19,6 +20,7 @@ export default function AuthenticatedLayout({ children }: AuthenticatedLayoutPro
           </main>
         </div>
       </div>
+      <AuthRequiredModal />
     </div>
   );
 }

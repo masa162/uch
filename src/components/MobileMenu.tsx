@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useAuth } from '@/contexts/AuthContext'
+import { useAuthAction } from '@/hooks/useAuthAction'
 
 interface MobileMenuProps {
   isOpen: boolean
@@ -11,6 +13,8 @@ interface MobileMenuProps {
 export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const router = useRouter()
+  const { user, signOut } = useAuth()
+  const { runAuthAction } = useAuthAction()
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -22,6 +26,11 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
 
   const handleNavigation = (path: string) => {
     router.push(path)
+    onClose()
+  }
+
+  const handleSignOut = () => {
+    signOut()
     onClose()
   }
 
@@ -88,6 +97,43 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
             </form>
           </div>
 
+          {/* ユーザー情報 */}
+          {user && (
+            <div className="mb-6 p-4 bg-base-200 rounded-lg">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="avatar">
+                  <div className="w-10 h-10 rounded-full bg-primary text-primary-content flex items-center justify-center font-bold">
+                    {user.name ? user.name.charAt(0).toUpperCase() : '👤'}
+                  </div>
+                </div>
+                <div>
+                  <div className="font-semibold text-sm">
+                    {user.name || 'ユーザー'}
+                  </div>
+                  {user.username && (
+                    <div className="text-xs text-base-content/70">
+                      @{user.username}
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleNavigation('/profile')}
+                  className="btn btn-primary btn-sm flex-1"
+                >
+                  📱 プロフィール
+                </button>
+                <button
+                  onClick={() => runAuthAction(() => handleNavigation('/articles/new'))}
+                  className="btn btn-outline btn-sm flex-1"
+                >
+                  ✏️ 記事を書く
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Navigation */}
           <div className="mb-6">
             <h3 className="text-sm font-semibold text-primary-dark mb-3">🔍 発見とメモ</h3>
@@ -118,6 +164,18 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
               </li>
             </ul>
           </div>
+
+          {/* ログアウト */}
+          {user && (
+            <div className="mt-6 pt-6 border-t border-base-300">
+              <button
+                onClick={handleSignOut}
+                className="btn btn-outline btn-error btn-sm w-full"
+              >
+                🚪 ログアウト
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </>

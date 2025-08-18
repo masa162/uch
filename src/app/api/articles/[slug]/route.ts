@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { Role } from '@prisma/client'
 
 // 記事詳細取得API
 export async function GET(request: NextRequest, { params }: { params: { slug: string } }) {
@@ -51,10 +52,27 @@ export async function PUT(request: NextRequest, { params }: { params: { slug: st
   try {
     const session = await getServerSession(authOptions) as Session | null
     
-    if (!session?.user?.id) {
+    // 開発環境で認証をスキップする場合のダミーユーザー
+    const isDevelopmentSkipAuth = process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_SKIP_AUTH === 'true'
+    const currentUser = session?.user || (isDevelopmentSkipAuth ? {
+      id: 'dev-user',
+      email: 'dev@example.com',
+      name: '開発ユーザー',
+      image: null
+    } : null)
+    
+    if (!currentUser?.id) {
       return NextResponse.json(
         { message: 'ログインが必要です' },
         { status: 401 }
+      )
+    }
+
+    // ゲストユーザーの書き込み権限チェック
+    if (session?.user?.role === Role.GUEST) {
+      return NextResponse.json(
+        { message: '権限がありません' },
+        { status: 403 }
       )
     }
 
@@ -73,7 +91,7 @@ export async function PUT(request: NextRequest, { params }: { params: { slug: st
       )
     }
 
-    if (existingArticle.authorId !== session.user.id) {
+    if (existingArticle.authorId !== currentUser.id) {
       return NextResponse.json(
         { message: '権限がありません' },
         { status: 403 }
@@ -125,10 +143,27 @@ export async function DELETE(request: NextRequest, { params }: { params: { slug:
   try {
     const session = await getServerSession(authOptions) as Session | null
     
-    if (!session?.user?.id) {
+    // 開発環境で認証をスキップする場合のダミーユーザー
+    const isDevelopmentSkipAuth = process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_SKIP_AUTH === 'true'
+    const currentUser = session?.user || (isDevelopmentSkipAuth ? {
+      id: 'dev-user',
+      email: 'dev@example.com',
+      name: '開発ユーザー',
+      image: null
+    } : null)
+    
+    if (!currentUser?.id) {
       return NextResponse.json(
         { message: 'ログインが必要です' },
         { status: 401 }
+      )
+    }
+
+    // ゲストユーザーの書き込み権限チェック
+    if (session?.user?.role === Role.GUEST) {
+      return NextResponse.json(
+        { message: '権限がありません' },
+        { status: 403 }
       )
     }
 
@@ -146,7 +181,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { slug:
       )
     }
 
-    if (existingArticle.authorId !== session.user.id) {
+    if (existingArticle.authorId !== currentUser.id) {
       return NextResponse.json(
         { message: '権限がありません' },
         { status: 403 }

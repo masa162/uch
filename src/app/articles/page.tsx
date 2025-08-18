@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import AuthenticatedLayout from '@/components/AuthenticatedLayout'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
+import { useAuthAction } from '@/hooks/useAuthAction'
 
 interface Article {
   id: string
@@ -27,14 +29,18 @@ interface Article {
 }
 
 export default function ArticlesPage() {
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
+  const { runAuthAction } = useAuthAction()
   const [articles, setArticles] = useState<Article[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    fetchArticles()
-  }, [])
+    // Only fetch articles after authentication state is resolved
+    if (!authLoading) {
+      fetchArticles()
+    }
+  }, [authLoading])
 
   const fetchArticles = async () => {
     try {
@@ -52,6 +58,26 @@ export default function ArticlesPage() {
     }
   }
 
+  const handleDeleteArticle = async (article: Article) => {
+    if (confirm(`「${article.title}」を削除しますか？この操作は元に戻せません。`)) {
+      try {
+        const response = await fetch(`/api/articles/${article.slug}`, {
+          method: 'DELETE',
+        })
+        
+        if (response.ok) {
+          alert('記事が削除されました')
+          fetchArticles() // 記事一覧を再取得
+        } else {
+          const errorData = await response.json()
+          alert(errorData.message || '削除に失敗しました')
+        }
+      } catch (err) {
+        alert('削除中にエラーが発生しました')
+      }
+    }
+  }
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('ja-JP', {
       year: 'numeric',
@@ -60,7 +86,7 @@ export default function ArticlesPage() {
     })
   }
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <AuthenticatedLayout>
         <div className="flex justify-center items-center min-h-64">
@@ -124,107 +150,87 @@ export default function ArticlesPage() {
         ) : (
           <div className="grid gap-6">
             {articles.map((article) => (
-              <article 
+              <Link 
                 key={article.id}
-                className="card bg-base-100 shadow-lg hover:shadow-xl transition-shadow cursor-pointer"
+                href={`/articles/${article.slug}`}
+                className="block"
               >
-                <div className="card-body">
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="flex-1">
-                      <h2 className="card-title text-xl mb-2">
-                        <Link 
-                          href={`/articles/${article.slug}`}
-                          className="hover:text-primary transition-colors"
-                        >
+                <article 
+                  className="card bg-base-100 shadow-lg hover:shadow-xl hover:bg-base-200 transition-all duration-200 cursor-pointer group"
+                >
+                  <div className="card-body">
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="flex-1">
+                        <h2 className="card-title text-xl mb-2 group-hover:text-primary transition-colors">
                           {article.title}
-                        </Link>
-                      </h2>
-                      {article.description && (
-                        <p className="text-gray-600 mb-3">{article.description}</p>
+                        </h2>
+                        {article.description && (
+                          <p className="text-gray-600 mb-3">{article.description}</p>
+                        )}
+                      </div>
+                      {article.heroImageUrl && (
+                        <div className="ml-4">
+                          <img 
+                            src={article.heroImageUrl} 
+                            alt={article.title}
+                            className="w-24 h-24 object-cover rounded-lg"
+                          />
+                        </div>
                       )}
                     </div>
-                    {article.heroImageUrl && (
-                      <div className="ml-4">
-                        <img 
-                          src={article.heroImageUrl} 
-                          alt={article.title}
-                          className="w-24 h-24 object-cover rounded-lg"
-                        />
+                    
+                    {/* メタ情報 */}
+                    <div className="flex items-center justify-between text-sm text-gray-500">
+                      <div className="flex items-center space-x-4">
+                        <span>👤 {article.author.name || article.author.email}</span>
+                        <span>📅 {formatDate(article.pubDate)}</span>
+                      </div>
+                      <div className="flex items-center space-x-4">
+                        <span>💬 {article._count.comments}</span>
+                        <span>❤️ {article._count.likes}</span>
+                      </div>
+                    </div>
+
+                    {/* タグ */}
+                    {article.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-3">
+                        {article.tags.map((tag) => (
+                          <span 
+                            key={tag}
+                            className="badge badge-primary badge-outline"
+                          >
+                            {tag}
+                          </span>
+                        ))}
                       </div>
                     )}
-                  </div>
-                  
-                  {/* メタ情報 */}
-                  <div className="flex items-center justify-between text-sm text-gray-500">
-                    <div className="flex items-center space-x-4">
-                      <span>👤 {article.author.name || article.author.email}</span>
-                      <span>📅 {formatDate(article.pubDate)}</span>
-                    </div>
-                    <div className="flex items-center space-x-4">
-                      <span>💬 {article._count.comments}</span>
-                      <span>❤️ {article._count.likes}</span>
-                    </div>
-                  </div>
 
-                  {/* タグ */}
-                  {article.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-3">
-                      {article.tags.map((tag) => (
-                        <span 
-                          key={tag}
-                          className="badge badge-primary badge-outline"
-                        >
-                          {tag}
-                        </span>
-                      ))}
+                    {/* アクションボタン */}
+                    <div className="card-actions justify-end mt-4" onClick={(e) => e.stopPropagation()}>
+                      {user?.email === article.author.email && (
+                        <>
+                          <Link 
+                            href={`/articles/${article.slug}/edit`}
+                            className="btn btn-primary btn-sm"
+                          >
+                            編集
+                          </Link>
+                          <button 
+                            className="btn btn-error btn-sm"
+                            onClick={(e) => {
+                              e.preventDefault()
+                              e.stopPropagation()
+                              runAuthAction(() => handleDeleteArticle(article))
+                            }}
+                          >
+                            削除
+                          </button>
+                        </>
+                      )}
                     </div>
-                  )}
-
-                  {/* アクションボタン */}
-                  <div className="card-actions justify-end mt-4">
-                    <Link 
-                      href={`/articles/${article.slug}`}
-                      className="btn btn-outline btn-sm"
-                    >
-                      詳細を見る
-                    </Link>
-                    {user?.email === article.author.email && (
-                      <>
-                        <Link 
-                          href={`/articles/${article.slug}/edit`}
-                          className="btn btn-primary btn-sm"
-                        >
-                          編集
-                        </Link>
-                        <button 
-                          className="btn btn-error btn-sm"
-                          onClick={async () => {
-                            if (confirm(`「${article.title}」を削除しますか？この操作は元に戻せません。`)) {
-                              try {
-                                const response = await fetch(`/api/articles/${article.slug}`, {
-                                  method: 'DELETE',
-                                })
-                                
-                                if (response.ok) {
-                                  alert('記事が削除されました')
-                                  fetchArticles() // 記事一覧を再取得
-                                } else {
-                                  const errorData = await response.json()
-                                  alert(errorData.message || '削除に失敗しました')
-                                }
-                              } catch (err) {
-                                alert('削除中にエラーが発生しました')
-                              }
-                            }
-                          }}
-                        >
-                          削除
-                        </button>
-                      </>
-                    )}
                   </div>
-                </div>
-              </article>
+                </article>
+              </Link>
             ))}
           </div>
         )}

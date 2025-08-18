@@ -9,6 +9,7 @@ interface User {
   name?: string | null
   image?: string | null
   username?: string
+  role?: string
 }
 
 interface AuthContextType {
@@ -32,21 +33,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   // 開発環境では認証スキップ時にダミーユーザーを設定
+  const skipAuth = process.env.NEXT_PUBLIC_SKIP_AUTH === 'true'
   const user = session?.user ? {
     id: session.user.id,
     email: session.user.email,
     name: session.user.name,
     image: session.user.image,
-    username: session.user.username
-  } : (process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_SKIP_AUTH === 'true') ? {
+    username: session.user.username,
+    role: session.user.role
+  } : skipAuth ? {
     id: 'dev-user',
     email: 'dev@example.com',
     name: '開発ユーザー',
     image: null,
-    username: 'devuser'
+    username: 'devuser',
+    role: 'USER'
   } : null
 
-  const loading = status === 'loading'
+  // 開発環境で認証スキップの場合は loading を false にする
+  const loading = skipAuth ? false : status === 'loading'
 
   const setPasswordValidated = (validated: boolean) => {
     setIsPasswordValidated(validated)

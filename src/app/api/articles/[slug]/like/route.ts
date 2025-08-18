@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { Role } from '@prisma/client'
 
 // いいね！API
 export async function POST(request: NextRequest, { params }: { params: { slug: string } }) {
@@ -13,6 +14,14 @@ export async function POST(request: NextRequest, { params }: { params: { slug: s
       return NextResponse.json(
         { message: 'ログインが必要です' },
         { status: 401 }
+      )
+    }
+
+    // ゲストユーザーの書き込み権限チェック
+    if (session.user.role === Role.GUEST) {
+      return NextResponse.json(
+        { message: '権限がありません' },
+        { status: 403 }
       )
     }
 
@@ -72,6 +81,14 @@ export async function DELETE(request: NextRequest, { params }: { params: { slug:
       return NextResponse.json(
         { message: 'ログインが必要です' },
         { status: 401 }
+      )
+    }
+
+    // ゲストユーザーの書き込み権限チェック
+    if (session.user.role === Role.GUEST) {
+      return NextResponse.json(
+        { message: '権限がありません' },
+        { status: 403 }
       )
     }
 

@@ -3,6 +3,7 @@ import { v2 as cloudinary } from 'cloudinary'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import type { Session } from 'next-auth'
+import { Role } from '@prisma/client'
 
 // Cloudinary設定
 cloudinary.config({
@@ -19,6 +20,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { message: 'ログインが必要です' },
         { status: 401 }
+      )
+    }
+
+    // ゲストユーザーの書き込み権限チェック
+    if (session.user.role === Role.GUEST) {
+      return NextResponse.json(
+        { message: '権限がありません' },
+        { status: 403 }
       )
     }
 

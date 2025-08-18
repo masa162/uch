@@ -5,30 +5,8 @@ import LineProvider from "next-auth/providers/line";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "./prisma";
 import bcrypt from "bcrypt";
+import { Role } from '@prisma/client';
 
-// NextAuth.jsの型を拡張
-declare module "next-auth" {
-  interface Session {
-    user: {
-      id: string;
-      name?: string | null;
-      email?: string | null;
-      image?: string | null;
-      username?: string;
-    };
-  }
-  interface User {
-    id: string;
-    username?: string;
-  }
-}
-
-declare module "next-auth/jwt" {
-  interface JWT {
-    id: string;
-    username?: string;
-  }
-}
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -44,7 +22,37 @@ export const authOptions: NextAuthOptions = {
             },
             async authorize(credentials, req) {
               // 開発環境では常に認証成功とみなす
-              return { id: "dev-user-id", name: "Dev User", email: credentials?.email || "dev@example.com", username: undefined } as User;
+              return { id: "dev-user-id", name: "Dev User", email: credentials?.email || "dev@example.com", username: undefined, role: 'USER' as Role } as User;
+            },
+          }),
+          CredentialsProvider({
+            id: 'guest',
+            name: 'Guest',
+            credentials: {},
+            async authorize(credentials) {
+              // ゲストユーザーを検索または作成
+              let guestUser = await prisma.user.findFirst({
+                where: { role: 'GUEST' },
+              });
+              
+              if (!guestUser) {
+                // ゲストユーザーが存在しない場合は作成
+                guestUser = await prisma.user.create({
+                  data: {
+                    name: 'ゲストユーザー',
+                    username: 'guest',
+                    role: 'GUEST',
+                  },
+                });
+              }
+              
+              return {
+                id: guestUser.id,
+                name: guestUser.name,
+                email: guestUser.email,
+                username: guestUser.username || undefined,
+                role: guestUser.role,
+              };
             },
           }),
         ]
@@ -91,7 +99,39 @@ export const authOptions: NextAuthOptions = {
                 return null;
               }
 
-              return { ...user, username: user.username || undefined };
+              return { 
+                ...user, 
+                username: user.username || undefined,
+                role: user.role 
+              };
+            },
+          }),
+          CredentialsProvider({
+            id: 'guest',
+            name: 'Guest',
+            credentials: {},
+            async authorize(credentials) {
+              let guestUser = await prisma.user.findFirst({
+                where: { role: 'GUEST' },
+              });
+              
+              if (!guestUser) {
+                guestUser = await prisma.user.create({
+                  data: {
+                    name: 'ゲストユーザー',
+                    username: 'guest',
+                    role: 'GUEST',
+                  },
+                });
+              }
+              
+              return {
+                id: guestUser.id,
+                name: guestUser.name,
+                email: guestUser.email,
+                username: guestUser.username || undefined,
+                role: guestUser.role,
+              };
             },
           }),
         ]),
@@ -104,6 +144,7 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = user.id;
         token.username = user.username;
+        token.role = user.role;
       }
       return token;
     },
@@ -111,6 +152,7 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         session.user.id = token.id as string;
         session.user.username = token.username as string;
+        session.user.role = token.role as Role;
       }
       return session;
     },

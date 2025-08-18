@@ -10,10 +10,7 @@ export async function GET() {
   try {
     const session = await getServerSession(authOptions) as Session | null
     
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
+    // 認証なしでもタグ一覧を取得可能にする（サイドバー表示用）
     // 過去に使用されたタグを取得（使用頻度順）
     const articles = await prisma.article.findMany({
       select: {

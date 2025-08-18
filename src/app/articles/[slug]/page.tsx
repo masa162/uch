@@ -6,6 +6,7 @@ import { useParams, useRouter } from 'next/navigation'
 import AuthenticatedLayout from '@/components/AuthenticatedLayout'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import { useAuthAction } from '@/hooks/useAuthAction'
 
 interface Article {
   id: string
@@ -43,6 +44,7 @@ export default function ArticleDetailPage() {
   const { slug } = useParams()
   const { user } = useAuth()
   const router = useRouter()
+  const { runAuthAction } = useAuthAction()
   const [article, setArticle] = useState<Article | null>(null)
   const [comments, setComments] = useState<Comment[]>([])
   const [loading, setLoading] = useState(true)
@@ -120,8 +122,7 @@ export default function ArticleDetailPage() {
     }
   }
 
-  const handleCommentSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleCommentSubmit = async () => {
     if (!user || !commentText.trim() || submittingComment) return
 
     setSubmittingComment(true)
@@ -157,6 +158,11 @@ export default function ArticleDetailPage() {
     } finally {
       setSubmittingComment(false)
     }
+  }
+
+  const handleCommentFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    runAuthAction(handleCommentSubmit)
   }
 
   if (!user) {
@@ -245,7 +251,7 @@ export default function ArticleDetailPage() {
           {/* いいね・コメント数 */}
           <div className="flex items-center space-x-6 mb-6">
             <button
-              onClick={handleLike}
+              onClick={() => runAuthAction(handleLike)}
               disabled={likingArticle}
               className={`flex items-center space-x-1 px-3 py-1 rounded-full transition ${
                 article.isLikedByUser
@@ -306,7 +312,7 @@ export default function ArticleDetailPage() {
           </h3>
 
           {/* コメント投稿フォーム */}
-          <form onSubmit={handleCommentSubmit} className="mb-8">
+          <form onSubmit={handleCommentFormSubmit} className="mb-8">
             <div className="mb-4">
               <textarea
                 value={commentText}

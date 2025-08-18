@@ -1,1 +1,12 @@
-{}
+{
+  "/_not-found/page": "app/_not-found/page.js",
+  "/page": "app/page.js",
+  "/articles/new/page": "app/articles/new/page.js",
+  "/api/articles/[slug]/route": "app/api/articles/[slug]/route.js",
+  "/api/articles/[slug]/comments/route": "app/api/articles/[slug]/comments/route.js",
+  "/api/articles/tags/route": "app/api/articles/tags/route.js",
+  "/articles/[slug]/page": "app/articles/[slug]/page.js",
+  "/articles/page": "app/articles/page.js",
+  "/api/articles/archive/hierarchy/route": "app/api/articles/archive/hierarchy/route.js",
+  "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js"
+}

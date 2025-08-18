@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { Role } from '@prisma/client'
 
 // 記事投稿API
 export async function POST(request: NextRequest) {
@@ -22,6 +23,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { message: 'ログインが必要です' },
         { status: 401 }
+      )
+    }
+
+    // ゲストユーザーの書き込み権限チェック
+    if (session?.user?.role === Role.GUEST) {
+      return NextResponse.json(
+        { message: '権限がありません' },
+        { status: 403 }
       )
     }
 
