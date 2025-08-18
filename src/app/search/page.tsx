@@ -1,9 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSession } from 'next-auth/react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import AuthenticatedLayout from '@/components/AuthenticatedLayout'
+
+// 動的ルーティングのため静的エクスポートを無効化
+export const dynamic = 'force-dynamic'
 
 interface Article {
   id: string
@@ -18,7 +21,7 @@ interface Article {
   }
 }
 
-export default function SearchPage() {
+function SearchContent() {
   const { data: session } = useSession()
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -218,5 +221,22 @@ export default function SearchPage() {
         </div>
       </div>
     </AuthenticatedLayout>
+  )
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={
+      <AuthenticatedLayout>
+        <div className="flex justify-center items-center min-h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-gray-600">検索ページを読み込み中...</p>
+          </div>
+        </div>
+      </AuthenticatedLayout>
+    }>
+      <SearchContent />
+    </Suspense>
   )
 }

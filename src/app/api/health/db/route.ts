@@ -3,6 +3,9 @@ import { PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
+// 動的ルートとして設定（ビルド時に実行されないようにする）
+export const dynamic = 'force-dynamic'
+
 export async function GET() {
   try {
     const startTime = Date.now()
