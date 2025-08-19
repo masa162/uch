@@ -105,7 +105,7 @@ export default function Sidebar() {
   }
 
   const handleTagClick = (tagName: string) => {
-    router.push(`/tags/${tagName}`)
+    router.push(`/tags/${encodeURIComponent(tagName)}`)
   }
 
   const toggleYear = (year: string) => {
