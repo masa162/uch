@@ -45,7 +45,6 @@ model User {
   password      String?
   username      String?   @unique
   createdAt     DateTime  @default(now())
-  role          Role      @default(USER)
   accounts      Account[]
   articles      Article[]
   comments      Comment[]
@@ -71,7 +70,7 @@ model Article {
   title        String
   slug         String    @unique
   description  String?
-  content      String    @db.Text
+  content      String
   pubDate      DateTime
   authorId     String
   heroImageUrl String?
@@ -107,10 +106,4 @@ model Like {
 
   @@unique([articleId, userId])
   @@map("likes")
-}
-
-enum Role {
-  USER
-  ADMIN
-  GUEST
 }

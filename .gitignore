@@ -7,3 +7,4 @@ docs/認証情報/
 *.key
 .env.local
 .env.*.local
+.next/

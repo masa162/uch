@@ -75,3 +75,5 @@ TSK-061,【Frontend】ゲストログインUIの構築,完了,高,UI/UX,2025-08-
 TSK-062,【Frontend】書き込み機能の利用制限UIの実装,完了,高,UI/UX,2025-08-18,2025-08-18,2025-08-18,Gemini CLI PM / Claude Code,docs/management/tasks/TSK-062_implement_write_restriction_ui.md,
 TSK-063,ナレッジベースの分割と再構築,完了,中,保守,2025-08-18,2025-08-18,2025-08-18,Gemini CLI PM,docs/management/tasks/TSK-063_refactor_knowledge_base.md
 TSK-064,Gitプッシュ時のコンフリクト解消とリポジトリ同期,進行中,最高,バグ修正,,2025-08-19,,Gemini CLI PM,docs/management/tasks/TSK-064_resolve_git_conflict.md
+TSK-065,本番環境へのデプロイと表示・動作確認,未着手,高,デプロイ,,2025-08-19,,Claude Code,docs/management/tasks/TSK-065_production_deployment_verification.md
+TSK-066,Windows開発環境のセットアップとDocker/ネットワーク設定の確認,完了,最高,環境,,2025-08-19,2025-08-19,Claude Code,docs/management/tasks/TSK-066_windows_env_setup.md
