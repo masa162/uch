@@ -19,6 +19,7 @@ COPY . .
 # Set NEXT_PUBLIC_SKIP_AUTH for build time
 ARG NEXT_PUBLIC_SKIP_AUTH
 ENV NEXT_PUBLIC_SKIP_AUTH=$NEXT_PUBLIC_SKIP_AUTH
+# Generate Prisma client first, then build
 RUN npx prisma generate
 RUN npm run build
 

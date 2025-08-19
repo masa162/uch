@@ -39,12 +39,13 @@ model Session {
 model User {
   id            String    @id @default(cuid())
   name          String?
-  email         String?
+  email         String?   @unique
   emailVerified DateTime?
   image         String?
   password      String?
   username      String?   @unique
   createdAt     DateTime  @default(now())
+  role          Role      @default(USER)
   accounts      Account[]
   articles      Article[]
   comments      Comment[]
@@ -106,4 +107,10 @@ model Like {
 
   @@unique([articleId, userId])
   @@map("likes")
+}
+
+enum Role {
+  USER
+  ADMIN
+  GUEST
 }

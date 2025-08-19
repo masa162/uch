@@ -44,3 +44,30 @@
     3.  `npx prisma db push` が `.env.local` を読み込まない問題に対し、`DATABASE_URL="postgresql://..." npx prisma db push` のように、コマンドの接頭辞として環境変数を直接指定することで解決した。
 - **教訓:** データベースのセットアップは、手順を明確に文書化することが重要。特に、ローカル環境で `prisma` のようなツールが環境変数を正しく読み込めないケースは頻出するため、直接指定する対処法は有効なデバッグ手段となる。
 
+## 2025年8月19日: Windows開発環境のセットアップにおけるPrisma Roleエラーの解決 (TSK-066)
+
+### 問題
+MacとWindows間での開発環境の同期が不完全であり、特にPrismaスキーマの`Role` enum定義が未実装であるにも関わらず、コードで既に`Role`を使用していたため、Dockerビルド時にエラーが発生した。
+
+### 原因
+- `src/app/api/articles/[slug]/comments/route.ts` で `Role` を `@prisma/client` からインポートしているが、`schema.prisma` に `Role` の定義がなかった。
+- ローカル開発環境では認証スキップ設定により正常動作していたが、Dockerビルド時にTypeScriptエラーが発生した。
+- これは典型的なプラットフォーム間の開発環境同期問題であり、Mac環境で作業したコードがWindows環境に移行された際、データベーススキーマの同期が不完全だったことが根本原因。
+
+### 解決内容
+1.  `prisma/schema.prisma` に `Role` enum を追加 (`USER`, `ADMIN`, `GUEST`)。
+2.  Userモデルに `role` フィールドを追加（デフォルト: `USER`）。
+3.  Prismaマイグレーションを実行 (`npx prisma migrate dev --name add_user_role`)。
+4.  Prismaクライアントを再生成 (`npx prisma generate`)。
+5.  Dockerビルドを再テスト (`docker-compose build --no-cache`)。
+
+### 結果
+- ローカル開発サーバー: `http://localhost:3001` で正常動作。
+- Docker環境: ビルド成功、Roleエラー解決。
+- Windows環境: 正常にセットアップ完了。
+
+### 今後の推奨事項
+環境移行時のチェックリストとして以下を推奨する:
+1.  Prismaスキーマの同期確認
+2.  マイグレーション状態の確認
+3.  環境変数ファイルの差分確認
