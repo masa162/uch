@@ -2,8 +2,9 @@
 
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import { Suspense } from 'react'
 
-export default function AuthErrorPage() {
+function ErrorContent() {
   const searchParams = useSearchParams()
   const error = searchParams.get('error')
 
@@ -28,13 +29,13 @@ export default function AuthErrorPage() {
           title: '設定エラー',
           message: '認証システムの設定に問題があります。',
           details: 'システム管理者にお問い合わせください。',
-          action: 'ホームページに戻る'
+          action: 'ホームに戻る'
         }
       case 'Verification':
         return {
-          title: '検証エラー',
-          message: '認証情報の検証に失敗しました。',
-          details: '入力された情報を確認して、もう一度お試しください。',
+          title: '認証エラー',
+          message: '認証トークンの検証に失敗しました。',
+          details: '認証リンクが無効または期限切れの可能性があります。',
           action: 'サインインページに戻る'
         }
       default:
@@ -67,25 +68,14 @@ export default function AuthErrorPage() {
         </div>
         
         <div className="bg-red-50 border border-red-200 rounded-md p-4">
-          <div className="text-sm text-red-700">
-            <p className="font-medium">詳細:</p>
-            <p className="mt-1">{errorInfo.details}</p>
-          </div>
-        </div>
-
-        {error === 'OAuthCallback' && (
-          <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
-            <div className="text-sm text-blue-700">
-              <p className="font-medium">トラブルシューティング:</p>
-              <ul className="mt-1 list-disc list-inside space-y-1">
-                <li>ブラウザのキャッシュとクッキーをクリアしてください</li>
-                <li>別のブラウザで試してください</li>
-                <li>ネットワーク接続を確認してください</li>
-                <li>しばらく時間をおいてから再度お試しください</li>
-              </ul>
+          <div className="flex">
+            <div className="ml-3">
+              <p className="text-sm text-red-700">
+                {errorInfo.details}
+              </p>
             </div>
           </div>
-        )}
+        </div>
         
         <div className="space-y-4">
           <Link
@@ -99,10 +89,31 @@ export default function AuthErrorPage() {
             href="/"
             className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
           >
-            ホームページに戻る
+            ホームに戻る
           </Link>
+        </div>
+        
+        <div className="text-center">
+          <p className="text-xs text-gray-500">
+            問題が解決しない場合は、システム管理者にお問い合わせください
+          </p>
         </div>
       </div>
     </div>
+  )
+}
+
+export default function AuthErrorPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="loading loading-spinner loading-lg"></div>
+          <p className="mt-4 text-gray-600">読み込み中...</p>
+        </div>
+      </div>
+    }>
+      <ErrorContent />
+    </Suspense>
   )
 }
