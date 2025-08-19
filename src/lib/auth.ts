@@ -4,12 +4,13 @@ import GoogleProvider from "next-auth/providers/google";
 import LineProvider from "next-auth/providers/line";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "./prisma";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import { Role } from '@prisma/client';
 
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
+  debug: process.env.NODE_ENV === 'development' || process.env.NEXTAUTH_DEBUG === 'true',
   providers: [
     ...(process.env.NODE_ENV === 'development'
       ? [
@@ -157,6 +158,7 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
     async redirect({ url, baseUrl }) {
+      console.log('NextAuth redirect callback:', { url, baseUrl });
       // 認証成功後のリダイレクト処理
       if (url.startsWith('/')) {
         // 相対パスの場合は、baseUrlと結合
@@ -168,9 +170,27 @@ export const authOptions: NextAuthOptions = {
       // 外部URLの場合は、baseUrlにリダイレクト
       return baseUrl;
     },
+    async signIn({ user, account, profile, email, credentials }) {
+      console.log('NextAuth signIn callback:', { 
+        provider: account?.provider, 
+        hasProfile: !!profile, 
+        hasEmail: !!profile?.email 
+      });
+      
+      // 認証プロセスの検証
+      if (account?.provider === 'google') {
+        // Google OAuth認証の検証
+        if (!profile?.email) {
+          console.error('Google OAuth: No email in profile');
+          return false;
+        }
+      }
+      return true;
+    },
   },
   pages: {
     signIn: "/auth/signin",
+    error: "/auth/error",
   },
 };
 
