@@ -23,21 +23,18 @@ export default function AuthenticatedLayout({ children }: AuthenticatedLayoutPro
     }
   }, [session, status, router])
 
-  // ローディング中または未認証の場合は何も表示しない
-  if (status === 'loading') {
+  // ローディング中または未認証の場合はローディング画面を表示
+  if (status === 'loading' || !session) {
     return (
       <div className="min-h-screen bg-base-200 flex items-center justify-center">
         <div className="text-center">
           <div className="loading loading-spinner loading-lg"></div>
-          <p className="mt-4 text-gray-600">読み込み中...</p>
+          <p className="mt-4 text-gray-600">
+            {status === 'loading' ? '読み込み中...' : 'サインイン画面に移動中...'}
+          </p>
         </div>
       </div>
     )
-  }
-
-  // 未認証の場合は何も表示しない（リダイレクト中）
-  if (!session) {
-    return null
   }
 
   return (
