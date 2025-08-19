@@ -95,6 +95,8 @@
 | TSK-015 | 機能 | 🔴高 | ✅完了 | サイドバーコンポーネントの移植 | 2025-08-17 | Gemini CLI PM | - | [docs/management/tasks/TSK-015_migrate_sidebar_component.md](docs/management/tasks/TSK-015_migrate_sidebar_component.md) |
 | TSK-014 | 機能 | 🔴高 | ✅完了 | 共通UIコンポーネントの移植 | 2025-08-17 | Gemini CLI PM | - | [docs/management/tasks/TSK-014_migrate_common_ui_components.md](docs/management/tasks/TSK-014_migrate_common_ui_components.md) |
 | TSK-016 | 機能 | 🔴高 | ✅完了 | トップページ（Home）の再構築 | 2025-08-17 | Gemini CLI PM | - | [docs/management/tasks/TSK-016_rebuild_homepage.md](docs/management/tasks/TSK-016_rebuild_homepage.md) |
+| TSK-066 | 環境 | 🔥最高 | ✅完了 | Windows開発環境のセットアップとDocker/ネットワーク設定の確認 | 2025-08-19 | Claude Code | - | [docs/management/tasks/TSK-066_windows_env_setup.md](docs/management/tasks/TSK-066_windows_env_setup.md) |
+| TSK-065 | デプロイ | 🔴高 | ✅完了 | 本番環境へのデプロイと表示・動作確認 | 2025-08-19 | Claude Code | - | [docs/management/tasks/TSK-065_production_deployment_verification.md](docs/management/tasks/TSK-065_production_deployment_verification.md) |
 | **🔴 高優先度** | | | | | | | | |
 | TSK-017 | 計画 | 🔴高 | 📋待機 | バックエンド連携の実装計画策定 | | Gemini CLI PM | - | [docs/management/tasks/TSK-017_backend_integration_planning.md](docs/management/tasks/TSK-017_backend_integration_planning.md) |
 
@@ -136,9 +138,7 @@
 - **UI/UX実装フェーズ完了**: 旧プロジェクトのUI/UXを継承した、美しく機能的なフロントエンドが完成しました。
 
 **次の高優先度項目**:
-1.  **TSK-066: Windows開発環境のセットアップとDocker/ネットワーク設定の確認**
-2.  **TSK-065: 本番環境へのデプロイと表示・動作確認**
-3.  **TSK-017: バックエンド連携の実装計画策定** - UIとバックエンドを繋ぎ、アプリケーションを完全に機能させるための計画を策定します。
+1.  **TSK-017: バックエンド連携の実装計画策定** - UIとバックエンドを繋ぎ、アプリケーションを完全に機能させるための計画を策定します。
 
 ### 今後の主要なマイルストーン
 1.  **バックエンド連携の完了**: UIとデータベース間のデータフローを確立し、主要機能が動作するようにします。
