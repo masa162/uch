@@ -143,9 +143,14 @@ export default function HomePage() {
                       {article.tags.length > 0 && (
                         <div className="flex flex-wrap gap-1">
                           {article.tags.slice(0, 2).map((tag, index) => (
-                            <span key={index} className="badge badge-outline badge-sm">
+                            <Link 
+                              key={index} 
+                              href={`/tags/${encodeURIComponent(tag)}`}
+                              className="badge badge-outline badge-sm hover:badge-primary transition-colors"
+                              onClick={(e) => e.stopPropagation()}
+                            >
                               {tag}
-                            </span>
+                            </Link>
                           ))}
                           {article.tags.length > 2 && (
                             <span className="badge badge-outline badge-sm">+{article.tags.length - 2}</span>

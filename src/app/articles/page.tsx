@@ -201,12 +201,14 @@ export default function ArticlesPage() {
                     {article.tags.length > 0 && (
                       <div className="flex flex-wrap gap-2 mt-3">
                         {article.tags.map((tag) => (
-                          <span 
+                          <Link 
                             key={tag}
-                            className="badge badge-primary badge-outline"
+                            href={`/tags/${encodeURIComponent(tag)}`}
+                            className="badge badge-primary badge-outline hover:badge-primary transition-colors"
+                            onClick={(e) => e.stopPropagation()}
                           >
                             {tag}
-                          </span>
+                          </Link>
                         ))}
                       </div>
                     )}

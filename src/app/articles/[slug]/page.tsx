@@ -7,6 +7,7 @@ import AuthenticatedLayout from '@/components/AuthenticatedLayout'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { useAuthAction } from '@/hooks/useAuthAction'
+import Link from 'next/link'
 
 interface Article {
   id: string
@@ -237,12 +238,13 @@ export default function ArticleDetailPage() {
                 <span className="mr-1">🏷️</span>
                 <div className="flex space-x-1">
                   {article.tags.map((tag, index) => (
-                    <span
+                    <Link
                       key={index}
-                      className="bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs"
+                      href={`/tags/${encodeURIComponent(tag)}`}
+                      className="bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs hover:bg-gray-200 transition-colors"
                     >
                       {tag}
-                    </span>
+                    </Link>
                   ))}
                 </div>
               </div>

@@ -26,7 +26,10 @@
       "Bash(NODE_ENV=production npm start)",
       "Bash(timeout 10 docker-compose logs app --follow)",
       "Bash(echo $VPS_HOST)",
-      "Bash(ping:*)"
+      "Bash(ping:*)",
+      "Bash(gh run list:*)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:uchinokiroku.com)"
     ],
     "deny": [],
     "ask": []

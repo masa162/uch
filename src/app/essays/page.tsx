@@ -37,8 +37,6 @@ export default function EssayPage() {
   }, [])
 
   const fetchArticlesByTag = async () => {
-    if (!session) return
-
     setLoading(true)
     setError(null)
     try {
@@ -67,15 +65,6 @@ export default function EssayPage() {
     })
   }
 
-  if (!session) {
-    return (
-      <AuthenticatedLayout>
-        <div className="text-center py-8">
-          <p className="text-gray-600">ログインが必要です</p>
-        </div>
-      </AuthenticatedLayout>
-    )
-  }
 
   if (loading) {
     return (
@@ -200,12 +189,14 @@ export default function EssayPage() {
                     {article.tags.length > 0 && (
                       <div className="flex flex-wrap gap-2 mt-3">
                         {article.tags.map((tagName) => (
-                          <span 
+                          <Link 
                             key={tagName}
-                            className={`badge ${tagName === 'エッセイ' ? 'badge-primary' : 'badge-outline'}`}
+                            href={`/tags/${encodeURIComponent(tagName)}`}
+                            className={`badge ${tagName === 'エッセイ' ? 'badge-primary' : 'badge-outline'} hover:badge-primary transition-colors`}
+                            onClick={(e) => e.stopPropagation()}
                           >
                             {tagName}
-                          </span>
+                          </Link>
                         ))}
                       </div>
                     )}
