@@ -1,6 +1,7 @@
 name: Deploy to VPS
 
 # Updated with new PAT configuration
+# VPS deployment ready - testing CI/CD pipeline
 on:
   push:
     branches:
