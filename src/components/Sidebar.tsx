@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { useAuthAction } from '@/hooks/useAuthAction'
+import RealtimeSearch from '@/components/RealtimeSearch'
 
 interface Tag {
   name: string
@@ -36,7 +37,6 @@ export default function Sidebar() {
   const [loadingArchive, setLoadingArchive] = useState(false)
   const [expandedYears, setExpandedYears] = useState<Set<string>>(new Set())
   const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set())
-  const [searchQuery, setSearchQuery] = useState('')
 
   // タグ一覧を取得
   useEffect(() => {
@@ -111,12 +111,6 @@ export default function Sidebar() {
     router.push(`/tags/${encodeURIComponent(tagName)}`)
   }
 
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (searchQuery.trim()) {
-      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
-    }
-  }
 
   const toggleYear = (year: string) => {
     setExpandedYears(prev => {
@@ -182,27 +176,11 @@ export default function Sidebar() {
           />
         </button>
       </div>
-      {/* 検索ボックス */}
-      <form onSubmit={handleSearchSubmit} className="form-control">
-        <div className="relative">
-          <input 
-            type="text" 
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="記事を検索..." 
-            className="input input-bordered w-full pr-10" 
-          />
-          <button
-            type="submit"
-            className="absolute right-2 top-1/2 transform -translate-y-1/2 btn btn-ghost btn-sm btn-circle"
-            disabled={!searchQuery.trim()}
-          >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-          </button>
-        </div>
-      </form>
+      {/* リアルタイム検索ボックス */}
+      <RealtimeSearch 
+        placeholder="記事を検索..." 
+        className="form-control"
+      />
       
       {/* ユーザーメニュー */}
       {user && (
