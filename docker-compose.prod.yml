@@ -1,0 +1,15 @@
+version: '3.8'
+services:
+  uch:
+    # buildコンテキストを削除し、GHCRのイメージを直接指定
+    image: ghcr.io/masayuki-nakayama/uch:latest
+    container_name: uch_app
+    restart: always
+    ports:
+      - "3000:3000"
+    # 永続化が必要なuploadsディレクトリのみをマウント
+    volumes:
+      - ./uploads:/app/uploads
+    env_file:
+      - ./.env.production
+    # 起動コマンドはDockerfileに任せるため削除 (start-with-env.shはDockerfile内で実行されるように変更が必要)
