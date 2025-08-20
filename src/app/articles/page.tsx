@@ -176,15 +176,13 @@ export default function ArticlesPage() {
                           <p className="text-gray-600 mb-3">{article.description}</p>
                         )}
                       </div>
-                      {article.heroImageUrl && (
-                        <div className="ml-4">
-                          <img 
-                            src={article.heroImageUrl} 
-                            alt={article.title}
-                            className="w-24 h-24 object-cover rounded-lg"
-                          />
-                        </div>
-                      )}
+                      <div className="ml-4">
+                        <img 
+                          src={article.heroImageUrl || '/images/ogp/ogp.png'} 
+                          alt={article.title}
+                          className="w-24 h-24 object-cover rounded-lg"
+                        />
+                      </div>
                     </div>
                     
                     {/* メタ情報 */}

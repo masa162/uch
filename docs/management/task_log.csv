@@ -89,3 +89,5 @@ TSK-075,[機能追加] ログアウト機能を実装する,完了,高,機能追
 TSK-076,[機能追加] プロフィールでニックネーム変更機能を実装する,完了,中,機能追加,2025-08-23,2025-08-20,2025-08-20,Claude Code,docs/management/tasks/TSK-076_implement_nickname_change.md
 TSK-077,[機能追加] プロフィールで自身の投稿一覧を表示する,完了,中,機能追加,2025-08-23,2025-08-20,2025-08-20,Claude Code,docs/management/tasks/TSK-077_implement_user_article_list.md
 TSK-078,[機能検討] リアルタイム検索の実装を検討する,完了,低,計画,2025-08-24,2025-08-20,2025-08-20,Claude Code,docs/management/tasks/TSK-078_plan_realtime_search.md
+TSK-079,トップページに最新記事3件を表示,未着手,高,機能改善,2025-08-22,2025-08-20,,Gemini CLI PM,docs/management/tasks/TSK-079_TSK-080_article_display_fix.md
+TSK-080,記事一覧のアイキャッチ画像表示,未着手,中,機能改善,2025-08-23,2025-08-20,,Gemini CLI PM,docs/management/tasks/TSK-079_TSK-080_article_display_fix.md
