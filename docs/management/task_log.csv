@@ -1,97 +1,86 @@
-TaskID,Title,Status,Priority,Type,TargetDate,CreatedDate,CompletedDate,Assignee,TaskFile
-TSK-001,旧プロジェクト(uchi)からの移行計画策定,完了,高,計画,2025-08-16,2025-08-16,Gemini CLI PM,docs/management/tasks/TSK-001_uchi_migration_plan.md,
-TSK-002,データベース設計の移行,完了,高,機能追加,2025-08-16,2025-08-16,Gemini CLI PM,docs/management/tasks/TSK-002_db_schema_migration.md,
-TSK-003,コアライブラリの導入,完了,高,機能追加,2025-08-16,2025-08-16,Gemini CLI PM,docs/management/tasks/TSK-003_install_core_deps.md,
-TSK-007,Userモデルへのpasswordフィールド追加,完了,高,機能追加,2025-08-16,2025-08-16,Gemini CLI PM,docs/management/tasks/TSK-007_add_password_to_user.md,
-TSK-004,認証情報設定の準備,完了,高,設定,2025-08-16,2025-08-16,Gemini CLI PM,docs/management/tasks/TSK-004_prepare_env_vars.md,
-TSK-005,認証機能の中核を実装,完了,高,機能追加,2025-08-16,2025-08-16,Gemini CLI PM,docs/management/tasks/TSK-005_implement_auth_core.md,
-TSK-006,画像ホスティングの設定,完了,中,設定,2025-08-16,2025-08-16,Gemini CLI PM,docs/management/tasks/TSK-006_configure_image_hosting.md,
-TSK-008,UI/UXの実装計画策定,完了,高,計画,2025-08-17,2025-08-17,Gemini CLI PM,docs/management/tasks/TSK-008_ui_ux_planning.md,
-TSK-009,OGP画像・ファビコンの配置,完了,中,設定,2025-08-17,2025-08-17,Gemini CLI PM,docs/management/tasks/TSK-009_ogp_favicon_placement.md,
-TSK-010,基本レイアウト（サイドバーとメインコンテンツ）の構築,完了,高,機能追加,2025-08-17,2025-08-17,Gemini CLI PM,docs/management/tasks/TSK-010_base_layout_construction.md,
-TSK-011,サイドバー共通コンポーネントの実装,完了,高,機能追加,2025-08-17,2025-08-17,Gemini CLI PM,docs/management/tasks/TSK-011_sidebar_components_implementation.md,
-TSK-012,Tailwind CSSとDaisyUIの設定,完了,高,設定,2025-08-17,2025-08-17,Gemini CLI PM,docs/management/tasks/TSK-012_tailwind_daisyui_setup.md,
-TSK-013,ルートレイアウトの再構築,完了,高,機能追加,2025-08-17,2025-08-17,Gemini CLI PM,docs/management/tasks/TSK-013_rebuild_root_layout.md,
-TSK-015,サイドバーコンポーネントの移植,完了,高,機能追加,2025-08-17,2025-08-17,Gemini CLI PM,docs/management/tasks/TSK-015_migrate_sidebar_component.md,
-TSK-014,共通UIコンポーネントの移植,完了,高,機能追加,2025-08-17,2025-08-17,Gemini CLI PM,docs/management/tasks/TSK-014_migrate_common_ui_components.md,
-TSK-016,トップページ（Home）の再構築,完了,高,機能追加,2025-08-17,2025-08-17,Gemini CLI PM,docs/management/tasks/TSK-016_rebuild_homepage.md,
-TSK-017,バックエンド連携の実装計画策定,完了,高,計画,2025-08-17,2025-08-17,Gemini CLI PM,docs/management/tasks/TSK-017_backend_integration_planning.md,
-TSK-018,認証関連APIの実装,完了,高,機能追加,2025-08-17,2025-08-17,Gemini CLI PM,docs/management/tasks/TSK-018_auth_api_implementation.md,
-TSK-019,サイトパスワード認証APIの実装,完了,高,機能追加,2025-08-17,2025-08-17,Gemini CLI PM,docs/management/tasks/TSK-019_site_password_api_implementation.md,
-TSK-020,記事投稿・管理APIの実装 (CRUD),完了,高,機能追加,2025-08-17,2025-08-17,Gemini CLI PM,docs/management/tasks/TSK-020_article_crud_api_implementation.md,
-TSK-021,記事インタラクションAPIの実装 (コメント、いいね),完了,高,機能追加,2025-08-17,2025-08-17,Gemini CLI PM,docs/management/tasks/TSK-021_article_interaction_api_implementation.md,
-TSK-022,記事発見APIの実装 (検索、タグ、アーカイブ),完了,高,機能追加,2025-08-17,2025-08-17,Gemini CLI PM,docs/management/tasks/TSK-022_article_discovery_api_implementation.md,
-TSK-023,画像アップロードAPIの実装,完了,中,機能追加,2025-08-17,2025-08-17,Gemini CLI PM,docs/management/tasks/TSK-023_image_upload_api_implementation.md,
-TSK-024,ヘルスチェックAPIの実装,完了,低,機能追加,2025-08-17,2025-08-17,Gemini CLI PM,docs/management/tasks/TSK-024_health_check_api_implementation.md,
-TSK-025,認証UIとAPIの連携,完了,高,機能追加,2025-08-17,2025-08-17,Gemini CLI PM,docs/management/tasks/TSK-025_auth_ui_api_integration.md,
-TSK-026,トップページと記事一覧のデータ連携,完了,高,機能追加,2025-08-17,2025-08-17,Gemini CLI PM,docs/management/tasks/TSK-026_homepage_article_list_data_integration.md,
-TSK-027,記事投稿UIとAPIの連携,完了,高,機能追加,2025-08-17,2025-08-17,Gemini CLI PM,docs/management/tasks/TSK-027_article_post_ui_api_integration.md,
-TSK-028,記事詳細・コメント・いいねのUI連携,完了,高,機能追加,2025-08-17,2025-08-17,Gemini CLI PM,docs/management/tasks/TSK-028_article_detail_comment_like_ui_integration.md,
-TSK-029,サイドバーのデータ連携,完了,高,機能追加,2025-08-17,2025-08-17,Gemini CLI PM,docs/management/tasks/TSK-029_sidebar_data_integration.md,
-TSK-030,検索・タグ・アーカイブページのUI連携,完了,高,機能追加,2025-08-17,2025-08-17,Gemini CLI PM,docs/management/tasks/TSK-030_search_tag_archive_ui_integration.md,
-TSK-031,テスト、デプロイ、および新機能開発の計画策定,進行中,高,計画,,2025-08-17,,Gemini CLI PM,docs/management/tasks/TSK-031_testing_deployment_new_features_planning.md
-TSK-032,アプリケーション機能の復旧とビルドエラーの根本原因解決,完了,高,バグ修正,,2025-08-17,2025-08-17,Gemini CLI PM / Claude Code,docs/management/tasks/TSK-032_application_feature_restoration.md
-TSK-033,環境クリーンアップと不要資産の棚卸し,完了,高,保守,,2025-08-17,2025-08-17,Gemini CLI PM / Claude Code,docs/management/tasks/TSK-033_environment_cleanup.md
-TSK-034,レガシー資産のクリーンアップと棚卸し,完了,高,保守,,2025-08-17,2025-08-17,Gemini CLI PM / Claude Code,docs/management/tasks/TSK-034_cleanup_legacy_assets.md
-TSK-035,ローカル環境での認証完全除外,完了,最優先,設定,,2025-08-17,2025-08-17,Gemini CLI PM / Claude Code,docs/management/tasks/TSK-035_disable_local_auth.md
-TSK-036,新規記事投稿APIの契約不一致に起因するエラーの調査と修正,完了,最高,バグ修正,,2025-08-17,2025-08-17,Gemini CLI PM,docs/management/tasks/TSK-036_fix_article_api_mismatch.md
-TSK-037,簡易投稿APIの仕様不整合エラーの調査と修正,完了,最高,バグ修正,,2025-08-17,2025-08-17,Gemini CLI PM,docs/management/tasks/TSK-037_fix_simple_article_api_mismatch.md
-TSK-038,旧サイト(uchinokiroku.com)のUI/UX再現,キャンセル,高,UI/UX,,2025-08-17,,Gemini CLI PM / Claude Code,docs/management/tasks/TSK-038_reproduce_legacy_uiux.md
-TSK-039,daisyUIテーマの導入と認証後ダッシュボードUIの再現,完了,最高,UI/UX,,2025-08-17,2025-08-17,Gemini CLI PM / Claude Code,docs/management/tasks/TSK-039_implement_daisyui_dashboard.md
-TSK-040,記事管理(CRUD)機能の基本実装,完了,最高,機能追加,,2025-08-18,2025-08-18,Gemini CLI PM / Claude Code,docs/management/tasks/TSK-040_implement_article_crud.md
-TSK-041,テスト戦略の策定と基本方針の定義,完了,高,計画,,2025-08-18,2025-08-18,Gemini CLI PM,docs/management/tasks/TSK-041_define_test_strategy.md
-TSK-042,テスト環境の構築と基本テストの実装,未着手,低,テスト,,2025-08-18,,Gemini CLI PM / Claude Code,docs/management/tasks/TSK-042_implement_basic_tests.md
-TSK-043,VPS本番環境への初回デプロイ準備と手動デプロイの実施,完了,高,デプロイ,,2025-08-18,2025-08-18,Gemini CLI PM / Claude Code,docs/management/tasks/TSK-043_vps_initial_deployment.md
-TSK-044,VPSファイアウォール設定の見直しと外部アクセス許可,完了,最高,設定,,2025-08-18,2025-08-18,Claude Code,docs/management/tasks/TSK-044_vps_firewall_configuration.md
-TSK-045,本番環境のOAuth設定,完了,高,設定,2025-08-18,2025-08-18,Gemini CLI PM / Claude Code,docs/management/tasks/TSK-045_production_oauth_configuration.md,
-TSK-046,本番環境でのPrismaマイグレーション安定化,完了,中,保守,2025-08-18,2025-08-18,Gemini CLI PM / Claude Code,docs/management/tasks/TSK-046_stabilize_prisma_migration.md,
-TSK-UIUX-001,Tailwind CSS と DaisyUI の設定継承,完了,高,UI/UX,2025-08-17,2025-08-17,Gemini CLI PM / Claude Code,docs/management/tasks/TSK-UIUX-001_tailwind_daisyui_setup.md,
-TSK-UIUX-002,グローバルスタイルの継承,完了,高,UI/UX,2025-08-17,2025-08-17,Gemini CLI PM / Claude Code,docs/management/tasks/TSK-UIUX-002_global_styles_inheritance.md,
-TSK-UIUX-003,フォント設定の継承,完了,高,UI/UX,2025-08-17,2025-08-17,Gemini CLI PM / Claude Code,docs/management/tasks/TSK-UIUX-003_font_settings_inheritance.md,
-TSK-UIUX-004,`Providers.tsx` の移植と統合,完了,高,UI/UX,2025-08-17,2025-08-17,Gemini CLI PM / Claude Code,docs/management/tasks/TSK-UIUX-004_providers_migration.md,
-TSK-UIUX-005,`PasswordGate.tsx` の移植と統合,完了,高,UI/UX,2025-08-17,2025-08-17,Gemini CLI PM / Claude Code,docs/management/tasks/TSK-UIUX-005_passwordgate_migration.md,
-TSK-UIUX-006,`AuthForm.tsx` の移植と統合,完了,高,UI/UX,2025-08-17,2025-08-17,Gemini CLI PM / Claude Code,docs/management/tasks/TSK-UIUX-006_authform_migration.md,
-TSK-UIUX-007,`AuthenticatedLayout.tsx` の移植と統合,完了,高,UI/UX,2025-08-17,2025-08-17,Gemini CLI PM / Claude Code,docs/management/tasks/TSK-UIUX-007_authenticatedlayout_migration.md,
-TSK-UIUX-008,`Sidebar.tsx` の移植と統合,完了,高,UI/UX,2025-08-17,2025-08-17,Gemini CLI PM / Claude Code,docs/management/tasks/TSK-UIUX-008_sidebar_migration.md,
-TSK-UIUX-009,`MarkdownPreview.tsx` の移植と統合,完了,高,UI/UX,2025-08-17,2025-08-17,Gemini CLI PM / Claude Code,docs/management/tasks/TSK-UIUX-009_markdownpreview_migration.md,
-TSK-UIUX-010,`TagSelector.tsx` の移植と統合,完了,高,UI/UX,2025-08-17,2025-08-17,Gemini CLI PM / Claude Code,docs/management/tasks/TSK-UIUX-010_tagselector_migration.md,
-TSK-UIUX-011,ルートレイアウト (`src/app/layout.tsx`) の調整,完了,高,UI/UX,2025-08-17,2025-08-17,Gemini CLI PM / Claude Code,docs/management/tasks/TSK-UIUX-011_root_layout_adjustment.md,
-TSK-UIUX-012,トップページ (`src/app/page.tsx`) の調整,完了,高,UI/UX,2025-08-17,2025-08-17,Gemini CLI PM / Claude Code,docs/management/tasks/TSK-UIUX-012_homepage_adjustment.md,
-TSK-047,本番環境での認証スキップ設定の確認と修正,保留中,高,バグ修正,,2025-08-18,,Claude Code,docs/management/tasks/TSK-047_verify_and_fix_auth_skip.md
-TSK-048,OGP画像の表示とTOP回帰リンクの設定,完了,中,UI/UX,2025-08-18,2025-08-18,Gemini CLI PM / Claude Code,docs/management/tasks/TSK-048_display_ogp_and_top_link.md
-TSK-049,記事一覧表示の失敗原因調査と修正,完了,高,バグ修正,2025-08-18,2025-08-18,Gemini CLI PM / Claude Code,docs/management/tasks/TSK-049_investigate_and_fix_article_list_failure.md
-TSK-050,プロフィール表示機能の確認と実装,完了,中,機能追加,2025-08-18,2025-08-18,Gemini CLI PM / Claude Code,docs/management/tasks/TSK-050_verify_and_implement_profile_display.md
-TSK-051,記事編集機能の動作確認と改善,完了,高,機能確認,2025-08-18,2025-08-18,Gemini CLI PM / Claude Code,docs/management/tasks/TSK-051_verify_and_improve_article_edit.md,
-TSK-052,家族ローンチ前の認証・あいことば設定,保留中,中,設定,,2025-08-18,,Gemini CLI PM / Claude Code,docs/management/tasks/TSK-052_configure_auth_before_launch.md
-TSK-053,コメント認証スキップの修正,未着手,中,バグ修正,,2025-08-18,,Gemini CLI PM / Claude Code,docs/management/tasks/TSK-053_fix_comment_auth_skip.md,
-TSK-054,画像アップロード機能の実装,完了,中,機能追加,,2025-08-18,2025-08-18,Gemini CLI PM / Claude Code,docs/management/tasks/TSK-054_implement_image_upload.md,
-TSK-055,記事カードのリンク領域拡大,完了,中,UI/UX,,2025-08-18,2025-08-18,Gemini CLI PM / Claude Code,docs/management/tasks/TSK-055_expand_article_card_link_area.md,
-TSK-056,タグリストのトグル機能実装,完了,中,UI/UX,,2025-08-18,2025-08-18,Gemini CLI PM / Claude Code,docs/management/tasks/TSK-056_implement_tag_list_toggle.md,
-TSK-057,月別アーカイブの階層化とトグル機能実装,完了,中,UI/UX,,2025-08-18,2025-08-18,Gemini CLI PM / Claude Code,docs/management/tasks/TSK-057_implement_monthly_archive_hierarchy_and_toggle.md,
-TSK-058,【DB】ユーザーモデルへの役割(Role)概念の導入,完了,最高,DB設計,,2025-08-18,2025-08-18,Gemini CLI PM / Claude Code,docs/management/tasks/TSK-058_introduce_user_role.md,
-TSK-059,【Backend】ゲスト認証フローの実装,完了,最高,機能追加,2025-08-18,2025-08-18,2025-08-18,Gemini CLI PM / Claude Code,docs/management/tasks/TSK-059_implement_guest_auth_flow.md,
-TSK-060,【Backend】APIアクセス制御の実装,完了,最高,セキュリティ,2025-08-18,2025-08-18,2025-08-18,Gemini CLI PM / Claude Code,docs/management/tasks/TSK-060_implement_api_access_control.md,
-TSK-061,【Frontend】ゲストログインUIの構築,完了,高,UI/UX,2025-08-18,2025-08-18,2025-08-18,Gemini CLI PM / Claude Code,docs/management/tasks/TSK-061_build_guest_login_ui.md,
-TSK-062,【Frontend】書き込み機能の利用制限UIの実装,完了,高,UI/UX,2025-08-18,2025-08-18,2025-08-18,Gemini CLI PM / Claude Code,docs/management/tasks/TSK-062_implement_write_restriction_ui.md,
-TSK-063,ナレッジベースの分割と再構築,完了,中,保守,2025-08-18,2025-08-18,2025-08-18,Gemini CLI PM,docs/management/tasks/TSK-063_refactor_knowledge_base.md
-TSK-064,Gitプッシュ時のコンフリクト解消とリポジトリ同期,進行中,最高,バグ修正,,2025-08-19,,Gemini CLI PM,docs/management/tasks/TSK-064_resolve_git_conflict.md
-TSK-065,本番環境へのデプロイと表示・動作確認,完了,高,デプロイ,,2025-08-19,2025-08-19,Claude Code,docs/management/tasks/TSK-065_production_deployment_verification.md
-TSK-066,Windows開発環境のセットアップとDocker/ネットワーク設定の確認,完了,最高,環境,2025-08-19,2025-08-19,Claude Code,docs/management/tasks/TSK-066_windows_env_setup.md
-TSK-067,本番環境での記事更新失敗の調査と修正,完了,最高,バグ修正,,2025-08-19,2025-08-19,Gemini CLI PM / Claude Code,docs/management/tasks/TSK-067_fix_article_update_failure.md
-TSK-068,本番環境でのLINE/Googleログインエラーの調査と修正,完了,最高,バグ修正,,2025-08-19,2025-08-20,Claude Code,docs/management/tasks/TSK-068_fix_oauth_login_error.md
-TSK-069,[本番バグ] タグ機能が動作しない問題を調査・修正,完了,最高,バグ修正,2025-08-21,2025-08-20,2025-08-20,Claude Code,docs/management/tasks/TSK-069_fix_tag_functionality.md
-TSK-070,[本番UX改善] 認証画面のちらつきを調査・修正,完了,高,UX,2025-08-22,2025-08-20,2025-08-20,Claude Code,docs/management/tasks/TSK-070_fix_auth_screen_flicker.md
-TSK-071,[本番UI改善] モバイルのダークモードにおける文字コントラストを改善,完了,高,UI/UX,2025-08-22,2025-08-20,2025-08-20,Claude Code,docs/management/tasks/TSK-071_improve_dark_mode_contrast.md
-TSK-072,[本番バグ] 画像アップロード機能が動作しない問題を調査・修正,完了,最高,バグ修正,2025-08-21,2025-08-20,2025-08-20,Claude Code,docs/management/tasks/TSK-072_fix_image_upload.md
-TSK-073,[本番バグ] 記事へのコメント投稿時にページエラーが発生する,完了,最高,バグ修正,2025-08-21,2025-08-20,2025-08-20,Claude Code,docs/management/tasks/TSK-073_fix_comment_error.md
-TSK-074,[機能改善] 検索機能を有効化する（検索ボタン追加）,完了,高,機能改善,2025-08-22,2025-08-20,2025-08-20,Claude Code,docs/management/tasks/TSK-074_implement_search_button.md
-TSK-075,[機能追加] ログアウト機能を実装する,完了,高,機能追加,2025-08-22,2025-08-20,2025-08-20,Claude Code,docs/management/tasks/TSK-075_implement_logout_button.md
-TSK-076,[機能追加] プロフィールでニックネーム変更機能を実装する,完了,中,機能追加,2025-08-23,2025-08-20,2025-08-20,Claude Code,docs/management/tasks/TSK-076_implement_nickname_change.md
-TSK-077,[機能追加] プロフィールで自身の投稿一覧を表示する,完了,中,機能追加,2025-08-23,2025-08-20,2025-08-20,Claude Code,docs/management/tasks/TSK-077_implement_user_article_list.md
-TSK-078,[機能検討] リアルタイム検索の実装を検討する,完了,低,計画,2025-08-24,2025-08-20,2025-08-20,Claude Code,docs/management/tasks/TSK-078_plan_realtime_search.md
-TSK-079,トップページに最新記事3件を表示,完了,高,機能改善,2025-08-22,2025-08-20,2025-08-20,Claude Code,docs/management/tasks/TSK-079_TSK-080_article_display_fix.md
-TSK-080,記事一覧のアイキャッチ画像表示,完了,中,機能改善,2025-08-23,2025-08-20,2025-08-20,Claude Code,docs/management/tasks/TSK-079_TSK-080_article_display_fix.md
-TSK-081,エッセイ一覧ページの作成とサイドバーへのリンク追加,完了,中,機能追加,2025-08-24,2025-08-20,2025-08-20,Claude Code,docs/management/tasks/TSK-081_create_essay_page.md
-TSK-082,本番環境デプロイ反映不具合の調査,完了,最高,バグ修正,2025-08-20,2025-08-20,2025-08-20,Claude Code,docs/management/tasks/TSK-082_investigate_deployment_failure.md
-TSK-083,本番環境デプロイ反映の再調査と恒久対策,完了,最高,バグ修正,2025-08-20,2025-08-20,2025-08-20,Claude Code,docs/management/tasks/TSK-083_reinvestigate_deployment_failure.md
-TSK-084,デプロイ不具合の最終調査と恒久対策,進行中,最高,バグ修正,2025-08-20,2025-08-20,,Gemini CLI PM,docs/management/tasks/TSK-084_final_deployment_fix.md
+Task ID,Date,Status,Description,Assigned To,Notes
+TSK-001,2025-08-16,Completed,プロジェクト初期設定と基本ファイル作成,Gemini CLI PM,
+TSK-002,2025-08-16,Completed,Next.jsプロジェクトのセットアップ,Gemini CLI PM,
+TSK-003,2025-08-16,Completed,Docker環境の構築（開発用）,Gemini CLI PM,
+TSK-004,2025-08-16,Completed,PrismaのセットアップとDB接続確認,Gemini CLI PM,
+TSK-005,2025-08-16,Completed,NextAuth.jsの導入と基本認証フローの実装,Gemini CLI PM,
+TSK-006,2025-08-16,Completed,Tailwind CSSの導入と基本スタイリング,Gemini CLI PM,
+TSK-007,2025-08-16,Completed,基本レイアウトコンポーネントの作成,Gemini CLI PM,
+TSK-008,2025-08-16,Completed,記事投稿機能のUI作成,Gemini CLI PM,
+TSK-009,2025-08-16,Completed,記事投稿APIの実装,Gemini CLI PM,
+TSK-010,2025-08-16,Completed,記事一覧表示機能のUI作成,Gemini CLI PM,
+TSK-011,2025-08-16,Completed,記事一覧取得APIの実装,Gemini CLI PM,
+TSK-012,2025-08-16,Completed,記事詳細表示機能のUI作成,Gemini CLI PM,
+TSK-013,2025-08-16,Completed,記事詳細取得APIの実装,Gemini CLI PM,
+TSK-014,2025-08-16,Completed,記事編集機能のUI作成,Gemini CLI PM,
+TSK-015,2025-08-16,Completed,記事編集APIの実装,Gemini CLI PM,
+TSK-016,2025-08-16,Completed,記事削除機能のUI作成,Gemini CLI PM,
+TSK-017,2025-08-16,Completed,記事削除APIの実装,Gemini CLI PM,
+TSK-018,2025-08-16,Completed,ユーザー登録機能のUI作成,Gemini CLI PM,
+TSK-019,2025-08-16,Completed,ユーザー登録APIの実装,Gemini CLI PM,
+TSK-020,2025-08-16,Completed,ログイン機能のUI作成,Gemini CLI PM,
+TSK-021,2025-08-16,Completed,ログインAPIの実装,Gemini CLI PM,
+TSK-022,2025-08-16,Completed,ログアウト機能のUI作成,Gemini CLI PM,
+TSK-023,2025-08-16,Completed,ログアウトAPIの実装,Gemini CLI PM,
+TSK-024,2025-08-16,Completed,セッション管理の実装,Gemini CLI PM,
+TSK-025,2025-08-16,Completed,エラーハンドリングの共通化,Gemini CLI PM,
+TSK-026,2025-08-16,Completed,バリデーションの実装,Gemini CLI PM,
+TSK-027,2025-08-16,Completed,環境変数の管理,Gemini CLI PM,
+TSK-028,2025-08-16,Completed,Docker Composeによる開発環境の起動スクリプト作成,Gemini CLI PM,
+TSK-029,2025-08-16,Completed,README.mdの作成と更新,Gemini CLI PM,
+TSK-030,2025-08-16,Completed,Gitリポジトリの初期化と管理,Gemini CLI PM,
+TSK-031,2025-08-17,Completed,NextAuth.jsの認証システム復旧作業,Gemini CLI PM,
+TSK-032,2025-08-17,Completed,レイアウト崩れの修正とUI調整,Gemini CLI PM,
+TSK-033,2025-08-17,Completed,認証画面のちらつき問題の調査と修正,Gemini CLI PM,
+TSK-034,2025-08-17,Completed,ゲストユーザー機能の実装,Gemini CLI PM,
+TSK-035,2025-08-17,Completed,記事投稿・編集時のタグ機能実装,Gemini CLI PM,
+TSK-036,2025-08-17,Completed,記事の公開・非公開設定機能,Gemini CLI PM,
+TSK-037,2025-08-17,Completed,画像アップロード機能の実装,Gemini CLI PM,
+TSK-038,2025-08-17,Completed,リアルタイム検索機能の検討とプロトタイプ,Gemini CLI PM,
+TSK-039,2025-08-17,Completed,ダークモードのコントラスト改善,Gemini CLI PM,
+TSK-040,2025-08-17,Completed,コメント機能の不具合修正,Gemini CLI PM,
+TSK-041,2025-08-17,Completed,検索ボタンの実装,Gemini CLI PM,
+TSK-042,2025-08-17,Completed,ログアウトボタンの実装,Gemini CLI PM,
+TSK-043,2025-08-17,Completed,ユーザーニックネーム変更機能の実装,Gemini CLI PM,
+TSK-044,2025-08-17,Completed,ユーザー別記事一覧表示機能の実装,Gemini CLI PM,
+TSK-045,2025-08-17,Completed,エッセイページの作成,Gemini CLI PM,
+TSK-046,2025-08-17,Completed,デプロイ失敗の調査（初回）,Gemini CLI PM,
+TSK-047,2025-08-17,Completed,デプロイ失敗の再調査,Gemini CLI PM,
+TSK-048,2025-08-17,Completed,最終的なデプロイ修正,Gemini CLI PM,
+TSK-049,2025-08-17,Completed,Windows環境セットアップの調査とドキュメント化,Gemini CLI PM,
+TSK-050,2025-08-17,Completed,OAuthログインエラーの調査と修正ガイド作成,Gemini CLI PM,
+TSK-051,2025-08-17,Completed,環境変数設定の最終確認と修正,Gemini CLI PM,
+TSK-052,2025-08-17,Completed,タグ機能の不具合修正,Gemini CLI PM,
+TSK-053,2025-08-17,Completed,記事表示の不具合修正,Gemini CLI PM,
+TSK-054,2025-08-17,Completed,知識ベースのリファクタリング,Gemini CLI PM,
+TSK-055,2025-08-17,Completed,本番デプロイの検証,Gemini CLI PM,
+TSK-056,2025-08-17,Completed,タグリストトグル機能の実装,Gemini CLI PM,
+TSK-057,2025-08-17,Completed,カーソルベースのページネーション実装,Gemini CLI PM,
+TSK-058,2025-08-17,Completed,記事のアーカイブ機能実装,Gemini CLI PM,
+TSK-059,2025-08-17,Completed,OGP画像の自動生成機能実装,Gemini CLI PM,
+TSK-060,2025-08-17,Completed,サイトマップとRSSフィードの生成,Gemini CLI PM,
+TSK-061,2025-08-17,Completed,管理画面の基本機能実装,Gemini CLI PM,
+TSK-062,2025-08-17,Completed,ユーザーロール管理機能実装,Gemini CLI PM,
+TSK-063,2025-08-17,Completed,知識ベースのリファクタリング,Gemini CLI PM,
+TSK-064,2025-08-17,Completed,本番デプロイの検証,Gemini CLI PM,
+TSK-065,2025-08-17,Completed,本番デプロイの検証,Gemini CLI PM,
+TSK-066,2025-08-17,Completed,Windows環境セットアップの調査とドキュメント化,Gemini CLI PM,
+TSK-067,2025-08-17,Completed,記事更新失敗の修正,Gemini CLI PM,
+TSK-068,2025-08-17,Completed,環境変数修正,Gemini CLI PM,
+TSK-069,2025-08-17,Completed,タグ機能修正,Gemini CLI PM,
+TSK-070,2025-08-17,Completed,認証画面ちらつき修正,Gemini CLI PM,
+TSK-071,2025-08-17,Completed,ダークモードコントラスト改善,Gemini CLI PM,
+TSK-072,2025-08-17,Completed,コメントエラー修正,Gemini CLI PM,
+TSK-073,2025-08-17,Completed,コメントエラー修正,Gemini CLI PM,
+TSK-074,2025-08-17,Completed,検索ボタン実装,Gemini CLI PM,
+TSK-075,2025-08-17,Completed,ログアウトボタン実装,Gemini CLI PM,
+TSK-076,2025-08-17,Completed,ニックネーム変更実装,Gemini CLI PM,
+TSK-077,2025-08-17,Completed,ユーザー記事リスト実装,Gemini CLI PM,
+TSK-078,2025-08-17,Completed,リアルタイム検索計画,Gemini CLI PM,
+TSK-079,2025-08-17,Completed,記事表示修正,Gemini CLI PM,
+TSK-080,2025-08-17,Completed,記事表示修正,Gemini CLI PM,
+TSK-081,2025-08-17,Completed,エッセイページ作成,Gemini CLI PM,
+TSK-082,2025-08-17,Completed,デプロイ失敗調査,Gemini CLI PM,
+TSK-083,2025-08-17,Completed,デプロイ失敗再調査,Gemini CLI PM,
+TSK-084,2025-08-17,Completed,最終デプロイ修正,Gemini CLI PM,
+TSK-085,2025-08-20,Completed,VPS本番環境のDocker設定見直しと最適化（イメージタグ、DB公開、Composeファイル）,Gemini CLI PM,ユーザーからのVPS現状報告に基づき、本番環境のセキュリティと再現性向上のための設定見直し。
