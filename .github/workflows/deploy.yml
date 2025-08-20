@@ -52,5 +52,5 @@ jobs:
             cd $PROJECT_DIR
             echo ${{ secrets.CR_PAT }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             docker pull ghcr.io/${{ github.repository }}:${DOCKER_IMAGE_TAG}
-            docker-compose up -d --force-recreate
+            docker-compose -f docker-compose.prod.yml up -d --force-recreate
             docker image prune -f
