@@ -18,14 +18,21 @@ services:
       - NEXTAUTH_URL=https://uchinokiroku.com
       - NEXT_PUBLIC_SITE_PASSWORD=きぼう
       - NEXT_PUBLIC_SKIP_AUTH=false
-      # 以下は本番環境で適切な値を設定してください
-      - EMAIL_SERVER_USER=${EMAIL_SERVER_USER}
-      - EMAIL_SERVER_PASSWORD=${EMAIL_SERVER_PASSWORD}
-      - EMAIL_FROM=${EMAIL_FROM}
-      - RESEND_API_KEY=${RESEND_API_KEY}
-      - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
-      - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
-      - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
+      # Cloudflare R2設定
+      - CLOUDFLARE_R2_ACCOUNT_ID=c677241d7d66ff80103bab9f142128ab
+      - CLOUDFLARE_R2_ACCESS_KEY_ID=dbe71580377b19eccdc8234e389c222b
+      - CLOUDFLARE_R2_SECRET_ACCESS_KEY=6b655ca4c4a7a26047a461463bdf2628a40af478f2caf428247c6777fa24ebe5
+      - CLOUDFLARE_R2_BUCKET_NAME=uch-assets
+      - CLOUDFLARE_R2_ENDPOINT=https://c677241d7d66ff80103bab9f142128ab.r2.cloudflarestorage.com
+      - CLOUDFLARE_R2_PUBLIC_URL=https://pub-c677241d7d66ff80103bab9f142128ab.r2.dev
+      # 以下は本番環境で適切な値を設定してください（現在は空文字列で設定）
+      - EMAIL_SERVER_USER=
+      - EMAIL_SERVER_PASSWORD=
+      - EMAIL_FROM=
+      - RESEND_API_KEY=
+      - CLOUDINARY_CLOUD_NAME=
+      - CLOUDINARY_API_KEY=
+      - CLOUDINARY_API_SECRET=
     ports:
       - "127.0.0.1:3000:3000" # Nginxからのみアクセス可能にするため、ローカルホストにバインド
     volumes:
