@@ -94,3 +94,4 @@ TSK-080,記事一覧のアイキャッチ画像表示,完了,中,機能改善,20
 TSK-081,エッセイ一覧ページの作成とサイドバーへのリンク追加,完了,中,機能追加,2025-08-24,2025-08-20,2025-08-20,Claude Code,docs/management/tasks/TSK-081_create_essay_page.md
 TSK-082,本番環境デプロイ反映不具合の調査,完了,最高,バグ修正,2025-08-20,2025-08-20,2025-08-20,Claude Code,docs/management/tasks/TSK-082_investigate_deployment_failure.md
 TSK-083,本番環境デプロイ反映の再調査と恒久対策,完了,最高,バグ修正,2025-08-20,2025-08-20,2025-08-20,Claude Code,docs/management/tasks/TSK-083_reinvestigate_deployment_failure.md
+TSK-084,デプロイ不具合の最終調査と恒久対策,進行中,最高,バグ修正,2025-08-20,2025-08-20,,Gemini CLI PM,docs/management/tasks/TSK-084_final_deployment_fix.md
