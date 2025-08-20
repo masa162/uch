@@ -51,6 +51,7 @@ model User {
   comments      Comment[]
   likes         Like[]
   sessions      Session[]
+  mediaFiles    MediaFile[]
 
   @@map("users")
 }
@@ -107,6 +108,23 @@ model Like {
 
   @@unique([articleId, userId])
   @@map("likes")
+}
+
+model MediaFile {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  fileName    String   @unique
+  originalName String
+  fileType    String
+  fileSize    Int
+  publicUrl   String
+  r2Key       String   @unique
+  userId      String
+  metadata    Json?    // 追加のメタデータ（タグ、説明など）
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("media_files")
 }
 
 enum Role {

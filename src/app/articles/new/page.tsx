@@ -8,6 +8,7 @@ import Link from 'next/link'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import ImageUpload from '@/components/ImageUpload'
+import R2ImageUploader from '@/components/R2ImageUploader'
 import { useAuthAction } from '@/hooks/useAuthAction'
 
 interface ArticleFormData {
@@ -43,6 +44,14 @@ export default function NewArticlePage() {
   }
 
   const handleImageUploaded = (markdown: string) => {
+    setFormData(prev => ({
+      ...prev,
+      content: prev.content + '\n\n' + markdown
+    }))
+  }
+
+  const handleR2ImageUploaded = (fileInfo: { fileName: string; publicUrl: string }) => {
+    const markdown = `![${fileInfo.fileName}](${fileInfo.publicUrl})`
     setFormData(prev => ({
       ...prev,
       content: prev.content + '\n\n' + markdown
@@ -232,7 +241,10 @@ export default function NewArticlePage() {
                 {/* 画像アップロード */}
                 {previewMode === 'edit' && (
                   <div className="mb-4">
-                    <ImageUpload onImageUploaded={handleImageUploaded} />
+                    <R2ImageUploader 
+                      onUploadSuccess={handleR2ImageUploaded}
+                      onUploadError={(error) => setError(error)}
+                    />
                   </div>
                 )}
                 
