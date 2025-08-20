@@ -29,6 +29,11 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
     onClose()
   }
 
+  const handleTagClick = (tagName: string) => {
+    router.push(`/tags/${encodeURIComponent(tagName)}`)
+    onClose()
+  }
+
   const handleSignOut = () => {
     if (confirm('ログアウトしますか？')) {
       signOut()
@@ -165,6 +170,43 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
                 </button>
               </li>
             </ul>
+          </div>
+
+          {/* よく使われるタグ */}
+          <div className="mb-6">
+            <h3 className="text-sm font-semibold text-primary-dark mb-3">🏷️ 人気のタグ</h3>
+            <div className="flex flex-wrap gap-2">
+              <button 
+                onClick={() => handleTagClick('家族')}
+                className="badge badge-primary badge-outline hover:badge-primary cursor-pointer transition-colors text-xs"
+              >
+                家族
+              </button>
+              <button 
+                onClick={() => handleTagClick('思い出')}
+                className="badge badge-primary badge-outline hover:badge-primary cursor-pointer transition-colors text-xs"
+              >
+                思い出
+              </button>
+              <button 
+                onClick={() => handleTagClick('旅行')}
+                className="badge badge-primary badge-outline hover:badge-primary cursor-pointer transition-colors text-xs"
+              >
+                旅行
+              </button>
+              <button 
+                onClick={() => handleTagClick('料理')}
+                className="badge badge-primary badge-outline hover:badge-primary cursor-pointer transition-colors text-xs"
+              >
+                料理
+              </button>
+              <button 
+                onClick={() => handleTagClick('季節')}
+                className="badge badge-primary badge-outline hover:badge-primary cursor-pointer transition-colors text-xs"
+              >
+                季節
+              </button>
+            </div>
           </div>
 
           {/* ログアウト */}

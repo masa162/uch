@@ -420,11 +420,36 @@ export default function Sidebar() {
       <div className="space-y-2">
         <h3 className="font-bold text-primary-dark">🏷️ 人気のタグ</h3>
         <div className="flex flex-wrap gap-2">
-          <span className="badge badge-primary badge-outline">家族</span>
-          <span className="badge badge-primary badge-outline">思い出</span>
-          <span className="badge badge-primary badge-outline">旅行</span>
-          <span className="badge badge-primary badge-outline">料理</span>
-          <span className="badge badge-primary badge-outline">季節</span>
+          <button 
+            onClick={() => handleTagClick('家族')}
+            className="badge badge-primary badge-outline hover:badge-primary cursor-pointer transition-colors"
+          >
+            家族
+          </button>
+          <button 
+            onClick={() => handleTagClick('思い出')}
+            className="badge badge-primary badge-outline hover:badge-primary cursor-pointer transition-colors"
+          >
+            思い出
+          </button>
+          <button 
+            onClick={() => handleTagClick('旅行')}
+            className="badge badge-primary badge-outline hover:badge-primary cursor-pointer transition-colors"
+          >
+            旅行
+          </button>
+          <button 
+            onClick={() => handleTagClick('料理')}
+            className="badge badge-primary badge-outline hover:badge-primary cursor-pointer transition-colors"
+          >
+            料理
+          </button>
+          <button 
+            onClick={() => handleTagClick('季節')}
+            className="badge badge-primary badge-outline hover:badge-primary cursor-pointer transition-colors"
+          >
+            季節
+          </button>
         </div>
       </div>
     </div>
