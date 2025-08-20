@@ -1,5 +1,6 @@
 name: Deploy to VPS
 
+# Updated with new PAT configuration
 on:
   push:
     branches:
