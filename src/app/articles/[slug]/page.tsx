@@ -34,9 +34,10 @@ interface Comment {
   id: string
   content: string
   createdAt: string
-  author: {
+  user: {
+    id: string
     name: string | null
-    email: string
+    image: string | null
   }
 }
 
@@ -136,8 +137,8 @@ export default function ArticleDetailPage() {
       })
 
       if (response.ok) {
-        const data = await response.json()
-        setComments(prev => [data.comment, ...prev])
+        const newComment = await response.json()
+        setComments(prev => [newComment, ...prev])
         setCommentText('')
         
         // コメント数を更新
@@ -343,7 +344,7 @@ export default function ArticleDetailPage() {
                 <div key={comment.id} className="bg-gray-50 p-4 rounded-lg">
                   <div className="flex items-center space-x-2 mb-2">
                     <span className="font-medium text-gray-800">
-                      {comment.author.name || '匿名'}
+                      {comment.user.name || '匿名'}
                     </span>
                     <span className="text-sm text-gray-500">
                       {new Date(comment.createdAt).toLocaleDateString('ja-JP', {
