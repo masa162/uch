@@ -71,6 +71,8 @@ export default function NewArticlePage() {
         .map(tag => tag.trim())
         .filter(tag => tag.length > 0)
 
+      console.log('Submitting article:', { ...formData, tags })
+
       const response = await fetch('/api/articles', {
         method: 'POST',
         headers: {
@@ -83,17 +85,23 @@ export default function NewArticlePage() {
         }),
       })
 
+      console.log('Response status:', response.status)
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()))
+
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.error || '記事の作成に失敗しました')
+        console.error('API error response:', errorData)
+        throw new Error(errorData.error || `記事の作成に失敗しました (${response.status})`)
       }
 
       const result = await response.json()
+      console.log('Article created successfully:', result)
       
       // 作成成功後、記事詳細ページにリダイレクト
       router.push(`/articles/${result.article.slug}`)
       
     } catch (err) {
+      console.error('Article submission error:', err)
       setError(err instanceof Error ? err.message : 'エラーが発生しました')
     } finally {
       setLoading(false)

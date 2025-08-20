@@ -29,7 +29,10 @@
       "Bash(ping:*)",
       "Bash(gh run list:*)",
       "WebFetch(domain:github.com)",
-      "WebFetch(domain:uchinokiroku.com)"
+      "WebFetch(domain:uchinokiroku.com)",
+      "Bash(git rev-parse:*)",
+      "Bash(mkdir:*)",
+      "Bash(mv:*)"
     ],
     "deny": [],
     "ask": []

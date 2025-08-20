@@ -1,0 +1,204 @@
+name: Enhanced Deploy to VPS
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+        continue-on-error: false
+
+      - name: Build application
+        run: npm run build
+        continue-on-error: false
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+      image-digest: ${{ steps.build.outputs.digest }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.CR_PAT }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest
+
+      - name: Build and push Docker image
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: false
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script_stop: true
+          script: |
+            set -e
+            
+            # Environment setup
+            export PROJECT_DIR="/home/nakayama/uch"
+            export DOCKER_IMAGE_TAG=${{ github.sha }}
+            export BACKUP_DIR="${PROJECT_DIR}/backups/$(date +%Y%m%d_%H%M%S)"
+            
+            echo "🚀 Starting deployment for commit ${{ github.sha }}"
+            
+            cd $PROJECT_DIR
+            
+            # Create backup directory
+            mkdir -p $BACKUP_DIR
+            
+            # Backup current state
+            echo "📋 Creating backup..."
+            cp docker-compose.prod.yml $BACKUP_DIR/
+            docker compose -f docker-compose.prod.yml config > $BACKUP_DIR/current-config.yml
+            
+            # Update code
+            echo "📥 Updating code..."
+            git fetch origin
+            git reset --hard origin/main
+            
+            # Login to registry
+            echo "🔐 Logging in to registry..."
+            echo ${{ secrets.CR_PAT }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            
+            # Pull new image
+            echo "📦 Pulling new image..."
+            docker pull ghcr.io/${{ github.repository }}:${DOCKER_IMAGE_TAG}
+            
+            # Update compose file
+            echo "🔧 Updating compose configuration..."
+            sed -i "s|ghcr.io/masa162/uch:[^[:space:]]*|ghcr.io/${{ github.repository }}:${DOCKER_IMAGE_TAG}|g" docker-compose.prod.yml
+            
+            # Deploy with health check
+            echo "🚢 Deploying application..."
+            docker compose -f docker-compose.prod.yml up -d
+            
+            # Wait for services to be healthy
+            echo "🏥 Waiting for services to be healthy..."
+            timeout=300
+            count=0
+            
+            while [ $count -lt $timeout ]; do
+              if docker compose -f docker-compose.prod.yml ps | grep -q "healthy"; then
+                if curl -f -s http://localhost:3000/api/health >/dev/null; then
+                  echo "✅ Application is healthy!"
+                  break
+                fi
+              fi
+              
+              echo "⏳ Waiting for application to be ready... ($count/$timeout)"
+              sleep 10
+              count=$((count + 10))
+            done
+            
+            if [ $count -ge $timeout ]; then
+              echo "❌ Deployment failed - Application not healthy within timeout"
+              echo "🔄 Rolling back..."
+              cp $BACKUP_DIR/docker-compose.prod.yml ./
+              docker compose -f docker-compose.prod.yml up -d --force-recreate
+              exit 1
+            fi
+            
+            # Cleanup old images
+            echo "🧹 Cleaning up old images..."
+            docker image prune -f
+            
+            # Keep only last 3 backups
+            find ${PROJECT_DIR}/backups -maxdepth 1 -type d | sort | head -n -3 | xargs rm -rf
+            
+            echo "🎉 Deployment completed successfully!"
+
+      - name: Verify Deployment
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            # Final verification
+            echo "🔍 Running post-deployment verification..."
+            
+            # Check container status
+            docker ps --filter "name=uch_" --format "table {{.Names}}\t{{.Status}}"
+            
+            # Test application endpoints
+            curl -f http://localhost:3000/api/health || exit 1
+            curl -f http://localhost:3000/ > /dev/null || exit 1
+            curl -f http://localhost:3000/essays > /dev/null || exit 1
+            
+            echo "✅ All verification tests passed!"
+
+  notify:
+    needs: [test, build, deploy]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Notify Success
+        if: needs.deploy.result == 'success'
+        run: |
+          echo "🎉 Deployment successful for commit ${{ github.sha }}"
+          # Here you can add Discord/Slack/Email notifications
+          
+      - name: Notify Failure
+        if: needs.deploy.result == 'failure'
+        run: |
+          echo "❌ Deployment failed for commit ${{ github.sha }}"
+          # Here you can add Discord/Slack/Email notifications

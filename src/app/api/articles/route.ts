@@ -8,10 +8,15 @@ import { Role } from '@prisma/client'
 // 記事投稿API
 export async function POST(request: NextRequest) {
   try {
+    console.log('Article creation request started')
+    
     const session = await getServerSession(authOptions) as Session | null
+    console.log('Session:', session ? { id: session.user?.id, email: session.user?.email, role: session.user?.role } : 'No session')
     
     // 開発環境で認証をスキップする場合のダミーユーザー
     const isDevelopmentSkipAuth = process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_SKIP_AUTH === 'true'
+    console.log('Development skip auth:', isDevelopmentSkipAuth)
+    
     const currentUser = session?.user || (isDevelopmentSkipAuth ? {
       id: 'dev-user',
       email: 'dev@example.com',
@@ -19,31 +24,41 @@ export async function POST(request: NextRequest) {
       image: null
     } : null)
     
+    console.log('Current user:', currentUser)
+    
     if (!currentUser?.email) {
+      console.log('No current user email found')
       return NextResponse.json(
-        { message: 'ログインが必要です' },
+        { error: 'ログインが必要です' },
         { status: 401 }
       )
     }
 
     // ゲストユーザーの書き込み権限チェック
     if (session?.user?.role === Role.GUEST) {
+      console.log('Guest user attempted to create article')
       return NextResponse.json(
-        { message: '権限がありません' },
+        { error: '権限がありません' },
         { status: 403 }
       )
     }
 
-    const { title, content, tags, heroImage, isPublished, description } = await request.json()
+    const requestBody = await request.json()
+    console.log('Request body:', requestBody)
+    
+    const { title, content, tags, heroImage, isPublished, description } = requestBody
 
     // バリデーション
     if (!title?.trim() || !content?.trim()) {
+      console.log('Validation failed:', { title: !!title?.trim(), content: !!content?.trim() })
       return NextResponse.json(
-        { message: 'タイトルと本文は必須です' },
+        { error: 'タイトルと本文は必須です' },
         { status: 400 }
       )
     }
 
+    console.log('Attempting to find or create user')
+    
     // ユーザー取得または作成（開発環境用）
     let user = await prisma.user.findUnique({
       where: { id: currentUser.id }
@@ -51,6 +66,7 @@ export async function POST(request: NextRequest) {
 
     if (!user) {
       if (isDevelopmentSkipAuth) {
+        console.log('Creating dummy user for development')
         // 開発環境でダミーユーザーを作成
         user = await prisma.user.create({
           data: {
@@ -60,14 +76,20 @@ export async function POST(request: NextRequest) {
             image: currentUser.image
           }
         })
+        console.log('Dummy user created:', user.id)
       } else {
+        console.log('User not found and not in development mode')
         return NextResponse.json(
-          { message: 'ユーザーが見つかりません' },
+          { error: 'ユーザーが見つかりません' },
           { status: 404 }
         )
       }
+    } else {
+      console.log('User found:', user.id)
     }
 
+    console.log('Generating slug')
+    
     // スラッグ生成（日付ベース、分かりやすい形式）
     const now = new Date()
     const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '') // YYYYMMDD
@@ -96,6 +118,8 @@ export async function POST(request: NextRequest) {
       counter++
     }
 
+    console.log('Creating article with slug:', slug)
+    
     // 記事作成
     const article = await prisma.article.create({
       data: {
@@ -120,12 +144,34 @@ export async function POST(request: NextRequest) {
       }
     })
 
+    console.log('Article created successfully:', article.id)
     return NextResponse.json({ article }, { status: 201 })
   } catch (error) {
     console.error('Article creation error:', error)
+    
+    // より詳細なエラー情報を返す
+    let errorMessage = 'サーバーエラーが発生しました'
+    let statusCode = 500
+    
+    if (error instanceof Error) {
+      errorMessage = error.message
+      
+      // Prismaエラーの場合
+      if (error.message.includes('P2002')) {
+        errorMessage = '記事のスラッグが重複しています'
+        statusCode = 400
+      } else if (error.message.includes('P2003')) {
+        errorMessage = 'ユーザーが見つかりません'
+        statusCode = 400
+      } else if (error.message.includes('P1010')) {
+        errorMessage = 'データベース接続エラーが発生しました'
+        statusCode = 503
+      }
+    }
+    
     return NextResponse.json(
-      { message: 'サーバーエラーが発生しました' },
-      { status: 500 }
+      { error: errorMessage },
+      { status: statusCode }
     )
   }
 }
