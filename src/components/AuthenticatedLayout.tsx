@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react'
 import Sidebar from './Sidebar';
 import AuthRequiredModal from './AuthRequiredModal';
 import MobileMenu from './MobileMenu';
+import { useAuth } from '@/contexts/AuthContext';
 
 type AuthenticatedLayoutProps = {
   children: React.ReactNode;
@@ -13,20 +14,23 @@ type AuthenticatedLayoutProps = {
 
 export default function AuthenticatedLayout({ children }: AuthenticatedLayoutProps) {
   const { data: session, status } = useSession()
+  const { user } = useAuth()
   const router = useRouter()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   useEffect(() => {
     if (status === 'loading') return // ローディング中は何もしない
     
-    if (!session) {
+    // セッションもユーザーもない場合のみサインイン画面にリダイレクト
+    // ゲストユーザーの場合はリダイレクトしない
+    if (!session && !user) {
       router.push('/auth/signin')
       return
     }
-  }, [session, status, router])
+  }, [session, status, router, user])
 
-  // ローディング中または未認証の場合はローディング画面を表示
-  if (status === 'loading' || !session) {
+  // ローディング中またはセッションとユーザーの両方がない場合はローディング画面を表示
+  if (status === 'loading' || (!session && !user)) {
     return (
       <div className="min-h-screen bg-base-200 flex items-center justify-center">
         <div className="text-center">

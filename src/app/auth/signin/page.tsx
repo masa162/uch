@@ -3,17 +3,20 @@
 import { signIn, getSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useState, useEffect, Suspense } from 'react'
+import { useAuth } from '@/contexts/AuthContext'
 
 function SignInContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { user } = useAuth()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const checkSession = async () => {
       const session = await getSession()
-      if (session) {
+      // ゲストユーザーでない場合のみリダイレクト
+      if (session && user && user.role !== 'GUEST') {
         router.push('/')
       }
     }
