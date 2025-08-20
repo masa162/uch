@@ -2,7 +2,7 @@ version: '3.8'
 services:
   uch:
     # buildコンテキストを削除し、GHCRのイメージを直接指定
-    image: ghcr.io/masayuki-nakayama/uch:latest
+    image: ghcr.io/masayuki-nakayama/uch:${DOCKER_IMAGE_TAG:-latest}
     container_name: uch_app
     restart: always
     ports:
