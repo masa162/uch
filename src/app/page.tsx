@@ -12,12 +12,20 @@ export default function HomePage() {
           <p className="text-gray-600">今日も家族の大切な思い出を、やさしく残していきましょう 💝</p>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {/* 記事一覧カード */}
           <Link href="/articles" className="card bg-base-100 shadow-lg hover:shadow-2xl transition-shadow cursor-pointer">
             <div className="card-body">
               <h2 className="card-title">📚 記事一覧</h2>
               <p>みんなの思い出を見る</p>
+            </div>
+          </Link>
+          
+          {/* 検索カード */}
+          <Link href="/search" className="card bg-base-100 shadow-lg hover:shadow-2xl transition-shadow cursor-pointer">
+            <div className="card-body">
+              <h2 className="card-title">🔍 検索</h2>
+              <p>記事を検索する</p>
             </div>
           </Link>
           
@@ -30,12 +38,12 @@ export default function HomePage() {
           </Link>
           
           {/* プロフィールカード */}
-          <div className="card bg-base-100 shadow-lg hover:shadow-2xl transition-shadow cursor-pointer">
+          <Link href="/profile" className="card bg-base-100 shadow-lg hover:shadow-2xl transition-shadow cursor-pointer">
             <div className="card-body">
               <h2 className="card-title">👤 プロフィール</h2>
               <p>あなたについて教えてください</p>
             </div>
-          </div>
+          </Link>
         </div>
         
         {/* 最近の記事セクション */}

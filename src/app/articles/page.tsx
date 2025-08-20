@@ -126,12 +126,20 @@ export default function ArticlesPage() {
             <h1 className="text-3xl font-bold">📚 記事一覧</h1>
             <p className="text-gray-600">みんなの思い出を共有しましょう</p>
           </div>
-          <Link 
-            href="/articles/new"
-            className="btn btn-primary"
-          >
-            ✍️ 新しい記事を書く
-          </Link>
+          <div className="flex gap-2">
+            <Link 
+              href="/search"
+              className="btn btn-outline"
+            >
+              🔍 検索
+            </Link>
+            <Link 
+              href="/articles/new"
+              className="btn btn-primary"
+            >
+              ✍️ 新しい記事を書く
+            </Link>
+          </div>
         </div>
 
         {/* 記事一覧 */}
