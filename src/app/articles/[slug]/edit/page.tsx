@@ -79,7 +79,7 @@ export default function EditArticlePage() {
       const articleData = await response.json()
 
       // 認証チェック
-      if (user?.email !== articleData.author.email) {
+      if (user?.id !== articleData.authorId) {
         throw new Error('この記事を編集する権限がありません')
       }
 
