@@ -13,6 +13,21 @@ interface ProfileData {
   createdAt: string
 }
 
+interface MyArticle {
+  id: string
+  title: string
+  slug: string
+  content: string
+  pubDate: string
+  tags: string[]
+  isPublished: boolean
+  createdAt: string
+  _count: {
+    comments: number
+    likes: number
+  }
+}
+
 export default function ProfilePage() {
   const { user, loading: authLoading, signOut } = useAuth()
   const [profile, setProfile] = useState<ProfileData | null>(null)
@@ -24,12 +39,41 @@ export default function ProfilePage() {
   })
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+  const [myArticles, setMyArticles] = useState<MyArticle[]>([])
+  const [articlesLoading, setArticlesLoading] = useState(false)
+  const [showMyArticles, setShowMyArticles] = useState(false)
 
   useEffect(() => {
     if (user && !authLoading) {
       fetchProfile()
     }
   }, [user, authLoading])
+
+  const fetchMyArticles = async () => {
+    if (!user) return
+    
+    setArticlesLoading(true)
+    try {
+      const response = await fetch('/api/articles/my?limit=20')
+      if (response.ok) {
+        const data = await response.json()
+        setMyArticles(data.articles || [])
+      } else {
+        console.error('Failed to fetch articles:', response.statusText)
+      }
+    } catch (error) {
+      console.error('Failed to fetch articles:', error)
+    } finally {
+      setArticlesLoading(false)
+    }
+  }
+
+  const toggleMyArticles = () => {
+    if (!showMyArticles && myArticles.length === 0) {
+      fetchMyArticles()
+    }
+    setShowMyArticles(!showMyArticles)
+  }
 
   const fetchProfile = async () => {
     try {
@@ -218,6 +262,87 @@ export default function ProfilePage() {
                       {new Date(profile.createdAt).toLocaleDateString('ja-JP')}
                     </div>
                   </div>
+                </div>
+
+                {/* 自分の投稿一覧セクション */}
+                <div className="mt-8 pt-6 border-t border-base-300">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold">📝 自分の投稿</h3>
+                    <button
+                      onClick={toggleMyArticles}
+                      className="btn btn-outline btn-sm"
+                    >
+                      {showMyArticles ? '非表示' : '表示'}
+                    </button>
+                  </div>
+                  
+                  {showMyArticles && (
+                    <div className="space-y-4">
+                      {articlesLoading ? (
+                        <div className="text-center py-8">
+                          <div className="loading loading-spinner loading-md"></div>
+                          <p className="text-sm text-gray-600 mt-2">読み込み中...</p>
+                        </div>
+                      ) : myArticles.length === 0 ? (
+                        <div className="text-center py-8 bg-base-200 rounded-lg">
+                          <div className="text-4xl mb-2">📝</div>
+                          <p className="text-gray-600">まだ投稿がありません</p>
+                          <p className="text-sm text-gray-500 mt-1">最初の記事を書いてみませんか？</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          {myArticles.map((article) => (
+                            <div key={article.id} className="card bg-base-100 border border-base-300 hover:shadow-md transition-shadow">
+                              <div className="card-body p-4">
+                                <div className="flex justify-between items-start mb-2">
+                                  <h4 className="card-title text-base">
+                                    <a 
+                                      href={`/articles/${article.slug}`}
+                                      className="hover:text-primary"
+                                    >
+                                      {article.title}
+                                    </a>
+                                  </h4>
+                                  <div className="flex items-center gap-2">
+                                    {!article.isPublished && (
+                                      <span className="badge badge-warning badge-sm">下書き</span>
+                                    )}
+                                    <a 
+                                      href={`/articles/${article.slug}/edit`}
+                                      className="btn btn-ghost btn-xs"
+                                    >
+                                      編集
+                                    </a>
+                                  </div>
+                                </div>
+                                
+                                <p className="text-sm text-gray-600 line-clamp-2">
+                                  {article.content.slice(0, 100)}...
+                                </p>
+                                
+                                <div className="flex items-center justify-between text-xs text-gray-500 mt-3">
+                                  <div className="flex items-center gap-4">
+                                    <span>📅 {new Date(article.pubDate).toLocaleDateString('ja-JP')}</span>
+                                    <span>💬 {article._count.comments}</span>
+                                    <span>❤️ {article._count.likes}</span>
+                                  </div>
+                                  {article.tags.length > 0 && (
+                                    <div className="flex gap-1">
+                                      {article.tags.slice(0, 3).map((tag, index) => (
+                                        <span key={index} className="badge badge-outline badge-xs">
+                                          {tag}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* アカウント管理セクション */}
