@@ -30,8 +30,10 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
   }
 
   const handleSignOut = () => {
-    signOut()
-    onClose()
+    if (confirm('ログアウトしますか？')) {
+      signOut()
+      onClose()
+    }
   }
 
   if (!isOpen) return null

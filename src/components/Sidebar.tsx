@@ -101,8 +101,10 @@ export default function Sidebar() {
   }
 
   const handleSignOut = () => {
-    signOut()
-    setShowUserMenu(false)
+    if (confirm('ログアウトしますか？')) {
+      signOut()
+      setShowUserMenu(false)
+    }
   }
 
   const handleTagClick = (tagName: string) => {

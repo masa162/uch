@@ -14,7 +14,7 @@ interface ProfileData {
 }
 
 export default function ProfilePage() {
-  const { user, loading: authLoading } = useAuth()
+  const { user, loading: authLoading, signOut } = useAuth()
   const [profile, setProfile] = useState<ProfileData | null>(null)
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState(false)
@@ -217,6 +217,29 @@ export default function ProfilePage() {
                     <div className="input input-bordered bg-base-200">
                       {new Date(profile.createdAt).toLocaleDateString('ja-JP')}
                     </div>
+                  </div>
+                </div>
+
+                {/* アカウント管理セクション */}
+                <div className="mt-8 pt-6 border-t border-base-300">
+                  <h3 className="text-lg font-semibold mb-4">🔧 アカウント管理</h3>
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    <button
+                      onClick={() => setEditing(true)}
+                      className="btn btn-outline"
+                    >
+                      ✏️ プロフィール編集
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (confirm('ログアウトしますか？')) {
+                          signOut()
+                        }
+                      }}
+                      className="btn btn-outline btn-error"
+                    >
+                      🚪 ログアウト
+                    </button>
                   </div>
                 </div>
               </div>
