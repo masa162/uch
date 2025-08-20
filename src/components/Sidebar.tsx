@@ -409,9 +409,12 @@ export default function Sidebar() {
             )}
           </li>
           <li>
-            <a className="hover:bg-primary-light hover:text-primary-dark transition-colors">
+            <button
+              onClick={() => handleNavigation('/essays')}
+              className="w-full flex items-center text-left hover:bg-primary-light hover:text-primary-dark transition-colors"
+            >
               📝 エッセイ
-            </a>
+            </button>
           </li>
         </ul>
       </div>
