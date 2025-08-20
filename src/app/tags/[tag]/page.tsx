@@ -1,9 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useSession } from 'next-auth/react'
 import { useParams, useRouter } from 'next/navigation'
-import AuthenticatedLayout from '@/components/AuthenticatedLayout'
+import PublicLayout from '@/components/PublicLayout'
 
 interface Article {
   id: string
@@ -17,7 +16,6 @@ interface Article {
 
 export default function TagPage() {
   const { tag } = useParams()
-  const { data: session } = useSession()
   const router = useRouter()
   const [articles, setArticles] = useState<Article[]>([])
   const [loading, setLoading] = useState(true)
@@ -27,7 +25,7 @@ export default function TagPage() {
 
   useEffect(() => {
     const fetchTagArticles = async () => {
-      if (!session || !tag) return
+      if (!tag) return
 
       setLoading(true)
       try {
@@ -50,31 +48,24 @@ export default function TagPage() {
     }
 
     fetchTagArticles()
-  }, [session, tag])
+  }, [tag])
 
-  if (!session) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p>ログインが必要です</p>
-      </div>
-    )
-  }
 
   if (loading) {
     return (
-      <AuthenticatedLayout>
+      <PublicLayout>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4"></div>
             <p className="text-gray-600">読み込み中...</p>
           </div>
         </div>
-      </AuthenticatedLayout>
+      </PublicLayout>
     )
   }
 
   return (
-    <AuthenticatedLayout>
+    <PublicLayout>
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <button
@@ -185,6 +176,6 @@ export default function TagPage() {
           </div>
         </div>
       </div>
-    </AuthenticatedLayout>
+    </PublicLayout>
   )
 }

@@ -84,3 +84,8 @@ TSK-082,2025-08-17,Completed,デプロイ失敗調査,Gemini CLI PM,
 TSK-083,2025-08-17,Completed,デプロイ失敗再調査,Gemini CLI PM,
 TSK-084,2025-08-17,Completed,最終デプロイ修正,Gemini CLI PM,
 TSK-085,2025-08-20,Completed,VPS本番環境のDocker設定見直しと最適化（イメージタグ、DB公開、Composeファイル）,Gemini CLI PM,ユーザーからのVPS現状報告に基づき、本番環境のセキュリティと再現性向上のための設定見直し。
+TSK-086,2025-08-20,Pending,【基本機能】画像アップロード機能の実装,Claude Code,アイディアだし(250818)よりタスク化
+TSK-087,2025-08-20,Pending,【基本機能】動画アップロード機能の実装,Claude Code,アイディアだし(250818)よりタスク化
+TSK-088,2025-08-20,Pending,【拡張機能】AI執事による画像自動最適化,Claude Code,アイディアだし(250818)よりタスク化
+TSK-089,2025-08-20,Pending,【拡張機能】AI執事による画像自動タグ付け,Claude Code,アイディアだし(250818)よりタスク化
+TSK-090,2025-08-20,Pending,【UI/UX】メディアギャラリーの作成,Claude Code,アイディアだし(250818)よりタスク化

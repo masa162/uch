@@ -1,9 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
-import AuthenticatedLayout from '@/components/AuthenticatedLayout'
+import PublicLayout from '@/components/PublicLayout'
 import Link from 'next/link'
 
 interface Article {
@@ -26,8 +24,6 @@ interface Article {
 
 export default function EssayPage() {
   const tag = 'エッセイ'
-  const { data: session } = useSession()
-  const router = useRouter()
   const [articles, setArticles] = useState<Article[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -68,20 +64,20 @@ export default function EssayPage() {
 
   if (loading) {
     return (
-      <AuthenticatedLayout>
+      <PublicLayout>
         <div className="flex justify-center items-center min-h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
             <p className="text-gray-600">エッセイを読み込み中...</p>
           </div>
         </div>
-      </AuthenticatedLayout>
+      </PublicLayout>
     )
   }
 
   if (error) {
     return (
-      <AuthenticatedLayout>
+      <PublicLayout>
         <div className="text-center py-8">
           <div className="alert alert-error max-w-md mx-auto">
             <span>⚠️ {error}</span>
@@ -93,12 +89,12 @@ export default function EssayPage() {
             再試行
           </button>
         </div>
-      </AuthenticatedLayout>
+      </PublicLayout>
     )
   }
 
   return (
-    <AuthenticatedLayout>
+    <PublicLayout>
       <div className="space-y-6">
         {/* ヘッダー */}
         <div className="flex justify-between items-center">
@@ -207,6 +203,6 @@ export default function EssayPage() {
           </div>
         )}
       </div>
-    </AuthenticatedLayout>
+    </PublicLayout>
   )
 }
