@@ -24,7 +24,9 @@
       "Bash(echo $NODE_ENV)",
       "Bash(taskkill:*)",
       "Bash(NODE_ENV=production npm start)",
-      "Bash(timeout 10 docker-compose logs app --follow)"
+      "Bash(timeout 10 docker-compose logs app --follow)",
+      "Bash(echo $VPS_HOST)",
+      "Bash(ping:*)"
     ],
     "deny": [],
     "ask": []
