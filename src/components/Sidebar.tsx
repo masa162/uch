@@ -24,7 +24,11 @@ interface ArchiveHierarchy {
   }
 }
 
-export default function Sidebar() {
+interface SidebarProps {
+  onNavigate?: () => void
+}
+
+export default function Sidebar({ onNavigate }: SidebarProps = {}) {
   const router = useRouter()
   const { user, signOut } = useAuth()
   const { runAuthAction } = useAuthAction()
@@ -98,17 +102,20 @@ export default function Sidebar() {
 
   const handleNavigation = (path: string) => {
     router.push(path)
+    onNavigate?.()
   }
 
   const handleSignOut = () => {
     if (confirm('ログアウトしますか？')) {
       signOut()
       setShowUserMenu(false)
+      onNavigate?.()
     }
   }
 
   const handleTagClick = (tagName: string) => {
     router.push(`/tags/${encodeURIComponent(tagName)}`)
+    onNavigate?.()
   }
 
 
@@ -147,6 +154,7 @@ export default function Sidebar() {
 
   const handleArticleClick = (slug: string) => {
     router.push(`/articles/${slug}`)
+    onNavigate?.()
   }
 
   const formatMonth = (month: string) => {
@@ -177,10 +185,12 @@ export default function Sidebar() {
         </button>
       </div>
       {/* リアルタイム検索ボックス */}
-      <RealtimeSearch 
-        placeholder="記事を検索..." 
-        className="form-control"
-      />
+      <div onClick={onNavigate}>
+        <RealtimeSearch 
+          placeholder="記事を検索..." 
+          className="form-control"
+        />
+      </div>
       
       {/* ユーザーメニュー */}
       {user && (
