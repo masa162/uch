@@ -9,6 +9,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import ImageUpload from '@/components/ImageUpload'
 import R2ImageUploader from '@/components/R2ImageUploader'
+import MediaSelector from '@/components/MediaSelector'
 import { useAuthAction } from '@/hooks/useAuthAction'
 
 interface ArticleFormData {
@@ -26,6 +27,7 @@ export default function NewArticlePage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [previewMode, setPreviewMode] = useState<'edit' | 'preview'>('edit')
+  const [showMediaSelector, setShowMediaSelector] = useState(false)
   
   const [formData, setFormData] = useState<ArticleFormData>({
     title: '',
@@ -52,6 +54,24 @@ export default function NewArticlePage() {
 
   const handleR2ImageUploaded = (fileInfo: { fileName: string; publicUrl: string }) => {
     const markdown = `![${fileInfo.fileName}](${fileInfo.publicUrl})`
+    setFormData(prev => ({
+      ...prev,
+      content: prev.content + '\n\n' + markdown
+    }))
+  }
+
+  const handleMediaSelect = (mediaFile: any, quality: string = 'medium') => {
+    const selectedFile = mediaFile.optimizedFiles.find((f: any) => f.quality === quality)
+    const url = selectedFile?.url || mediaFile.displayUrl
+    const altText = mediaFile.originalFilename.replace(/\.[^/.]+$/, '')
+    
+    let markdown = ''
+    if (mediaFile.mimeType.startsWith('video/')) {
+      markdown = `<video controls width="100%">\n  <source src="${url}" type="${mediaFile.mimeType}">\n  お使いのブラウザは動画タグをサポートしていません。\n</video>`
+    } else {
+      markdown = `![${altText}](${url})`
+    }
+    
     setFormData(prev => ({
       ...prev,
       content: prev.content + '\n\n' + markdown
@@ -240,11 +260,20 @@ export default function NewArticlePage() {
 
                 {/* 画像アップロード */}
                 {previewMode === 'edit' && (
-                  <div className="mb-4">
-                    <R2ImageUploader 
-                      onUploadSuccess={handleR2ImageUploaded}
-                      onUploadError={(error) => setError(error)}
-                    />
+                  <div className="mb-4 space-y-2">
+                    <div className="flex gap-2">
+                      <R2ImageUploader 
+                        onUploadSuccess={handleR2ImageUploaded}
+                        onUploadError={(error) => setError(error)}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowMediaSelector(true)}
+                        className="btn btn-outline btn-sm"
+                      >
+                        📷 ギャラリーから選択
+                      </button>
+                    </div>
                   </div>
                 )}
                 
@@ -367,6 +396,13 @@ export default function NewArticlePage() {
           </div>
         </div>
       </div>
+
+      {/* メディアセレクター */}
+      <MediaSelector
+        isOpen={showMediaSelector}
+        onClose={() => setShowMediaSelector(false)}
+        onSelect={handleMediaSelect}
+      />
     </AuthenticatedLayout>
   )
 }

@@ -32,7 +32,10 @@
       "WebFetch(domain:uchinokiroku.com)",
       "Bash(git rev-parse:*)",
       "Bash(mkdir:*)",
-      "Bash(mv:*)"
+      "Bash(mv:*)",
+      "Bash(npm install:*)",
+      "Bash(node:*)",
+      "Bash(timeout:*)"
     ],
     "deny": [],
     "ask": []

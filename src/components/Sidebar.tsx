@@ -185,10 +185,11 @@ export default function Sidebar({ onNavigate }: SidebarProps = {}) {
         </button>
       </div>
       {/* リアルタイム検索ボックス */}
-      <div onClick={onNavigate}>
+      <div>
         <RealtimeSearch 
           placeholder="記事を検索..." 
           className="form-control"
+          onNavigate={onNavigate}
         />
       </div>
       
@@ -424,6 +425,14 @@ export default function Sidebar({ onNavigate }: SidebarProps = {}) {
               className="w-full flex items-center text-left hover:bg-primary-light hover:text-primary-dark transition-colors"
             >
               📝 エッセイ
+            </button>
+          </li>
+          <li>
+            <button
+              onClick={() => handleNavigation('/gallery')}
+              className="w-full flex items-center text-left hover:bg-primary-light hover:text-primary-dark transition-colors"
+            >
+              📷 メディアギャラリー
             </button>
           </li>
         </ul>

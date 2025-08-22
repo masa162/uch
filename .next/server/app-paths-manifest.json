@@ -1,3 +1,12 @@
 {
-  "/api/media/route": "app/api/media/route.js"
+  "/_not-found/page": "app/_not-found/page.js",
+  "/articles/[slug]/page": "app/articles/[slug]/page.js",
+  "/articles/page": "app/articles/page.js",
+  "/articles/new/page": "app/articles/new/page.js",
+  "/page": "app/page.js",
+  "/gallery/page": "app/gallery/page.js",
+  "/api/articles/route": "app/api/articles/route.js",
+  "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js",
+  "/api/articles/tags/route": "app/api/articles/tags/route.js",
+  "/api/articles/archive/hierarchy/route": "app/api/articles/archive/hierarchy/route.js"
 }

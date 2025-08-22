@@ -52,6 +52,7 @@ model User {
   likes         Like[]
   sessions      Session[]
   mediaFiles    MediaFile[]
+  uploadedMedia Media[]   @relation("MediaUploader")
 
   @@map("users")
 }
@@ -127,8 +128,65 @@ model MediaFile {
   @@map("media_files")
 }
 
+model Media {
+  id               String          @id @default(cuid())
+  uploaderId       String
+  originalFilename String
+  storageKey       String          @unique
+  mimeType         String
+  fileSize         Int?
+  status           MediaStatus     @default(PENDING)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  uploader         User            @relation("MediaUploader", fields: [uploaderId], references: [id], onDelete: Cascade)
+  optimizedFiles   MediaOptimized[]
+  tags             MediaTag[]
+
+  @@map("media")
+}
+
+model MediaOptimized {
+  id         String   @id @default(cuid())
+  mediaId    String
+  storageKey String   @unique
+  mimeType   String
+  width      Int?
+  height     Int?
+  fileSize   Int?
+  quality    String?  // "thumbnail", "medium", "large" など
+  createdAt  DateTime @default(now())
+  media      Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@map("media_optimized")
+}
+
+model MediaTag {
+  id       String @id @default(cuid())
+  mediaId  String
+  tag      String
+  confidence Float? // AI分析の信頼度 (0.0-1.0)
+  source   TagSource @default(MANUAL)
+  createdAt DateTime @default(now())
+  media    Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@unique([mediaId, tag])
+  @@map("media_tags")
+}
+
 enum Role {
   USER
   ADMIN
   GUEST
+}
+
+enum MediaStatus {
+  PENDING    // アップロード完了、最適化待ち
+  PROCESSING // AI執事が処理中
+  OPTIMIZED  // 最適化完了
+  ERROR      // 処理エラー
+}
+
+enum TagSource {
+  MANUAL // ユーザーが手動で追加
+  AI     // AI分析により自動追加
 }

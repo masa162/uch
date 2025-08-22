@@ -20,9 +20,10 @@ interface SearchResult {
 interface RealtimeSearchProps {
   placeholder?: string
   className?: string
+  onNavigate?: () => void
 }
 
-const RealtimeSearch = ({ placeholder = "記事を検索...", className = "" }: RealtimeSearchProps) => {
+const RealtimeSearch = ({ placeholder = "記事を検索...", className = "", onNavigate }: RealtimeSearchProps) => {
   const [query, setQuery] = useState('')
   const [isOpen, setIsOpen] = useState(false)
   const [selectedIndex, setSelectedIndex] = useState(-1)
@@ -87,6 +88,7 @@ const RealtimeSearch = ({ placeholder = "記事を検索...", className = "" }: 
     setQuery('')
     setIsOpen(false)
     clearResults()
+    onNavigate?.()
   }
 
   const handleSearchSubmit = () => {
@@ -95,6 +97,7 @@ const RealtimeSearch = ({ placeholder = "記事を検索...", className = "" }: 
       setQuery('')
       setIsOpen(false)
       clearResults()
+      onNavigate?.()
     }
   }
 
