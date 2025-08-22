@@ -8,3 +8,4 @@ docs/認証情報/
 .env.local
 .env.*.local
 .next/
+scripts/ai-butler/uchinokiroku-a4746b0aff28.json
