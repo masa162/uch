@@ -96,6 +96,7 @@ jobs:
             
             echo "🚀 Starting deployment..."
             
+            # **この行が抜けていました。必ず追加してください。**
             cd ${{ secrets.VPS_PROJECT_PATH }}
             
             echo "🔐 Logging in to registry..."
@@ -105,7 +106,7 @@ jobs:
             docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
             
             echo "🚢 Deploying application..."
-            # ハイフンをスペースに変更
+            # これで正しいディレクトリで実行されます
             docker compose up -d --force-recreate
             
             echo "🧹 Cleaning up old images..."
