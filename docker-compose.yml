@@ -1,47 +1,39 @@
-services:
-  # PostgreSQL Database
-  db:
-    image: postgres:16-alpine
-    container_name: uch-db
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: uch_dev
-      POSTGRES_USER: uch_user
-      POSTGRES_PASSWORD: uch_password
-      PGDATA: /var/lib/postgresql/data/pgdata
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5433:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U uch_user -d uch_dev"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
+# docker-composeファイルのバージョンを指定
+version: '3.8'
 
-  # Next.js Application
+# ここに、起動したいコンテナ（サービス）を定義していく
+services:
+  # 1つ目のサービス：Next.jsアプリケーション
   app:
-    build: 
-      context: .
-      dockerfile: Dockerfile
-    container_name: uch-app
-    restart: unless-stopped
-    env_file:
-      - .env.local
-    environment:
-      - NODE_ENV=production
+    # 現在のディレクトリにあるDockerfileを使ってイメージをビルドする
+    build: .
+    # コンテナに`my-app-container`という名前を付ける
+    container_name: my-app-container
+    # ポートフォワーディング：ホストの3000番をコンテナの3000番に繋ぐ
     ports:
       - "3000:3000"
+    # .envファイルから環境変数を読み込む
+    env_file:
+      - .env
+    # dbサービスが起動してからappサービスを起動するように依存関係を設定
     depends_on:
-      db:
-        condition: service_healthy
+      - db
+
+  # 2つ目のサービス：PostgreSQLデータベース
+  db:
+    # Docker Hubにある公式のpostgresイメージのバージョン16-alpineを使用する
+    image: postgres:16-alpine
+    # コンテナに`my-db-container`という名前を付ける
+    container_name: my-db-container
+    # データを永続化するために、db-dataという名前のVolumeをコンテナの/var/lib/postgresql/dataに接続する
     volumes:
-      - ./uploads:/app/uploads  # 将来の画像アップロード用
+      - db-data:/var/lib/postgresql/data
+    # .envファイルからDBのパスワードなどを環境変数として読み込む
+    env_file:
+      - .env
+    # コンテナがクラッシュしても自動的に再起動する
+    restart: always
 
+# データの永続化に使うVolumeを定義
 volumes:
-  postgres_data:
-    driver: local
-
-networks:
-  default:
-    driver: bridge
+  db-data:

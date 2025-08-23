@@ -1,64 +1,68 @@
-# Next.js Production Dockerfile (Minimal)
-FROM node:20-alpine AS base
-RUN apk add --no-cache openssl
+# ==============================================================================
+# STAGE 1: ビルダーステージ (家の建築作業場)
+# ==============================================================================
+# "AS builder" で、このステージに "builder" という名前を付けています
+FROM node:20-alpine AS builder
 
-# Install dependencies only when needed
-FROM base AS deps
-RUN apk add --no-cache libc6-compat python3 make g++
-WORKDIR /app
-COPY package.json package-lock.json* ./ 
-RUN npm ci
+# パッケージマネージャとしてpnpmを指定 (npmやyarnの場合は適宜変更してください)
+# RUN npm install -g pnpm
 
-# Rebuild the source code only when needed
-FROM base AS builder
-RUN apk add --no-cache libc6-compat python3 make g++
+# アプリケーションの作業ディレクトリを設定
 WORKDIR /app
-COPY package.json package-lock.json* ./ 
+
+# 依存関係の定義ファイルだけを先にコピー
+COPY package.json package-lock.json ./
+# COPY package.json pnpm-lock.yaml ./   # pnpmの場合
+# COPY package.json yarn.lock ./          # yarnの場合
+
+# 依存関係をインストール (開発用のものも含む)
+# RUN pnpm install --frozen-lockfile
 RUN npm ci
+# npmの場合
+# RUN yarn install --frozen-lockfile     # yarnの場合
+
+# アプリの全ソースコードをコピー
 COPY . .
-# Set NEXT_PUBLIC_SKIP_AUTH for build time
-ARG NEXT_PUBLIC_SKIP_AUTH
-ENV NEXT_PUBLIC_SKIP_AUTH=$NEXT_PUBLIC_SKIP_AUTH
-# Generate Prisma client first, then build
-RUN npx prisma generate
-RUN npm run build
 
-# Production image, copy all the files and run next
-FROM base AS runner
-RUN apk add --no-cache libc6-compat
+# Prisma Clientを生成
+RUN npx prisma generate
+
+# Next.jsアプリケーションを本番用にビルド
+# RUN pnpm build
+RUN npm run build
+# npmの場合
+# RUN yarn build                         # yarnの場合
+
+
+# ==============================================================================
+# STAGE 2: 最終ステージ (完成品を置く本番の土地)
+# ==============================================================================
+FROM node:20-alpine
+
+# アプリケーションの作業ディレクトリを設定
 WORKDIR /app
 
+# Next.jsの実行に必要な環境変数を設定
 ENV NODE_ENV=production
-ENV NEXT_TELEMETRY_DISABLED=1
 
+# ビルダーステージから、standaloneモードで出力された実行ファイル群をコピー
+# --chown=nextjs:nodejs はセキュリティのための設定で、一般ユーザーで実行するようにします
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+# 一般ユーザー 'nextjs' を作成し、それに切り替え
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./ 
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-COPY --from=builder --chown=nextjs:nodejs /app/public ./public
-
-# Copy Prisma files
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
-COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
-
-# Copy bcrypt and other native modules
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/bcrypt ./node_modules/bcrypt
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/bcryptjs ./node_modules/bcryptjs
+# /app ディレクトリ全体の所有権を強制的に nextjs ユーザーに変更
+RUN chown -R nextjs:nodejs /app
 
 USER nextjs
 
-# Copy start-with-env.sh and make it executable
-COPY --chown=nextjs:nodejs start-with-env.sh ./start-with-env.sh
-USER root
-RUN chmod +x ./start-with-env.sh
-USER nextjs
-
+# 公開するポート番号を指定
 EXPOSE 3000
 
-ENV PORT=3000
-ENV HOSTNAME="0.0.0.0"
-
-# Run Prisma migration and start the server using start-with-env.sh
-CMD ["/bin/sh", "./start-with-env.sh"]
+# コンテナが起動したときに実行される最終コマンド
+# standaloneモードで生成されたサーバーを起動します
+CMD ["node", "server.js"]
