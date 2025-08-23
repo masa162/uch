@@ -96,7 +96,6 @@ jobs:
             
             echo "🚀 Starting deployment..."
             
-            # **この行が抜けていました。必ず追加してください。**
             cd ${{ secrets.VPS_PROJECT_PATH }}
             
             echo "🔐 Logging in to registry..."
@@ -105,24 +104,23 @@ jobs:
             echo "📦 Pulling new image..."
             docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
             
-            echo "🚢 Deploying application..."
+            echo "🚢 Starting deployment process..."
 
-            # --- ここからが新しいクリーンアップ処理 ---
-            # 1. まずdocker-composeで管理されているコンテナを安全に停止・削除
-            echo "🛑 Stopping existing services..."
-            docker compose down || true
+            # --- 最終版クリーンアップ処理 ---
+            # 1. 関連するコンテナと孤児コンテナをすべて停止・削除
+            echo "🛑 Stopping all related services..."
+            docker compose down --remove-orphans || true
 
-            # 2. それでもポートを掴んでいるゴーストプロセスがいたら強制終了
-            echo "🧹 Forcefully freeing up port 3000..."
-            lsof -t -i:3000 | xargs kill -9 || true
+            # 2. Dockerデーモンがポートを解放するのを数秒だけ待つ
+            echo "⏱️ Waiting for ports to be freed..."
+            sleep 5
             # ------------------------------------
 
             # クリーンな状態でアプリケーションを起動
             echo "✨ Starting new services..."
+            docker compose up -d
             
-            docker compose up -d --force-recreate
-            
-            echo "🧹 Cleaning up old images..."
+            echo "🧼 Cleaning up old images..."
             docker image prune -f
             
             echo "🎉 Deployment completed successfully!"
