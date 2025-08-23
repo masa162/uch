@@ -106,7 +106,10 @@ jobs:
             docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
             
             echo "🚢 Deploying application..."
-            # これで正しいディレクトリで実行されます
+
+            # 念のため、ポート3000を使用している古いプロセスを強制終了させます
+            lsof -t -i:3000 | xargs kill -9 || true
+            
             docker compose up -d --force-recreate
             
             echo "🧹 Cleaning up old images..."
