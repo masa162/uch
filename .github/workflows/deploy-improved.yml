@@ -96,21 +96,17 @@ jobs:
             
             echo "🚀 Starting deployment..."
             
-            # secretsからプロジェクトのパスを取得して移動
             cd ${{ secrets.VPS_PROJECT_PATH }}
             
             echo "🔐 Logging in to registry..."
-            # secretsからトークンを読み込み、安全にログイン
             echo ${{ secrets.CR_PAT }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             
             echo "📦 Pulling new image..."
-            # :latest タグのイメージをプルする
             docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
             
             echo "🚢 Deploying application..."
-            # docker-compose.yml を使って起動
-            # （docker-compose.yml側で 'image: ghcr.io/masa162/uch:latest' を使うようにしておきます）
-            docker-compose up -d --force-recreate
+            # ハイフンをスペースに変更
+            docker compose up -d --force-recreate
             
             echo "🧹 Cleaning up old images..."
             docker image prune -f
