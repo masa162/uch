@@ -107,8 +107,18 @@ jobs:
             
             echo "🚢 Deploying application..."
 
-            # 念のため、ポート3000を使用している古いプロセスを強制終了させます
+            # --- ここからが新しいクリーンアップ処理 ---
+            # 1. まずdocker-composeで管理されているコンテナを安全に停止・削除
+            echo "🛑 Stopping existing services..."
+            docker compose down || true
+
+            # 2. それでもポートを掴んでいるゴーストプロセスがいたら強制終了
+            echo "🧹 Forcefully freeing up port 3000..."
             lsof -t -i:3000 | xargs kill -9 || true
+            # ------------------------------------
+
+            # クリーンな状態でアプリケーションを起動
+            echo "✨ Starting new services..."
             
             docker compose up -d --force-recreate
             
