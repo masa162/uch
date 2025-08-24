@@ -111,9 +111,27 @@ jobs:
             echo "🛑 Stopping all related services..."
             docker compose down --remove-orphans || true
 
-            # 2. Dockerデーモンがポートを解放するのを数秒だけ待つ
-            echo "⏱️ Waiting for ports to be freed..."
-            sleep 5
+            # 2. ポート3000を使用中のプロセスを強制終了
+            echo "🔪 Killing processes using port 3000..."
+            sudo fuser -k 3000/tcp || true
+            
+            # 3. ポートが完全に解放されるまで待機
+            echo "⏱️ Waiting for port to be completely freed..."
+            timeout=30
+            while [ $timeout -gt 0 ]; do
+                if ! ss -tulpn | grep -q :3000; then
+                    echo "✅ Port 3000 is now free"
+                    break
+                fi
+                echo "⏳ Port 3000 still in use, waiting... ($timeout seconds left)"
+                sleep 2
+                timeout=$((timeout - 2))
+            done
+            
+            if ss -tulpn | grep -q :3000; then
+                echo "❌ Warning: Port 3000 still in use after timeout"
+                ss -tulpn | grep :3000
+            fi
             # ------------------------------------
 
             # クリーンな状態でアプリケーションを起動
