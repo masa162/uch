@@ -152,7 +152,7 @@ services:
 volumes:
   db-data:
 EOF
-
+            
             # --- 最終版クリーンアップ処理 ---
             # 1. 関連するコンテナと孤児コンテナをすべて停止・削除
             echo "🛑 Stopping all related services..."
