@@ -122,6 +122,36 @@ jobs:
             fi
             
             echo "🚢 Starting deployment process..."
+            
+            # --- Production docker-compose setup ---
+            echo "📝 Creating production docker-compose file..."
+            cat > docker-compose.prod.yml << 'EOF'
+            version: '3.8'
+            
+            services:
+              app:
+                image: ghcr.io/masa162/uch:latest
+                container_name: my-app-container
+                ports:
+                  - "3000:3000"
+                env_file:
+                  - .env
+                depends_on:
+                  - db
+                restart: unless-stopped
+            
+              db:
+                image: postgres:16-alpine
+                container_name: my-db-container
+                volumes:
+                  - db-data:/var/lib/postgresql/data
+                env_file:
+                  - .env
+                restart: always
+            
+            volumes:
+              db-data:
+            EOF
 
             # --- 最終版クリーンアップ処理 ---
             # 1. 関連するコンテナと孤児コンテナをすべて停止・削除
