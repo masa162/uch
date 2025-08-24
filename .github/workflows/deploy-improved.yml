@@ -104,6 +104,23 @@ jobs:
             echo "📦 Pulling new image..."
             docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
             
+            echo "🔧 Updating environment variables..."
+            # Ensure PostgreSQL environment variables are set
+            if ! grep -q "POSTGRES_PASSWORD" .env 2>/dev/null; then
+                echo "DATABASE_URL=\"postgresql://postgres:password@db:5432/uch_db\"" > .env.tmp
+                echo "" >> .env.tmp
+                echo "# PostgreSQL Configuration" >> .env.tmp
+                echo "POSTGRES_DB=uch_db" >> .env.tmp
+                echo "POSTGRES_USER=postgres" >> .env.tmp
+                echo "POSTGRES_PASSWORD=password" >> .env.tmp
+                echo "" >> .env.tmp
+                # Append existing .env content if it exists
+                if [ -f .env ]; then
+                    tail -n +2 .env >> .env.tmp
+                fi
+                mv .env.tmp .env
+            fi
+            
             echo "🚢 Starting deployment process..."
 
             # --- 最終版クリーンアップ処理 ---
