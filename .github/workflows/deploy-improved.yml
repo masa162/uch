@@ -125,33 +125,31 @@ jobs:
             
             # --- Production docker-compose setup ---
             echo "📝 Creating production docker-compose file..."
-            cat > docker-compose.prod.yml << 'EOF'
-version: '3.8'
-
-services:
-  app:
-    image: ghcr.io/masa162/uch:latest
-    container_name: my-app-container
-    ports:
-      - "3000:3000"
-    env_file:
-      - .env
-    depends_on:
-      - db
-    restart: unless-stopped
-
-  db:
-    image: postgres:16-alpine
-    container_name: my-db-container
-    volumes:
-      - db-data:/var/lib/postgresql/data
-    env_file:
-      - .env
-    restart: always
-
-volumes:
-  db-data:
-EOF
+            echo "version: '3.8'" > docker-compose.prod.yml
+            echo "" >> docker-compose.prod.yml
+            echo "services:" >> docker-compose.prod.yml
+            echo "  app:" >> docker-compose.prod.yml
+            echo "    image: ghcr.io/masa162/uch:latest" >> docker-compose.prod.yml
+            echo "    container_name: my-app-container" >> docker-compose.prod.yml
+            echo "    ports:" >> docker-compose.prod.yml
+            echo "      - \"3000:3000\"" >> docker-compose.prod.yml
+            echo "    env_file:" >> docker-compose.prod.yml
+            echo "      - .env" >> docker-compose.prod.yml
+            echo "    depends_on:" >> docker-compose.prod.yml
+            echo "      - db" >> docker-compose.prod.yml
+            echo "    restart: unless-stopped" >> docker-compose.prod.yml
+            echo "" >> docker-compose.prod.yml
+            echo "  db:" >> docker-compose.prod.yml
+            echo "    image: postgres:16-alpine" >> docker-compose.prod.yml
+            echo "    container_name: my-db-container" >> docker-compose.prod.yml
+            echo "    volumes:" >> docker-compose.prod.yml
+            echo "      - db-data:/var/lib/postgresql/data" >> docker-compose.prod.yml
+            echo "    env_file:" >> docker-compose.prod.yml
+            echo "      - .env" >> docker-compose.prod.yml
+            echo "    restart: always" >> docker-compose.prod.yml
+            echo "" >> docker-compose.prod.yml
+            echo "volumes:" >> docker-compose.prod.yml
+            echo "  db-data:" >> docker-compose.prod.yml
             
             # --- 最終版クリーンアップ処理 ---
             # 1. 関連するコンテナと孤児コンテナをすべて停止・削除
