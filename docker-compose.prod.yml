@@ -1,0 +1,27 @@
+# Production docker-compose file
+version: '3.8'
+
+services:
+  app:
+    # Use the built image from GitHub Container Registry
+    image: ghcr.io/masa162/uch:latest
+    container_name: my-app-container
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    depends_on:
+      - db
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    container_name: my-db-container
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    env_file:
+      - .env
+    restart: always
+
+volumes:
+  db-data:

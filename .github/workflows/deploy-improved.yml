@@ -126,7 +126,7 @@ jobs:
             # --- 最終版クリーンアップ処理 ---
             # 1. 関連するコンテナと孤児コンテナをすべて停止・削除
             echo "🛑 Stopping all related services..."
-            docker compose down --remove-orphans || true
+            docker compose -f docker-compose.prod.yml down --remove-orphans || true
 
             # 2. ポート3000を使用中のプロセスを強制終了
             echo "🔪 Killing processes using port 3000..."
@@ -153,7 +153,7 @@ jobs:
 
             # クリーンな状態でアプリケーションを起動
             echo "✨ Starting new services..."
-            docker compose up -d
+            docker compose -f docker-compose.prod.yml up -d
             
             echo "🧼 Cleaning up old images..."
             docker image prune -f
