@@ -12,9 +12,14 @@ export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   debug: process.env.NODE_ENV === 'development' || process.env.NEXTAUTH_DEBUG === 'true',
   providers: [
+    // Google OAuth (開発・本番共通)
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID || "",
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+    }),
     ...(process.env.NODE_ENV === 'development'
       ? [
-          // 開発環境ではダミーのCredentialsProviderのみ
+          // 開発環境では追加のCredentialsProviderも提供
           CredentialsProvider({
             name: "Development Credentials",
             credentials: {
@@ -58,11 +63,7 @@ export const authOptions: NextAuthOptions = {
           }),
         ]
       : [
-          // 本番環境用のプロバイダー
-          GoogleProvider({
-            clientId: process.env.GOOGLE_CLIENT_ID || "",
-            clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
-          }),
+          // 本番環境ではLINEログインも追加
           LineProvider({
             clientId: process.env.LINE_CLIENT_ID || "",
             clientSecret: process.env.LINE_CLIENT_SECRET || "",

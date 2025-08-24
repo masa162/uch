@@ -35,7 +35,8 @@
       "Bash(mv:*)",
       "Bash(npm install:*)",
       "Bash(node:*)",
-      "Bash(timeout:*)"
+      "Bash(timeout:*)",
+      "Read(//Users/nakayamamasayuki/Documents/ss/**)"
     ],
     "deny": [],
     "ask": []

@@ -25,8 +25,10 @@
 2. **名前**: うちのきろく Web Client
 3. **承認済みの JavaScript 生成元**:
    - `http://localhost:3000`
+   - `https://uchinokiroku.com`
 4. **承認済みのリダイレクト URI**:
-   - `http://localhost:3000/api/auth/callback/google`
+   - `http://localhost:3000/api/auth/callback/google` （開発環境）
+   - `https://uchinokiroku.com/api/auth/callback/google` （本番環境）
 
 ### 4. 環境変数に設定
 
@@ -158,5 +160,37 @@ NEXTAUTH_URL=https://uchinokiroku.com
 
 ---
 
-*最終更新: 2025年8月9日*  
+## 🔧 トラブルシューティング履歴
+
+### `redirect_uri_mismatch` エラー解決 (2025-08-24)
+
+**問題概要:**
+Google OAuth認証時に「400: redirect_uri_mismatch」エラーが発生。
+
+**原因分析:**
+1. `.env`ファイルで`NEXTAUTH_URL=http://localhost:3001`となっていたが、実際のアプリケーションは3000ポートで動作
+2. 開発環境でGoogle OAuthプロバイダーが無効化されていた
+3. Google Cloud Consoleのリダイレクト URI設定が不完全
+
+**解決策:**
+1. **NEXTAUTH_URL修正**: `http://localhost:3000`に変更
+2. **auth.ts修正**: 開発・本番環境でGoogle OAuthを共通利用
+3. **Google Cloud Console設定**: 開発・本番両方のリダイレクトURIを登録
+
+**修正後の設定:**
+```typescript
+// 開発・本番共通でGoogle OAuthを有効化
+GoogleProvider({
+  clientId: process.env.GOOGLE_CLIENT_ID || "",
+  clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+})
+```
+
+**Google Cloud Consoleリダイレクト URI:**
+- 開発環境: `http://localhost:3000/api/auth/callback/google`
+- 本番環境: `https://uchinokiroku.com/api/auth/callback/google`
+
+---
+
+*最終更新: 2025年8月24日*  
 *「家族みんなが使いやすい認証システム」を目指して 🏠💝*
