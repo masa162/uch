@@ -1,0 +1,2 @@
+プロジェクト名,ドメイン名,担当コンテナ,外部ポート (Internet),プロキシポート (Nginx),コンテナポート (Docker),内部ポート (App),関連DBコンテナ,DBポート,備考
+うちのきろく,uchinokiroku.com,my-app-container,80/443,3000,3000,3000,my-db-container (PostgreSQL),5432,Next.js + Prisma + SSL証明書

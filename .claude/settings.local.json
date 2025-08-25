@@ -36,7 +36,13 @@
       "Bash(npm install:*)",
       "Bash(node:*)",
       "Bash(timeout:*)",
-      "Read(//Users/nakayamamasayuki/Documents/ss/**)"
+      "Read(//Users/nakayamamasayuki/Documents/ss/**)",
+      "Bash(nmap:*)",
+      "Bash(nc:*)",
+      "Bash(echo:*)",
+      "Bash(for port in 22 2222 2200 10022)",
+      "Bash(do echo \"Testing port $port:\")",
+      "Bash(nslookup:*)"
     ],
     "deny": [],
     "ask": []
