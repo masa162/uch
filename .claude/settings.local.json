@@ -42,7 +42,11 @@
       "Bash(echo:*)",
       "Bash(for port in 22 2222 2200 10022)",
       "Bash(do echo \"Testing port $port:\")",
-      "Bash(nslookup:*)"
+      "Bash(nslookup:*)",
+      "Bash(open:*)",
+      "Bash(DATABASE_URL=\"postgresql://postgres:password@localhost:5432/uch_db\" npx prisma migrate dev --name add_displayName)",
+      "Bash(break)",
+      "Bash(scp:*)"
     ],
     "deny": [],
     "ask": []

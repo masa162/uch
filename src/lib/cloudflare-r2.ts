@@ -4,14 +4,14 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 // Cloudflare R2クライアントの設定
 const r2Client = new S3Client({
   region: 'auto',
-  endpoint: process.env.CLOUDFLARE_R2_ENDPOINT,
+  endpoint: process.env.R2_ENDPOINT,
   credentials: {
-    accessKeyId: process.env.CLOUDFLARE_R2_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY!,
+    accessKeyId: process.env.R2_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
   },
 })
 
-const BUCKET_NAME = process.env.CLOUDFLARE_R2_BUCKET_NAME!
+const BUCKET_NAME = process.env.R2_BUCKET_NAME!
 
 /**
  * ファイルをCloudflare R2にアップロード
@@ -34,7 +34,7 @@ export async function uploadToR2(
     const result = await r2Client.send(command)
     
     // 公開URLを返す
-    const publicUrl = `${process.env.CLOUDFLARE_R2_PUBLIC_URL}/${key}`
+    const publicUrl = `${process.env.R2_PUBLIC_URL}/${key}`
     
     return {
       success: true,
@@ -94,7 +94,7 @@ export async function deleteFromR2(key: string) {
  * ファイルの公開URLを取得
  */
 export function getPublicUrl(key: string): string {
-  return `${process.env.CLOUDFLARE_R2_PUBLIC_URL}/${key}`
+  return `${process.env.R2_PUBLIC_URL}/${key}`
 }
 
 /**

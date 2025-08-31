@@ -12,19 +12,19 @@
 ### 本番環境
 - **データベース**: PostgreSQL 16
 - **ホスト**: ConoHa VPS (160.251.136.92)
-- **接続先**: `postgresql://uch_user:uch_password@db:5432/uch_dev?schema=public`
+- **接続先**: `postgresql://uch_user:uch_password@db:5432/uch_db?schema=public`
 - **Docker Container**: `my-db-container`
 
 ### 開発環境 
 - **データベース**: PostgreSQL (ローカル)
-- **接続先**: `postgresql://postgres:password@localhost:5432/uch_dev?schema=public`
+- **接続先**: `postgresql://postgres:password@localhost:5432/uch_db?schema=public`
 - **セットアップ**: 
   ```bash
   # PostgreSQL起動（Docker使用例）
-  docker run --name postgres-dev -e POSTGRES_PASSWORD=password -e POSTGRES_DB=uch_dev -p 5432:5432 -d postgres:16
+  docker run --name postgres-dev -e POSTGRES_PASSWORD=password -e POSTGRES_DB=uch_db -p 5432:5432 -d postgres:16
   
   # 環境変数設定（.env.local）
-  DATABASE_URL="postgresql://postgres:password@localhost:5432/uch_dev?schema=public"
+  DATABASE_URL="postgresql://postgres:password@localhost:5432/uch_db?schema=public"
   ```
 
 ## データベース設計
@@ -235,10 +235,10 @@ CREATE INDEX media_status_idx ON media(status);
 ### バックアップ手順（TODO）
 ```bash
 # VPS上でのバックアップ例
-docker exec my-db-container pg_dump -U uch_user -d uch_dev > backup_$(date +%Y%m%d).sql
+docker exec my-db-container pg_dump -U uch_user -d uch_db > backup_$(date +%Y%m%d).sql
 
 # 復旧例
-docker exec -i my-db-container psql -U uch_user -d uch_dev < backup_YYYYMMDD.sql
+docker exec -i my-db-container psql -U uch_user -d uch_db < backup_YYYYMMDD.sql
 ```
 
 ### 障害時復旧手順

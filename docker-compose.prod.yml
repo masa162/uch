@@ -14,6 +14,19 @@ services:
       - db
     restart: unless-stopped
 
+  ai-butler:
+    build: 
+      context: ./scripts/ai-butler
+      dockerfile: Dockerfile
+    container_name: my-ai-butler-container
+    env_file:
+      - ./scripts/ai-butler/.env
+    depends_on:
+      - db
+    restart: unless-stopped
+    volumes:
+      - butler-temp:/app/temp
+
   db:
     image: postgres:16-alpine
     container_name: my-db-container
@@ -25,3 +38,4 @@ services:
 
 volumes:
   db-data:
+  butler-temp:
