@@ -27,6 +27,9 @@ COPY . .
 # Prisma Clientを生成
 RUN npx prisma generate
 
+# Next.jsの実行に必要な環境変数を設定 (ビルド時)
+ENV NEXTAUTH_URL=https://uchinokiroku.com
+
 # Next.jsアプリケーションを本番用にビルド
 # RUN pnpm build
 RUN npm run build
