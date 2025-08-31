@@ -1,7 +1,9 @@
 #!/bin/sh
 
-echo "Syncing database schema..."
-npx prisma db push --skip-generate || echo "Database sync failed or already synced"
+set -e
+
+echo "Applying database migrations..."
+npx prisma migrate deploy
 
 echo "Starting Next.js server..."
 exec node server.js

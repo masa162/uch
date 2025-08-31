@@ -1,5 +1,34 @@
 # デプロイ関連 (Docker, VPS) 知見集
 
+## 2025年8月31日: デプロイ成功のための必須ファイル (TSK-095)
+
+### 概要
+デプロイプロセスを安定させるため、`Dockerfile`を修正し、本番用Dockerイメージに必要なファイルがすべて含まれるように改善した。
+
+### 問題
+従来の`Dockerfile`では、Next.jsのビルド成果物のみが最終イメージにコピーされていた。そのため、本番環境で`docker exec`を使ってコンテナに入り、Prismaのマイグレーションコマンド (`npx prisma migrate deploy`) を実行しようとすると、`prisma/schema.prisma`やマイグレーションファイルが見つからずに失敗していた。
+
+### 解決策
+`Dockerfile`の最終ステージに、`prisma`ディレクトリをコピーする`COPY`命令を追加した。
+
+```Dockerfile
+# (前略)
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+# Prismaスキーマとマイグレーションファイルをコピー（データベースマイグレーション用）
+COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
+
+# (後略)
+```
+
+### 教訓
+- **Dockerイメージには実行時に必要なファイルをすべて含める**: Next.jsアプリケーションの実行自体には不要でも、データベースマイグレーションのような運用上必要なコマンドが依存するファイル（`prisma`ディレクトリなど）は、すべて最終イメージに含める必要がある。
+- **手動コピーからの脱却**: この修正により、デプロイごとに`docker cp`コマンドで手動でファイルをコンテナにコピーする手間がなくなり、デプロイプロセスがよりシンプルで再現性の高いものになった。
+
+---
+
+
 ## 2025年8月18日: 本番環境でのPrismaマイグレーション安定化 (TSK-046) からの知見
 
 ### 1. 概要

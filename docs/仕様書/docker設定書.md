@@ -15,6 +15,23 @@
 - サービス名: `db`
 - ポート: `5432`
 
+## Dockerfileの構造
+プロジェクトの`Dockerfile`は、Next.jsの公式ドキュメントで推奨されているマルチステージビルドを採用しています。これにより、最終的な本番イメージのサイズを最小限に抑えています。
+
+1.  **`builder`ステージ**:
+    *   依存関係のインストール (`npm install`)
+    *   アプリケーションのビルド (`npm run build`)
+    *   このステージには、ビルドに必要なすべての開発ツールとソースコードが含まれます。
+
+2.  **最終ステージ**:
+    *   `builder`ステージから、ビルドされた成果物（`.next/standalone`, `.next/static`, `public`）のみをコピーします。
+    *   **重要な注意点**: データベースのマイグレーションをコンテナ内で実行可能にするため、`prisma`ディレクトリも`builder`ステージからコピーする必要があります。
+        ```Dockerfile
+        # Prismaスキーマとマイグレーションファイルをコピー（データベースマイグレーション用）
+        COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
+        ```
+    *   この設定により、デプロイ時に`docker exec`等でコンテナに入り、`npx prisma migrate deploy`のようなコマンドを実行できるようになります。これが含まれていない場合、マイグレーションは失敗します。
+
 ## 備考
 - 開発環境では `docker-compose.yml` を使用。
-- 本番環境では別途デプロイメント戦略を検討。
+- 本番環境では `docker-compose.prod.yml` を使用し、本ドキュメントと`Dockerfile`に基づいたイメージをビルドします。
