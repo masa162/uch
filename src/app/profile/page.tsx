@@ -34,8 +34,7 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState(false)
   const [formData, setFormData] = useState({
-    name: '',
-    username: ''
+    name: ''
   })
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
@@ -82,8 +81,7 @@ export default function ProfilePage() {
         const data = await response.json()
         setProfile(data)
         setFormData({
-          name: data.name || '',
-          username: data.username || ''
+          name: data.name || ''
         })
       } else {
         setError('プロフィールの取得に失敗しました')
@@ -189,21 +187,6 @@ export default function ProfilePage() {
                   />
                 </div>
 
-                <div className="form-control">
-                  <label className="label">
-                    <span className="label-text">ユーザー名</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.username}
-                    onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value }))}
-                    className="input input-bordered"
-                    placeholder="ユーザー名を入力してください"
-                  />
-                  <label className="label">
-                    <span className="label-text-alt">半角英数字とアンダースコアが使用できます</span>
-                  </label>
-                </div>
 
                 <div className="flex gap-2 justify-end">
                   <button
@@ -211,8 +194,7 @@ export default function ProfilePage() {
                     onClick={() => {
                       setEditing(false)
                       setFormData({
-                        name: profile.name || '',
-                        username: profile.username || ''
+                        name: profile.name || ''
                       })
                       setError(null)
                       setSuccess(null)
