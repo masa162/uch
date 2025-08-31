@@ -45,6 +45,7 @@ WORKDIR /app
 # Next.jsの実行に必要な環境変数を設定
 ENV NODE_ENV=production
 ENV NEXTAUTH_URL=https://uchinokiroku.com
+ENV NEXTAUTH_DEBUG=true
 
 # ビルダーステージから、standaloneモードで出力された実行ファイル群をコピー
 # --chown=nextjs:nodejs はセキュリティのための設定で、一般ユーザーで実行するようにします
