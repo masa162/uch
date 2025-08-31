@@ -21,7 +21,10 @@ services:
       - db-data:/var/lib/postgresql/data
     env_file:
       - .env.production
-    restart: always
+    environment:
+      - POSTGRES_USER=uch_user
+      - POSTGRES_PASSWORD=uch_password
+      - POSTGRES_DB=uch_dev
 
 volumes:
   db-data:
