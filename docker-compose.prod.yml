@@ -3,8 +3,8 @@ version: '3.8'
 
 services:
   app:
-    # Use the built image from GitHub Container Registry
-    image: ghcr.io/masa162/uch:latest
+    # image: ghcr.io/masa162/uch:latest
+    build: .
     container_name: my-app-container
     ports:
       - "3000:3000"
