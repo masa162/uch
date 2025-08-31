@@ -51,6 +51,9 @@ COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
+# Prismaスキーマとマイグレーションファイルをコピー（データベースマイグレーション用）
+COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
+
 # 一般ユーザー 'nextjs' を作成し、それに切り替え
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
