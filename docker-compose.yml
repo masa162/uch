@@ -13,8 +13,7 @@ services:
     ports:
       - "3000:3000"
     # .envファイルから環境変数を読み込む
-    env_file:
-      - .env
+
     # dbサービスが起動してからappサービスを起動するように依存関係を設定
     depends_on:
       - db
@@ -29,8 +28,7 @@ services:
     volumes:
       - db-data:/var/lib/postgresql/data
     # .envファイルからDBのパスワードなどを環境変数として読み込む
-    env_file:
-      - .env
+
     # コンテナがクラッシュしても自動的に再起動する
     restart: always
 
