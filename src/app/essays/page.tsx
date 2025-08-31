@@ -15,6 +15,7 @@ interface Article {
   author: {
     name: string | null
     email: string | null
+    displayName: string | null
   }
   _count: {
     comments: number
@@ -172,7 +173,7 @@ export default function EssayPage() {
                     {/* メタ情報 */}
                     <div className="flex items-center justify-between text-sm text-gray-500">
                       <div className="flex items-center space-x-4">
-                        <span>👤 {article.author.name || article.author.email}</span>
+                        <span>👤 {article.author.displayName || article.author.name || article.author.email}</span>
                         <span>📅 {formatDate(article.pubDate)}</span>
                       </div>
                       <div className="flex items-center space-x-4">

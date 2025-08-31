@@ -11,6 +11,7 @@ interface Article {
   pubDate: string
   author: {
     name: string | null
+    displayName: string | null
   }
 }
 
@@ -124,7 +125,7 @@ export default function TagPage() {
                 <div className="flex items-center space-x-4 text-sm text-gray-600">
                   <div className="flex items-center">
                     <span className="mr-1">👤</span>
-                    <span>{article.author.name || '匿名'}</span>
+                    <span>{article.author.displayName || article.author.name || '匿名'}</span>
                   </div>
                   <div className="flex items-center">
                     <span className="mr-1">📅</span>

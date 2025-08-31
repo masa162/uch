@@ -7,6 +7,7 @@ import AuthenticatedLayout from '@/components/AuthenticatedLayout'
 interface ProfileData {
   id: string
   name?: string | null
+  displayName?: string | null
   email?: string | null
   image?: string | null
   username?: string | null
@@ -34,7 +35,7 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState(false)
   const [formData, setFormData] = useState({
-    name: ''
+    displayName: ''
   })
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
@@ -81,7 +82,7 @@ export default function ProfilePage() {
         const data = await response.json()
         setProfile(data)
         setFormData({
-          name: data.name || ''
+          displayName: data.displayName || ''
         })
       } else {
         setError('プロフィールの取得に失敗しました')
@@ -176,14 +177,14 @@ export default function ProfilePage() {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="form-control">
                   <label className="label">
-                    <span className="label-text">名前</span>
+                    <span className="label-text">表示名</span>
                   </label>
                   <input
                     type="text"
-                    value={formData.name}
-                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                    value={formData.displayName}
+                    onChange={(e) => setFormData(prev => ({ ...prev, displayName: e.target.value }))}
                     className="input input-bordered"
-                    placeholder="お名前を入力してください"
+                    placeholder="表示名を入力してください"
                   />
                 </div>
 
@@ -194,7 +195,7 @@ export default function ProfilePage() {
                     onClick={() => {
                       setEditing(false)
                       setFormData({
-                        name: profile.name || ''
+                        displayName: profile.displayName || ''
                       })
                       setError(null)
                       setSuccess(null)
@@ -214,11 +215,11 @@ export default function ProfilePage() {
                   <div className="inline-block">
                     <div className="avatar mb-4">
                       <div className="w-24 h-24 rounded-full bg-primary text-primary-content flex items-center justify-center text-3xl font-bold">
-                        {profile.name ? profile.name.charAt(0).toUpperCase() : '👤'}
+                        {(profile.displayName || profile.name) ? (profile.displayName || profile.name)!.charAt(0).toUpperCase() : '👤'}
                       </div>
                     </div>
                     <h2 className="text-2xl font-bold">
-                      {profile.name || 'お名前未設定'}
+                      {profile.displayName || profile.name || '表示名未設定'}
                     </h2>
                   </div>
                 </div>

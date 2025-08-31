@@ -5,11 +5,22 @@ import LineProvider from "next-auth/providers/line";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "./prisma";
 import bcrypt from "bcryptjs";
-import { Role } from '@prisma/client';
+import { Role, PrismaClient } from '@prisma/client';
+import { AdapterUser } from "next-auth/adapters";
 
 
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
+  adapter: {
+    ...PrismaAdapter(prisma as PrismaClient),
+    createUser: (data: Omit<AdapterUser, "id">) => {
+      return prisma.user.create({
+        data: {
+          ...data,
+          displayName: data.name, // name を displayName の初期値として設定
+        },
+      });
+    },
+  },
   debug: process.env.NODE_ENV === 'development' || process.env.NEXTAUTH_DEBUG === 'true',
   providers: [
     // Google OAuth (開発・本番共通)

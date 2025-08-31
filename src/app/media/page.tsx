@@ -16,6 +16,7 @@ interface MediaFile {
   user: {
     id: string
     name: string
+    displayName: string | null
     email: string
   }
 }
@@ -176,7 +177,7 @@ export default function MediaGalleryPage() {
                         <p><strong>サイズ:</strong> {formatFileSize(file.fileSize)}</p>
                         <p><strong>形式:</strong> {file.fileType}</p>
                         <p><strong>アップロード:</strong> {formatDate(file.createdAt)}</p>
-                        <p><strong>ユーザー:</strong> {file.user.name || file.user.email}</p>
+                        <p><strong>ユーザー:</strong> {file.user.displayName || file.user.name || file.user.email}</p>
                       </div>
 
                       {/* アクションボタン */}

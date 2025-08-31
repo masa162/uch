@@ -22,6 +22,7 @@ interface Article {
   author: {
     id: string
     name: string | null
+    displayName: string | null
     email: string
   }
   _count: {
@@ -38,6 +39,7 @@ interface Comment {
   user: {
     id: string
     name: string | null
+    displayName: string | null
     image: string | null
   }
 }
@@ -223,7 +225,7 @@ export default function ArticleDetailPage() {
           <div className="flex items-center space-x-6 text-sm text-gray-600 mb-6">
             <div className="flex items-center">
               <span className="mr-1">👤</span>
-              <span>{article.author.name || '匿名'}</span>
+              <span>{article.author.displayName || article.author.name || '匿名'}</span>
             </div>
             <div className="flex items-center">
               <span className="mr-1">📅</span>
@@ -346,7 +348,7 @@ export default function ArticleDetailPage() {
                 <div key={comment.id} className="bg-gray-50 p-4 rounded-lg">
                   <div className="flex items-center space-x-2 mb-2">
                     <span className="font-medium text-gray-800">
-                      {comment.user.name || '匿名'}
+                      {comment.user.displayName || comment.user.name || '匿名'}
                     </span>
                     <span className="text-sm text-gray-500">
                       {new Date(comment.createdAt).toLocaleDateString('ja-JP', {

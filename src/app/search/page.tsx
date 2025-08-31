@@ -18,6 +18,7 @@ interface Article {
   author: {
     name: string | null
     email: string
+    displayName: string | null
   }
 }
 
@@ -179,7 +180,7 @@ function SearchContent() {
                   <div className="flex items-center space-x-4">
                     <div className="flex items-center">
                       <span className="mr-1">👤</span>
-                      <span>{article.author.name || '匿名'}</span>
+                      <span>{article.author.displayName || article.author.name || '匿名'}</span>
                     </div>
                     <div className="flex items-center">
                       <span className="mr-1">📅</span>

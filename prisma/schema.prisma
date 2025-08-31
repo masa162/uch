@@ -38,7 +38,14 @@ model Session {
 
 model User {
   id            String    @id @default(cuid())
+
+  // @deprecated: アプリケーションロジックでは使用しない。認証プロバイダーからの生データ。
+  // 代わりに displayName を使用してください。
   name          String?
+
+  // [表示名] アプリケーション内で使用する唯一の表示名。
+  displayName   String?
+
   email         String?   @unique
   emailVerified DateTime?
   image         String?

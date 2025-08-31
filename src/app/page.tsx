@@ -19,6 +19,7 @@ interface Article {
   author: {
     name: string | null
     email: string | null
+    displayName: string | null
   }
 }
 
@@ -137,7 +138,7 @@ export default function HomePage() {
                     )}
                     <div className="card-actions justify-between items-center mt-4">
                       <div className="text-sm text-gray-500">
-                        <p>by {article.author.name || 'Unknown'}</p>
+                        <p>by {article.author.displayName || article.author.name || 'Unknown'}</p>
                         <p>{formatDate(article.pubDate)}</p>
                       </div>
                       {article.tags.length > 0 && (

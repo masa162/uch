@@ -17,6 +17,7 @@ export async function GET() {
       select: {
         id: true,
         name: true,
+        displayName: true,
         email: true,
         image: true,
         username: true,
@@ -52,7 +53,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { name, username } = body
+    const { displayName, username } = body
 
     // ユーザー名の重複チェック
     if (username) {
@@ -71,12 +72,13 @@ export async function PUT(request: NextRequest) {
     const updatedUser = await prisma.user.update({
       where: { id: session.user.id },
       data: {
-        name: name || null,
+        displayName: displayName || null,
         username: username || null,
       },
       select: {
         id: true,
         name: true,
+        displayName: true,
         email: true,
         image: true,
         username: true,
