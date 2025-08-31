@@ -228,39 +228,16 @@ export default function ProfilePage() {
               </form>
             ) : (
               <div className="space-y-4">
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="avatar">
-                    <div className="w-20 h-20 rounded-full bg-primary text-primary-content flex items-center justify-center text-2xl font-bold">
-                      {profile.name ? profile.name.charAt(0).toUpperCase() : '👤'}
+                <div className="text-center mb-8">
+                  <div className="inline-block">
+                    <div className="avatar mb-4">
+                      <div className="w-24 h-24 rounded-full bg-primary text-primary-content flex items-center justify-center text-3xl font-bold">
+                        {profile.name ? profile.name.charAt(0).toUpperCase() : '👤'}
+                      </div>
                     </div>
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-bold">
+                    <h2 className="text-2xl font-bold">
                       {profile.name || 'お名前未設定'}
                     </h2>
-                    {profile.username && (
-                      <p className="text-base-content/70">@{profile.username}</p>
-                    )}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="form-control">
-                    <label className="label">
-                      <span className="label-text">メールアドレス</span>
-                    </label>
-                    <div className="input input-bordered bg-base-200">
-                      {profile.email || '未設定'}
-                    </div>
-                  </div>
-
-                  <div className="form-control">
-                    <label className="label">
-                      <span className="label-text">登録日</span>
-                    </label>
-                    <div className="input input-bordered bg-base-200">
-                      {new Date(profile.createdAt).toLocaleDateString('ja-JP')}
-                    </div>
                   </div>
                 </div>
 
