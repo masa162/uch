@@ -14,6 +14,9 @@ RUN npm ci --omit=dev
 # アプリケーションファイルをコピー
 COPY . .
 
+# Prismaクライアントを生成
+RUN npx prisma generate
+
 # 一時ディレクトリ作成
 RUN mkdir -p temp
 

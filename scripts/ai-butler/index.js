@@ -1,5 +1,5 @@
 import 'dotenv/config'
-import { PrismaClient } from '../../node_modules/@prisma/client/index.js'
+import { PrismaClient } from '@prisma/client'
 import { S3Client, GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3'
 import sharp from 'sharp'
 import ffmpeg from 'fluent-ffmpeg'
