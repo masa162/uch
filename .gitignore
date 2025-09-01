@@ -1,12 +1,23 @@
 node_modules
 
+# 環境変数ファイル（機密情報）
+.env
+.env.*
+!.env.example
+!.env.template
+
+# AI Butler環境変数
+scripts/ai-butler/.env
+scripts/ai-butler/.env.*
+!scripts/ai-butler/.env.example
+
 # 機密情報ファイル
 docs/代行作業/*.ini
 docs/認証情報/
 *.secret
 *.key
-.env.local
-.env.*.local
+uchinokiroku-*.json
+
+# Next.js
 .next/
-scripts/ai-butler/uchinokiroku-a4746b0aff28.json
 /.next
