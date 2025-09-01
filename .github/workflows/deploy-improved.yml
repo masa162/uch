@@ -96,7 +96,7 @@ jobs:
             
             echo "🚀 Starting deployment..."
             
-            cd ${{ secrets.VPS_PROJECT_PATH }}
+            cd /opt/uchi
             
             echo "🔐 Logging in to registry..."
             echo ${{ secrets.CR_PAT }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
