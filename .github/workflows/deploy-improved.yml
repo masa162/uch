@@ -114,8 +114,14 @@ jobs:
             echo "POSTGRES_PASSWORD=password" >> .env
             echo "" >> .env
             echo "# NextAuth Configuration" >> .env
-            echo "NEXTAUTH_SECRET=\"\$(openssl rand -base64 32)\"" >> .env
+            echo "NEXTAUTH_SECRET=\"$(openssl rand -base64 32)\"" >> .env
             echo "NEXTAUTH_URL=\"https://uchinokiroku.com\"" >> .env
+            echo "" >> .env
+            echo "# OAuth Providers Configuration" >> .env
+            echo "GOOGLE_CLIENT_ID=\"${{ secrets.GOOGLE_CLIENT_ID }}\"" >> .env
+            echo "GOOGLE_CLIENT_SECRET=\"${{ secrets.GOOGLE_CLIENT_SECRET }}\"" >> .env
+            echo "LINE_CHANNEL_ID=\"${{ secrets.LINE_CHANNEL_ID }}\"" >> .env
+            echo "LINE_CHANNEL_SECRET=\"${{ secrets.LINE_CHANNEL_SECRET }}\"" >> .env
             
             echo "🚢 Starting deployment process..."
             
