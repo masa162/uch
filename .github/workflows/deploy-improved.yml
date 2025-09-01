@@ -152,15 +152,19 @@ jobs:
             echo "  db-data:" >> docker-compose.prod.yml
             
             # --- 最終版クリーンアップ処理 ---
-            # 1. 関連するコンテナと孤児コンテナをすべて停止・削除
-            echo "🛑 Stopping all related services..."
+            # 1. 既存のコンテナを完全削除
+            echo "🛑 Stopping and removing all existing containers..."
+            docker stop my-app-container my-db-container my-ai-butler-container 2>/dev/null || true
+            docker rm my-app-container my-db-container my-ai-butler-container 2>/dev/null || true
+            
+            # 2. 関連するコンテナと孤児コンテナをすべて停止・削除
             docker compose -f docker-compose.prod.yml down --remove-orphans || true
 
-            # 2. ポート3000を使用中のプロセスを強制終了
+            # 3. ポート3000を使用中のプロセスを強制終了
             echo "🔪 Killing processes using port 3000..."
             sudo fuser -k 3000/tcp || true
             
-            # 3. ポートが完全に解放されるまで待機
+            # 4. ポートが完全に解放されるまで待機
             echo "⏱️ Waiting for port to be completely freed..."
             timeout=30
             while [ $timeout -gt 0 ]; do
