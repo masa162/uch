@@ -89,6 +89,7 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
+          debug: true
           script: |
             echo "🧹 Starting Force Clean Deploy..."
             
@@ -124,6 +125,8 @@ jobs:
             done
             
             echo "✨ Clean environment ready for deployment!"
+            echo "🏁 Force Clean Deploy completed successfully!"
+            exit 0
 
       - name: Deploy to VPS
         uses: appleboy/ssh-action@v0.1.10
@@ -131,6 +134,7 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
+          debug: true
           script: |
             echo "🚀 Starting deployment..."
             
