@@ -90,6 +90,7 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           debug: true
+          command_timeout: 30m
           script: |
             echo "🧹 Starting Force Clean Deploy..."
             
