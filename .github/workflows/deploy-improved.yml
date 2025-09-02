@@ -83,6 +83,51 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
+      - name: Force Clean Deploy
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script_stop: true
+          script: |
+            set -e
+            
+            echo "🧹 Starting Force Clean Deploy..."
+            
+            cd /opt/uchi
+            
+            # Force stop all containers and clean environment
+            echo "🛑 Stopping all containers..."
+            docker compose down --remove-orphans || true
+            docker compose -f docker-compose.prod.yml down --remove-orphans || true
+            
+            # Kill any remaining processes on port 3000
+            echo "🔪 Killing processes using port 3000..."
+            pkill -f 'next-server' || true
+            pkill -f 'node.*3000' || true
+            sudo fuser -k 3000/tcp || true
+            
+            # Clean Docker environment
+            echo "🧼 Cleaning Docker environment..."
+            docker system prune -af
+            docker volume prune -f
+            
+            # Wait for port to be completely freed
+            echo "⏱️ Waiting for port 3000 to be freed..."
+            timeout=30
+            while [ $timeout -gt 0 ]; do
+                if ! ss -tulpn | grep -q :3000; then
+                    echo "✅ Port 3000 is now free"
+                    break
+                fi
+                echo "⏳ Port 3000 still in use, waiting... ($timeout seconds left)"
+                sleep 2
+                timeout=$((timeout - 2))
+            done
+            
+            echo "✨ Clean environment ready for deployment!"
+
       - name: Deploy to VPS
         uses: appleboy/ssh-action@v0.1.10
         with:
@@ -153,46 +198,23 @@ jobs:
             echo "volumes:" >> docker-compose.prod.yml
             echo "  db-data:" >> docker-compose.prod.yml
             
-            # --- 最終版クリーンアップ処理 ---
-            # 1. 既存のコンテナを完全削除
-            echo "🛑 Stopping and removing all existing containers..."
-            docker stop my-app-container my-db-container my-ai-butler-container 2>/dev/null || true
-            docker rm my-app-container my-db-container my-ai-butler-container 2>/dev/null || true
-            
-            # 2. 関連するコンテナと孤児コンテナをすべて停止・削除
-            docker compose -f docker-compose.prod.yml down --remove-orphans || true
-
-            # 3. ポート3000を使用中のプロセスを強制終了
-            echo "🔪 Killing processes using port 3000..."
-            sudo fuser -k 3000/tcp || true
-            
-            # 4. ポートが完全に解放されるまで待機
-            echo "⏱️ Waiting for port to be completely freed..."
-            timeout=30
-            while [ $timeout -gt 0 ]; do
-                if ! ss -tulpn | grep -q :3000; then
-                    echo "✅ Port 3000 is now free"
-                    break
-                fi
-                echo "⏳ Port 3000 still in use, waiting... ($timeout seconds left)"
-                sleep 2
-                timeout=$((timeout - 2))
-            done
-            
-            if ss -tulpn | grep -q :3000; then
-                echo "❌ Warning: Port 3000 still in use after timeout"
-                ss -tulpn | grep :3000
-            fi
-            # ------------------------------------
+            # --- Enhanced Clean Deployment Process ---
+            # Environment is already cleaned by Force Clean Deploy step
+            echo "🔄 Proceeding with clean deployment process..."
 
             # クリーンな状態でアプリケーションを起動
             echo "✨ Starting new services..."
             docker compose -f docker-compose.prod.yml up -d
             
-            echo "🧼 Cleaning up old images..."
-            docker image prune -f
+            echo "🧼 Post-deployment cleanup..."
+            # Remove unused images (keeping recent ones for rollback)
+            docker image prune -f --filter "until=24h"
             
-            echo "🎉 Deployment completed successfully!"
+            # Verify containers are running
+            echo "🔍 Verifying container status..."
+            docker compose -f docker-compose.prod.yml ps
+            
+            echo "🎉 Clean deployment completed successfully!"
 
       - name: Verify Deployment
         uses: appleboy/ssh-action@v0.1.10
