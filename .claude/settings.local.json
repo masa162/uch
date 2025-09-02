@@ -46,7 +46,9 @@
       "Bash(open:*)",
       "Bash(DATABASE_URL=\"postgresql://postgres:password@localhost:5432/uch_db\" npx prisma migrate dev --name add_displayName)",
       "Bash(break)",
-      "Bash(scp:*)"
+      "Bash(scp:*)",
+      "WebFetch(domain:console.cloud.google.com)",
+      "WebSearch"
     ],
     "deny": [],
     "ask": []
