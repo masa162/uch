@@ -30,6 +30,11 @@ const nextConfig = {
       poll: 1000,
       aggregateTimeout: 300,
     };
+    // Add fallback for 'crypto' module
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      crypto: false,
+    };
     return config;
   },
 
