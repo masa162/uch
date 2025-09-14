@@ -34,6 +34,9 @@ const nextConfig = {
     config.resolve.fallback = {
       ...config.resolve.fallback,
       crypto: false,
+      http: false,
+      https: false,
+      querystring: false,
     };
     return config;
   },
