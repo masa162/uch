@@ -1,6 +1,6 @@
 'use client'
 
-import { getSession } from 'next-auth/react'
+import { getSession, signIn } from 'next-auth/react'
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 
@@ -38,20 +38,10 @@ function SignInView() {
   }, [router])
 
   const handleGoogleSignIn = async () => {
-    try {
-      setLoading(true)
-      setError('')
-      const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.uchinokiroku.com'
-      const cb = typeof window !== 'undefined' ? window.location.origin + '/' : 'https://uchinokiroku.com/'
-      // Top-level redirect to API domain (stable across browsers)
-      if (typeof window !== 'undefined') {
-        window.location.href = `${apiBase}/api/auth/signin/google?callbackUrl=${encodeURIComponent(cb)}`
-      }
-    } catch (err) {
-      setError('Googleサインインに失敗しました。もう一度お試しください。')
-    } finally {
-      setLoading(false)
-    }
+    setLoading(true)
+    setError('')
+    await signIn("google", { callbackUrl: "/" })
+    setLoading(false)
   }
 
   const handleLineSignIn = async () => {
