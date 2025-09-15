@@ -44,7 +44,7 @@ export default function ArticlesPage() {
   const fetchArticles = async () => {
     try {
       setLoading(true)
-      const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.uchinokiroku.com'
+      const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://uch-api.belong2jazz.workers.dev'
       const res = await fetch(`${apiBase}/api/articles`, { credentials: 'include' })
       if (!res.ok) {
         throw new Error(`HTTP ${res.status}`)

@@ -18,7 +18,7 @@ type MediaItem = {
 type ViewMode = 'grid' | 'list'
 
 export default function GalleryPage() {
-  const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.uchinokiroku.com'
+  const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://uch-api.belong2jazz.workers.dev'
   const [items, setItems] = useState<MediaItem[]>([])
   const [offset, setOffset] = useState(0)
   const [loading, setLoading] = useState(false)
