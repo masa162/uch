@@ -101,7 +101,14 @@ export async function getArticle(req: Request, env: Env) {
   try {
     const url = new URL(req.url);
     const pathParts = url.pathname.split('/');
-    const articleSlug = pathParts[pathParts.length - 1];
+    let articleSlug = pathParts[pathParts.length - 1];
+
+    // URLデコード
+    try {
+      articleSlug = decodeURIComponent(articleSlug);
+    } catch (e) {
+      console.log('URL decode failed, using original slug:', articleSlug);
+    }
 
     if (!articleSlug) {
       return new Response(JSON.stringify({ 
@@ -133,7 +140,7 @@ export async function getArticle(req: Request, env: Env) {
       `, [articleSlug]);
     }
     
-    // IDで見つからない場合、スラッグベースで検索
+    // IDで見つからない場合、タイトルで直接検索
     if (!articles || articles.length === 0) {
       articles = await queryAll(env, `
         SELECT m.*, 
@@ -147,8 +154,8 @@ export async function getArticle(req: Request, env: Env) {
                END as user_email
         FROM memories m
         LEFT JOIN users u ON m.user_id = u.id AND m.user_id != 'システム'
-        WHERE LOWER(REPLACE(REPLACE(m.title, ' ', '-'), '[^a-z0-9-]', '')) = ?
-      `, [articleSlug.toLowerCase()]);
+        WHERE m.title = ?
+      `, [articleSlug]);
     }
     
     // それでも見つからない場合、部分一致で検索
@@ -165,8 +172,8 @@ export async function getArticle(req: Request, env: Env) {
                END as user_email
         FROM memories m
         LEFT JOIN users u ON m.user_id = u.id AND m.user_id != 'システム'
-        WHERE LOWER(m.title) LIKE ?
-      `, [`%${articleSlug.toLowerCase()}%`]);
+        WHERE m.title LIKE ?
+      `, [`%${articleSlug}%`]);
     }
     
     if (!articles || articles.length === 0) {

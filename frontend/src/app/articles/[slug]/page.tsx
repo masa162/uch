@@ -34,7 +34,7 @@ export default function ArticleDetailPage() {
       try {
         setLoading(true)
         const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.uchinokiroku.com'
-        const res = await fetch(`${apiBase}/api/articles/${encodeURIComponent(slug)}`, { credentials: 'include' })
+        const res = await fetch(`${apiBase}/api/articles/${slug}`, { credentials: 'include' })
         if (res.status === 404) {
           setError('記事が見つかりませんでした')
           setArticle(null)
