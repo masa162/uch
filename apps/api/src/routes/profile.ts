@@ -19,10 +19,12 @@ export async function getProfile(req: Request, env: Env): Promise<Response> {
     }
 
     // ユーザー情報を取得
+    console.log('Getting profile for user:', session.sub);
     const user = await queryOne(env, `
       SELECT id, provider, email, name, picture_url, created_at, updated_at 
       FROM users WHERE id = ?
     `, [session.sub]);
+    console.log('Profile query result:', user);
 
     if (!user) {
       return new Response(JSON.stringify({ 
@@ -112,10 +114,12 @@ export async function updateProfile(req: Request, env: Env): Promise<Response> {
     }
 
     // 更新されたユーザー情報を取得
+    console.log('Getting updated profile for user:', session.sub);
     const updatedUser = await queryOne(env, `
       SELECT id, provider, email, name, picture_url, created_at, updated_at 
       FROM users WHERE id = ?
     `, [session.sub]);
+    console.log('Updated profile query result:', updatedUser);
 
     if (!updatedUser) {
       throw new Error('更新後のユーザー情報の取得に失敗しました');
