@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import AuthenticatedLayout from '@/components/AuthenticatedLayout';
+import NameSetupModal from '@/components/NameSetupModal';
 import Link from 'next/link';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Article {
   id: string
@@ -24,9 +26,11 @@ interface Article {
 }
 
 export default function HomePage() {
+  const { user, checkNameSetup } = useAuth();
   const [recentArticles, setRecentArticles] = useState<Article[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [showNameSetup, setShowNameSetup] = useState(false)
 
   useEffect(() => {
     const fetchRecentArticles = async () => {
@@ -55,6 +59,20 @@ export default function HomePage() {
     fetchRecentArticles()
   }, [])
 
+  // 名前設定チェック
+  useEffect(() => {
+    const checkName = async () => {
+      if (user && checkNameSetup) {
+        const needsNameSetup = await checkNameSetup();
+        if (needsNameSetup) {
+          setShowNameSetup(true);
+        }
+      }
+    };
+
+    checkName();
+  }, [user, checkNameSetup])
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('ja-JP', {
       year: 'numeric',
@@ -65,6 +83,10 @@ export default function HomePage() {
 
   return (
     <AuthenticatedLayout>
+      <NameSetupModal 
+        isOpen={showNameSetup} 
+        onClose={() => setShowNameSetup(false)} 
+      />
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold">おかえりなさい 🏠</h1>

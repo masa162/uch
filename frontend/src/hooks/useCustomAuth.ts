@@ -133,6 +133,31 @@ export function useCustomAuth() {
     }
   }, [])
 
+  // 初回ログイン時の名前設定チェック
+  const checkNameSetup = useCallback(async () => {
+    if (!authState.user) return false;
+
+    try {
+      const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.uchinokiroku.com';
+      const response = await fetch(`${apiBase}/api/profile`, {
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const profileData = await response.json();
+        // 名前が設定されていない、または空の場合は名前設定が必要
+        return !profileData.name || profileData.name.trim().length === 0;
+      }
+    } catch (error) {
+      console.error('Profile check error:', error);
+    }
+    
+    return false;
+  }, [authState.user])
+
   // 初回ロード時の処理
   useEffect(() => {
     checkSession()
@@ -160,6 +185,7 @@ export function useCustomAuth() {
     isPasswordValidated: authState.isPasswordValidated,
     setPasswordValidated,
     signOut,
-    checkSession
+    checkSession,
+    checkNameSetup
   }
 }

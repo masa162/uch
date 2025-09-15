@@ -44,6 +44,14 @@ const routes: Record<string, (req: Request, env: Env) => Promise<Response> | Res
     // import の循環回避のため遅延 import
     return import("./routes/auth/logout").then(m => m.authLogout(_req, env));
   },
+  "GET /api/profile": async (req, env) => {
+    const mod = await import("./routes/profile");
+    return mod.getProfile(req, env);
+  },
+  "PUT /api/profile": async (req, env) => {
+    const mod = await import("./routes/profile");
+    return mod.updateProfile(req, env);
+  },
 };
 
 function keyOf(req: Request) {
