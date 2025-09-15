@@ -23,6 +23,7 @@ export interface Env {
 const routes: Record<string, (req: Request, env: Env) => Promise<Response> | Response> = {
   "GET /health": (_req, _env) => handleHealth(),
   "GET /memories": (req, env) => handleMemories(req, env),
+  "GET /api/articles": (req, env) => handleMemories(req, env), // エイリアス
   "GET /auth/google/start": (req, env) => googleStart(req, env),
   "GET /auth/google/callback": (req, env) => handleGoogleAuthCallback(req, env),
   "GET /auth/line/start": (req, env) => handleLineAuthStart(req, env),
@@ -42,23 +43,60 @@ function keyOf(req: Request) {
   return `${req.method.toUpperCase()} ${url.pathname}`;
 }
 
+// CORS設定
+function setCorsHeaders(response: Response, origin?: string): Response {
+  const headers = new Headers(response.headers);
+  
+  // 許可するオリジン
+  const allowedOrigins = [
+    'https://uchinokiroku.com',
+    'http://localhost:3000',
+    'https://localhost:3000'
+  ];
+  
+  if (origin && allowedOrigins.includes(origin)) {
+    headers.set('Access-Control-Allow-Origin', origin);
+  } else if (!origin) {
+    // プリフライトリクエストの場合
+    headers.set('Access-Control-Allow-Origin', 'https://uchinokiroku.com');
+  }
+  
+  headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, Cookie');
+  headers.set('Access-Control-Allow-Credentials', 'true');
+  headers.set('Access-Control-Max-Age', '86400');
+  
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers
+  });
+}
+
 export default {
   async fetch(req: Request, env: Env) {
     const url = new URL(req.url);
+    const origin = req.headers.get('Origin');
+    
+    // OPTIONS プリフライトリクエストの処理
+    if (req.method === 'OPTIONS') {
+      return setCorsHeaders(new Response(null, { status: 200 }), origin);
+    }
     
     // デバッグ用：ルート一覧を確認（最優先でチェック）
     if (url.pathname === "/__debug/routes") {
-      return new Response(JSON.stringify({ 
+      const response = new Response(JSON.stringify({ 
         routes: Object.keys(routes),
         total: Object.keys(routes).length
       }), {
         headers: { "Content-Type": "application/json" }
       });
+      return setCorsHeaders(response, origin);
     }
 
     // デバッグ用：環境変数の確認
     if (url.pathname === "/__debug/env") {
-      return new Response(JSON.stringify({
+      const response = new Response(JSON.stringify({
         GOOGLE_CLIENT_ID: env.GOOGLE_CLIENT_ID ? "設定済み" : "未設定",
         GOOGLE_CLIENT_SECRET: env.GOOGLE_CLIENT_SECRET ? "設定済み" : "未設定",
         GOOGLE_REDIRECT_URI: env.GOOGLE_REDIRECT_URI || "未設定",
@@ -66,6 +104,7 @@ export default {
       }), {
         headers: { "Content-Type": "application/json" }
       });
+      return setCorsHeaders(response, origin);
     }
 
     const key = keyOf(req);
@@ -74,15 +113,18 @@ export default {
     // デバッグ用: 実際に来たパスをログ
     console.log("[router]", key);
 
-    if (handler) return handler(req, env);
+    if (handler) {
+      const response = await handler(req, env);
+      return setCorsHeaders(response, origin);
+    }
 
     // ルート（/）だけは案内を返しておくと便利
     if (new URL(req.url).pathname === "/") {
-      return new Response(null, { status: 302, headers: { Location: "/health" } });
+      return setCorsHeaders(new Response(null, { status: 302, headers: { Location: "/health" } }), origin);
     }
 
     // 404（利用可能なエンドポイント一覧つき）
-    return new Response(
+    const response = new Response(
       JSON.stringify({
         error: "Not Found",
         message: "お探しのページが見つかりませんでした。",
@@ -90,5 +132,6 @@ export default {
       }),
       { status: 404, headers: { "Content-Type": "application/json" } }
     );
+    return setCorsHeaders(response, origin);
   },
 };
