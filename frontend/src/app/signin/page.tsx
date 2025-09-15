@@ -30,7 +30,9 @@ function SignInView() {
   // 認証成功パラメータを検出
   useEffect(() => {
     const authSuccess = searchParams?.get('auth')
+    console.log('Auth success parameter:', authSuccess)
     if (authSuccess === 'success') {
+      console.log('Auth success detected, reloading page...')
       // 認証成功時は認証状態を再確認
       window.location.reload()
     }

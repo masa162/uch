@@ -297,6 +297,9 @@ export async function handleGoogleAuthCallback(req: Request, env: Env): Promise<
     // フロントエンドにリダイレクト
     const frontendUrl = env.FRONTEND_URL || 'http://localhost:3000';
     const redirectUrl = `${frontendUrl}?auth=success`;
+    
+    console.log("Redirecting to:", redirectUrl);
+    console.log("Frontend URL:", frontendUrl);
 
     return new Response(null, {
       status: 302,
