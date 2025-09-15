@@ -18,6 +18,7 @@ interface AuthContextType {
   isPasswordValidated: boolean
   setPasswordValidated: (validated: boolean) => void
   signOut: () => void
+  checkNameSetup: () => Promise<boolean>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
