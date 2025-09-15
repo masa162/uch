@@ -75,6 +75,25 @@ export default function EditArticlePage() {
     }
   }
 
+  const handleDelete = async () => {
+    if (!id) return
+    if (!confirm('この記事を削除しますか？ この操作は取り消せません。')) return
+    try {
+      const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.uchinokiroku.com'
+      const res = await fetch(`${apiBase}/api/articles/${id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      })
+      if (!res.ok && res.status !== 204) {
+        const text = await res.text().catch(() => '')
+        throw new Error(`HTTP ${res.status} ${text}`)
+      }
+      router.push('/articles')
+    } catch (e) {
+      alert(e instanceof Error ? e.message : '削除に失敗しました')
+    }
+  }
+
   return (
     <AuthenticatedLayout>
       {loading ? (
@@ -115,6 +134,7 @@ export default function EditArticlePage() {
             <div className="flex gap-3">
               <button className="btn btn-primary" type="submit" disabled={saving}>{saving ? '保存中...' : '保存する'}</button>
               <button className="btn" type="button" onClick={() => router.push(`/articles/${id}`)}>キャンセル</button>
+              <button className="btn btn-error ml-auto" type="button" onClick={handleDelete}>記事を削除</button>
             </div>
           </form>
         </div>

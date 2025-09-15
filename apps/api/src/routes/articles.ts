@@ -316,3 +316,29 @@ export async function updateArticle(req: Request, env: Env) {
     }), { status: 500, headers: { 'Content-Type': 'application/json' } });
   }
 }
+
+export async function deleteArticle(req: Request, env: Env) {
+  try {
+    const session = await verifySession(req, env);
+    if (!session) {
+      return new Response(JSON.stringify({ error: "認証が必要です" }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+    }
+
+    const url = new URL(req.url);
+    const idParam = decodeURIComponent(url.pathname.split('/').pop() || '');
+    if (!idParam) {
+      return new Response(JSON.stringify({ error: 'IDが必要です' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+    }
+
+    // article_id で削除し、無ければ数値IDで削除
+    let res = await execute(env, `DELETE FROM memories WHERE article_id = ?`, [idParam]);
+    if ((res as any).meta?.changes === 0 && /^\d+$/.test(idParam)) {
+      res = await execute(env, `DELETE FROM memories WHERE id = ?`, [parseInt(idParam, 10)]);
+    }
+
+    return new Response(null, { status: 204 });
+  } catch (error: any) {
+    console.error('記事削除エラー:', error);
+    return new Response(JSON.stringify({ error: '記事の削除に失敗しました', details: error.message || '不明なエラー' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+  }
+}

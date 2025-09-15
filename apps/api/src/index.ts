@@ -36,6 +36,10 @@ const routes: Record<string, (req: Request, env: Env) => Promise<Response> | Res
     const mod = await import("./routes/articles");
     return mod.updateArticle(req, env);
   },
+  "DELETE /api/articles/[id]": async (req, env) => {
+    const mod = await import("./routes/articles");
+    return mod.deleteArticle(req, env);
+  },
   "GET /auth/google/start": (req, env) => googleStart(req, env),
   "GET /auth/google/callback": (req, env) => handleGoogleAuthCallback(req, env),
   "GET /auth/line/start": (req, env) => handleLineAuthStart(req, env),
