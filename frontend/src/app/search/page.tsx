@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import AuthenticatedLayout from '@/components/AuthenticatedLayout'
 import Link from 'next/link'
@@ -18,7 +18,7 @@ interface Article {
   }
 }
 
-export default function SearchPage() {
+function SearchContent() {
   const searchParams = useSearchParams()
   const query = searchParams?.get('q') || ''
   
@@ -133,5 +133,22 @@ export default function SearchPage() {
         )}
       </div>
     </AuthenticatedLayout>
+  )
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={
+      <AuthenticatedLayout>
+        <div className="flex justify-center items-center min-h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-gray-600">読み込み中...</p>
+          </div>
+        </div>
+      </AuthenticatedLayout>
+    }>
+      <SearchContent />
+    </Suspense>
   )
 }
