@@ -47,7 +47,7 @@ function SignInView() {
     try {
       setLoading(true)
       setError('')
-      const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://uch-api.belong2jazz.workers.dev'
+      const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.uchinokiroku.com'
       if (typeof window !== 'undefined') {
         window.location.href = `${apiBase}/auth/google/start`
       }
@@ -62,7 +62,7 @@ function SignInView() {
     try {
       setLoading(true)
       setError('')
-      const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://uch-api.belong2jazz.workers.dev'
+      const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.uchinokiroku.com'
       if (typeof window !== 'undefined') {
         window.location.href = `${apiBase}/auth/line/start`
       }
