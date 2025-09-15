@@ -84,31 +84,40 @@ export async function getArticle(req: Request, env: Env) {
   try {
     const url = new URL(req.url);
     const pathParts = url.pathname.split('/');
-    const articleId = pathParts[pathParts.length - 1];
+    const articleSlug = pathParts[pathParts.length - 1];
 
-    if (!articleId) {
+    if (!articleSlug) {
       return new Response(JSON.stringify({ 
-        error: "記事IDが必要です" 
+        error: "記事スラッグが必要です" 
       }), {
         status: 400,
         headers: { "Content-Type": "application/json" },
       });
     }
 
-    console.log('Getting article with ID:', articleId);
+    console.log('Getting article with slug:', articleSlug);
     
-    // queryOneの代わりにqueryAllを使用して安全に取得
-    const articles = await queryAll(env, `
-      SELECT * FROM memories WHERE id = ?
-    `, [articleId]);
+    // スラッグベースで検索（タイトルからスラッグを生成して比較）
+    let articles = await queryAll(env, `
+      SELECT * FROM memories WHERE LOWER(REPLACE(REPLACE(title, ' ', '-'), '[^a-z0-9-]', '')) = ?
+    `, [articleSlug.toLowerCase()]);
 
     if (!articles || articles.length === 0) {
-      return new Response(JSON.stringify({ 
-        error: "記事が見つかりません" 
-      }), {
-        status: 404,
-        headers: { "Content-Type": "application/json" },
-      });
+      // スラッグで見つからない場合、IDでも試す
+      const articlesById = await queryAll(env, `
+        SELECT * FROM memories WHERE id = ?
+      `, [articleSlug]);
+      
+      if (!articlesById || articlesById.length === 0) {
+        return new Response(JSON.stringify({ 
+          error: "記事が見つかりません" 
+        }), {
+          status: 404,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+      
+      articles = articlesById;
     }
 
     const article = articles[0];
