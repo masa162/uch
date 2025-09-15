@@ -117,9 +117,17 @@ export async function getArticle(req: Request, env: Env) {
     let articles = [];
     if (/^\d+$/.test(articleSlug)) {
       articles = await queryAll(env, `
-        SELECT m.*, u.name as user_name, u.email as user_email
+        SELECT m.*, 
+               CASE 
+                 WHEN m.user_id = 'システム' OR m.user_id IS NULL THEN 'システム'
+                 ELSE COALESCE(u.name, 'システム')
+               END as user_name,
+               CASE 
+                 WHEN m.user_id = 'システム' OR m.user_id IS NULL THEN NULL
+                 ELSE u.email
+               END as user_email
         FROM memories m
-        LEFT JOIN users u ON m.user_id = u.id
+        LEFT JOIN users u ON m.user_id = u.id AND m.user_id != 'システム'
         WHERE m.id = ?
       `, [articleSlug]);
     }
@@ -127,9 +135,17 @@ export async function getArticle(req: Request, env: Env) {
     // IDで見つからない場合、スラッグベースで検索
     if (!articles || articles.length === 0) {
       articles = await queryAll(env, `
-        SELECT m.*, u.name as user_name, u.email as user_email
+        SELECT m.*, 
+               CASE 
+                 WHEN m.user_id = 'システム' OR m.user_id IS NULL THEN 'システム'
+                 ELSE COALESCE(u.name, 'システム')
+               END as user_name,
+               CASE 
+                 WHEN m.user_id = 'システム' OR m.user_id IS NULL THEN NULL
+                 ELSE u.email
+               END as user_email
         FROM memories m
-        LEFT JOIN users u ON m.user_id = u.id
+        LEFT JOIN users u ON m.user_id = u.id AND m.user_id != 'システム'
         WHERE LOWER(REPLACE(REPLACE(m.title, ' ', '-'), '[^a-z0-9-]', '')) = ?
       `, [articleSlug.toLowerCase()]);
     }
@@ -137,9 +153,17 @@ export async function getArticle(req: Request, env: Env) {
     // それでも見つからない場合、部分一致で検索
     if (!articles || articles.length === 0) {
       articles = await queryAll(env, `
-        SELECT m.*, u.name as user_name, u.email as user_email
+        SELECT m.*, 
+               CASE 
+                 WHEN m.user_id = 'システム' OR m.user_id IS NULL THEN 'システム'
+                 ELSE COALESCE(u.name, 'システム')
+               END as user_name,
+               CASE 
+                 WHEN m.user_id = 'システム' OR m.user_id IS NULL THEN NULL
+                 ELSE u.email
+               END as user_email
         FROM memories m
-        LEFT JOIN users u ON m.user_id = u.id
+        LEFT JOIN users u ON m.user_id = u.id AND m.user_id != 'システム'
         WHERE LOWER(m.title) LIKE ?
       `, [`%${articleSlug.toLowerCase()}%`]);
     }

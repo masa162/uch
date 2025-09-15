@@ -7,9 +7,17 @@ export async function handleMemories(req: Request, env: Env) {
     const searchQuery = url.searchParams.get('q');
     
     let sql = `
-      SELECT m.*, u.name as user_name, u.email as user_email
+      SELECT m.*, 
+             CASE 
+               WHEN m.user_id = 'システム' OR m.user_id IS NULL THEN 'システム'
+               ELSE COALESCE(u.name, 'システム')
+             END as user_name,
+             CASE 
+               WHEN m.user_id = 'システム' OR m.user_id IS NULL THEN NULL
+               ELSE u.email
+             END as user_email
       FROM memories m
-      LEFT JOIN users u ON m.user_id = u.id
+      LEFT JOIN users u ON m.user_id = u.id AND m.user_id != 'システム'
     `;
     let params: any[] = [];
     
