@@ -26,7 +26,8 @@ export async function getProfile(req: Request, env: Env): Promise<Response> {
 
     if (!user) {
       return new Response(JSON.stringify({ 
-        error: 'ユーザーが見つかりません' 
+        error: 'ユーザーが見つかりません',
+        message: 'プロフィール情報が見つかりませんでした。'
       }), {
         status: 404,
         headers: { 'Content-Type': 'application/json' }
@@ -115,6 +116,10 @@ export async function updateProfile(req: Request, env: Env): Promise<Response> {
       SELECT id, provider, email, name, picture_url, created_at, updated_at 
       FROM users WHERE id = ?
     `, [session.sub]);
+
+    if (!updatedUser) {
+      throw new Error('更新後のユーザー情報の取得に失敗しました');
+    }
 
     return new Response(JSON.stringify({
       id: updatedUser.id,
