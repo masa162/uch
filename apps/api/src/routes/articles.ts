@@ -95,11 +95,14 @@ export async function getArticle(req: Request, env: Env) {
       });
     }
 
-    const article = await queryOne(env, `
+    console.log('Getting article with ID:', articleId);
+    
+    // queryOneの代わりにqueryAllを使用して安全に取得
+    const articles = await queryAll(env, `
       SELECT * FROM memories WHERE id = ?
     `, [articleId]);
 
-    if (!article) {
+    if (!articles || articles.length === 0) {
       return new Response(JSON.stringify({ 
         error: "記事が見つかりません" 
       }), {
@@ -107,6 +110,9 @@ export async function getArticle(req: Request, env: Env) {
         headers: { "Content-Type": "application/json" },
       });
     }
+
+    const article = articles[0];
+    console.log('Article found:', article);
 
     // スラッグ生成
     const slug = article.title
