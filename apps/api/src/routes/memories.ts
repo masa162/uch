@@ -6,56 +6,59 @@ export async function handleMemories(req: Request, env: Env) {
     const url = new URL(req.url);
     const searchQuery = url.searchParams.get('q');
     
-    let sql = `
-      SELECT m.*, 
-             CASE 
-               WHEN m.user_id = 'システム' OR m.user_id IS NULL THEN 'システム'
-               ELSE COALESCE(u.name, 'システム')
-             END as user_name,
-             CASE 
-               WHEN m.user_id = 'システム' OR m.user_id IS NULL THEN NULL
-               ELSE u.email
-             END as user_email
-      FROM memories m
-      LEFT JOIN users u ON m.user_id = u.id AND m.user_id != 'システム'
-    `;
+    console.log('handleMemories called with searchQuery:', searchQuery);
+    
+    // まずシンプルなクエリでテスト
+    let sql = `SELECT * FROM memories ORDER BY created_at DESC`;
     let params: any[] = [];
     
     if (searchQuery) {
-      sql += ` WHERE LOWER(m.title) LIKE ? OR LOWER(m.content) LIKE ?`;
+      sql = `SELECT * FROM memories WHERE LOWER(title) LIKE ? OR LOWER(content) LIKE ? ORDER BY created_at DESC`;
       params = [`%${searchQuery.toLowerCase()}%`, `%${searchQuery.toLowerCase()}%`];
     }
     
-    sql += ` ORDER BY m.created_at DESC`;
+    console.log('Executing SQL:', sql, 'with params:', params);
     
     // フロントエンドが期待する形式に合わせてデータを整形
     const results = await queryAll(env, sql, params);
+    console.log('Query results:', results.length, 'records');
     
     // フロントエンドが期待するArticle形式に変換
-    const articles = results.map((memory: any) => ({
-      id: memory.id.toString(),
-      title: memory.title,
-      slug: memory.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
-      description: memory.content ? memory.content.substring(0, 150) + '...' : null,
-      content: memory.content || '',
-      pubDate: memory.created_at,
-      heroImageUrl: null,
-      tags: [],
-      isPublished: true,
-      createdAt: memory.created_at,
-      updatedAt: memory.updated_at,
-      author: {
-        name: memory.user_name || 'システム',
-        email: memory.user_email || null,
-        displayName: memory.user_name || 'システム'
-      }
-    }));
+    const articles = results.map((memory: any) => {
+      console.log('Processing memory:', memory.id, memory.title, memory.user_id);
+      return {
+        id: memory.id.toString(),
+        title: memory.title,
+        slug: memory.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
+        description: memory.content ? memory.content.substring(0, 150) + '...' : null,
+        content: memory.content || '',
+        pubDate: memory.created_at,
+        heroImageUrl: null,
+        tags: [],
+        isPublished: true,
+        createdAt: memory.created_at,
+        updatedAt: memory.updated_at,
+        author: {
+          name: memory.user_id === 'システム' || !memory.user_id ? 'システム' : 'ユーザー',
+          email: null,
+          displayName: memory.user_id === 'システム' || !memory.user_id ? 'システム' : 'ユーザー'
+        }
+      };
+    });
+    
+    console.log('Formatted articles:', articles.length);
     
     return new Response(JSON.stringify(articles), {
       headers: { "Content-Type": "application/json" },
     });
   } catch (e: any) {
-    return new Response(JSON.stringify({ error: e.message }), {
+    console.error('handleMemories error:', e);
+    console.error('Error stack:', e.stack);
+    return new Response(JSON.stringify({ 
+      error: '記事の取得に失敗しました',
+      details: e.message,
+      stack: e.stack
+    }), {
       status: 500,
       headers: { "Content-Type": "application/json" },
     });
