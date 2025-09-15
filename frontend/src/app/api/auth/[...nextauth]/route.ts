@@ -1,19 +1,9 @@
-import NextAuth from "next-auth";
-import Google from "next-auth/providers/google";
-
-
-
+// NextAuth.jsは一時的に無効化（独自API認証を使用）
 export const runtime = "edge";
 
-const handler = NextAuth({
-  providers: [
-    Google({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-    }),
-  ],
-  session: { strategy: "jwt" },
-  secret: process.env.NEXTAUTH_SECRET,
-});
+// ダミーハンドラー
+const handler = () => {
+  return new Response("NextAuth.js is disabled", { status: 404 });
+};
 
 export { handler as GET, handler as POST };
