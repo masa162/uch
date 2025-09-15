@@ -25,54 +25,64 @@ export async function createArticle(req: Request, env: Env) {
       });
     }
 
-    // スラッグ生成（タイトルから + 重複チェック）
-    let baseSlug = title
-      .toLowerCase()
-      .replace(/[^\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAFa-z0-9\s-]/g, '') // 日本語文字も許可
-      .replace(/\s+/g, '-')
-      .trim();
+    // 記事ID生成（YYMMDD-NN形式）
+    const now = new Date();
+    const year = now.getFullYear().toString().slice(-2);
+    const month = (now.getMonth() + 1).toString().padStart(2, '0');
+    const day = now.getDate().toString().padStart(2, '0');
+    const datePrefix = `${year}${month}${day}`;
+    
+    // 同日の記事数を確認
+    const todayArticles = await queryAll(env, `
+      SELECT COUNT(*) as count FROM memories 
+      WHERE article_id LIKE ? OR (article_id IS NULL AND DATE(created_at) = DATE('now'))
+    `, [`${datePrefix}%`]);
+    
+    const todayCount = (todayArticles[0]?.count || 0) + 1;
+    const articleId = todayCount === 1 ? datePrefix : `${datePrefix}-${todayCount.toString().padStart(2, '0')}`;
     
     // 重複チェック
-    let slug = baseSlug;
+    let finalArticleId = articleId;
     let counter = 1;
     while (true) {
       const existing = await queryAll(env, `
-        SELECT id FROM memories WHERE LOWER(REPLACE(REPLACE(title, ' ', '-'), '[^a-z0-9-]', '')) = ?
-      `, [slug]);
+        SELECT id FROM memories WHERE article_id = ?
+      `, [finalArticleId]);
       
       if (existing.length === 0) {
         break;
       }
       
-      slug = `${baseSlug}-${counter}`;
       counter++;
+      finalArticleId = todayCount === 1 ? `${datePrefix}-${counter.toString().padStart(2, '0')}` : `${datePrefix}-${(todayCount + counter - 1).toString().padStart(2, '0')}`;
     }
 
     // 記事をデータベースに保存
-    console.log('Creating article with data:', { title, content, userId: session.sub });
+    console.log('Creating article with data:', { title, content, userId: session.sub, articleId: finalArticleId });
     const result = await execute(env, `
-      INSERT INTO memories (title, content, user_id, created_at, updated_at)
-      VALUES (?, ?, ?, datetime('now'), datetime('now'))
-    `, [title, content, session.sub]);
+      INSERT INTO memories (title, content, user_id, article_id, created_at, updated_at)
+      VALUES (?, ?, ?, ?, datetime('now'), datetime('now'))
+    `, [title, content, session.sub, finalArticleId]);
     console.log('Article creation result:', result);
 
-    const articleId = result.meta.last_row_id;
+    const dbArticleId = result.meta.last_row_id;
 
     // 作成時のデータから直接レスポンスを生成（DBから再取得をスキップ）
-    const now = new Date().toISOString();
+    const nowString = new Date().toISOString();
     const authorName = session.name || 'ユーザー';
     const formattedArticle = {
-      id: articleId.toString(),
+      id: dbArticleId.toString(),
+      articleId: finalArticleId,
       title: title,
-      slug: slug,
+      slug: finalArticleId, // スラッグをarticle_idに変更
       description: description || (content ? content.substring(0, 150) + '...' : null),
       content: content || '',
-      pubDate: now,
+      pubDate: nowString,
       heroImageUrl: null,
       tags: tags || [],
       isPublished: isPublished,
-      createdAt: now,
-      updatedAt: now,
+      createdAt: nowString,
+      updatedAt: nowString,
       author: {
         name: authorName,
         email: session.email,
@@ -119,28 +129,45 @@ export async function getArticle(req: Request, env: Env) {
       });
     }
 
-    console.log('Getting article with slug:', articleSlug);
+    console.log('Getting article with ID:', articleSlug);
     
-    // まずIDで検索（数値の場合）
-    let articles = [];
-    if (/^\d+$/.test(articleSlug)) {
-      articles = await queryAll(env, `
-        SELECT m.*, 
-               CASE 
-                 WHEN m.user_id = 'システム' OR m.user_id IS NULL THEN 'システム'
-                 ELSE COALESCE(u.name, 'システム')
-               END as user_name,
-               CASE 
-                 WHEN m.user_id = 'システム' OR m.user_id IS NULL THEN NULL
-                 ELSE u.email
-               END as user_email
-        FROM memories m
-        LEFT JOIN users u ON m.user_id = u.id AND m.user_id != 'システム'
-        WHERE m.id = ?
-      `, [articleSlug]);
+    // article_idで検索
+    let articles = await queryAll(env, `
+      SELECT m.*, 
+             CASE 
+               WHEN m.user_id = 'システム' OR m.user_id IS NULL THEN 'システム'
+               ELSE COALESCE(u.name, 'システム')
+             END as user_name,
+             CASE 
+               WHEN m.user_id = 'システム' OR m.user_id IS NULL THEN NULL
+               ELSE u.email
+             END as user_email
+      FROM memories m
+      LEFT JOIN users u ON m.user_id = u.id AND m.user_id != 'システム'
+      WHERE m.article_id = ?
+    `, [articleSlug]);
+    
+    // article_idで見つからない場合、数値IDで検索（後方互換性）
+    if (!articles || articles.length === 0) {
+      if (/^\d+$/.test(articleSlug)) {
+        articles = await queryAll(env, `
+          SELECT m.*, 
+                 CASE 
+                   WHEN m.user_id = 'システム' OR m.user_id IS NULL THEN 'システム'
+                   ELSE COALESCE(u.name, 'システム')
+                 END as user_name,
+                 CASE 
+                   WHEN m.user_id = 'システム' OR m.user_id IS NULL THEN NULL
+                   ELSE u.email
+                 END as user_email
+          FROM memories m
+          LEFT JOIN users u ON m.user_id = u.id AND m.user_id != 'システム'
+          WHERE m.id = ?
+        `, [articleSlug]);
+      }
     }
     
-    // IDで見つからない場合、タイトルで直接検索
+    // それでも見つからない場合、タイトルで検索（後方互換性）
     if (!articles || articles.length === 0) {
       articles = await queryAll(env, `
         SELECT m.*, 
@@ -158,24 +185,6 @@ export async function getArticle(req: Request, env: Env) {
       `, [articleSlug]);
     }
     
-    // それでも見つからない場合、部分一致で検索
-    if (!articles || articles.length === 0) {
-      articles = await queryAll(env, `
-        SELECT m.*, 
-               CASE 
-                 WHEN m.user_id = 'システム' OR m.user_id IS NULL THEN 'システム'
-                 ELSE COALESCE(u.name, 'システム')
-               END as user_name,
-               CASE 
-                 WHEN m.user_id = 'システム' OR m.user_id IS NULL THEN NULL
-                 ELSE u.email
-               END as user_email
-        FROM memories m
-        LEFT JOIN users u ON m.user_id = u.id AND m.user_id != 'システム'
-        WHERE m.title LIKE ?
-      `, [`%${articleSlug}%`]);
-    }
-    
     if (!articles || articles.length === 0) {
       return new Response(JSON.stringify({ 
         error: "記事が見つかりません" 
@@ -188,18 +197,12 @@ export async function getArticle(req: Request, env: Env) {
     const article = articles[0];
     console.log('Article found:', article);
 
-    // スラッグ生成
-    const slug = article.title
-      .toLowerCase()
-      .replace(/[^\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAFa-z0-9\s-]/g, '') // 日本語文字も許可
-      .replace(/\s+/g, '-')
-      .trim();
-
     // フロントエンドが期待する形式に変換
     const formattedArticle = {
       id: article.id.toString(),
+      articleId: article.article_id || article.id.toString(),
       title: article.title,
-      slug: slug,
+      slug: article.article_id || article.id.toString(), // article_idをスラッグとして使用
       description: article.content ? article.content.substring(0, 150) + '...' : null,
       content: article.content || '',
       pubDate: article.created_at,

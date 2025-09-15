@@ -50,8 +50,9 @@ export async function handleMemories(req: Request, env: Env) {
         
       return {
         id: memory.id.toString(),
+        articleId: memory.article_id || memory.id.toString(),
         title: memory.title,
-        slug: memory.title.toLowerCase().replace(/\s+/g, '-').replace(/[^\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAFa-z0-9-]/g, ''),
+        slug: memory.article_id || memory.id.toString(), // article_idをスラッグとして使用
         description: memory.content ? memory.content.substring(0, 150) + '...' : null,
         content: memory.content || '',
         pubDate: memory.created_at,

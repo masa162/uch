@@ -20,9 +20,9 @@ type Article = {
 }
 
 export default function ArticleDetailPage() {
-  const params = useParams<{ slug: string }>()
+  const params = useParams<{ id: string }>()
   const router = useRouter()
-  const slug = params?.slug
+  const id = params?.id
 
   const [article, setArticle] = useState<Article | null>(null)
   const [loading, setLoading] = useState(true)
@@ -30,11 +30,11 @@ export default function ArticleDetailPage() {
 
   useEffect(() => {
     const fetchOne = async () => {
-      if (!slug) return
+      if (!id) return
       try {
         setLoading(true)
         const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.uchinokiroku.com'
-        const res = await fetch(`${apiBase}/api/articles/${slug}`, { credentials: 'include' })
+        const res = await fetch(`${apiBase}/api/articles/${id}`, { credentials: 'include' })
         if (res.status === 404) {
           setError('記事が見つかりませんでした')
           setArticle(null)
@@ -53,7 +53,7 @@ export default function ArticleDetailPage() {
       }
     }
     fetchOne()
-  }, [slug])
+  }, [id])
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('ja-JP', {
@@ -90,7 +90,7 @@ export default function ArticleDetailPage() {
             {article.content || ''}
           </ReactMarkdown>
           <div className="mt-8 flex gap-3">
-            <Link href={`/articles/${encodeURIComponent(slug as string)}/edit`} className="btn btn-outline">編集する</Link>
+            <Link href={`/articles/${encodeURIComponent(id as string)}/edit`} className="btn btn-outline">編集する</Link>
             <Link href="/articles" className="btn">一覧へ戻る</Link>
           </div>
         </article>

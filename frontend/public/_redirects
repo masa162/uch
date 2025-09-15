@@ -1,0 +1,22 @@
+# 旧日本語タイトルURLから新ID型URLへのリダイレクト
+# 既存記事のリダイレクト設定
+/articles/%E3%81%93%E3%82%80%E3%81%8E   /articles/250915-01   301
+/articles/%E3%81%94%E3%81%AF%E3%82%93   /articles/250915-02   301
+/articles/%E3%81%AF%E3%81%AA%E3%81%B3   /articles/250915-03   301
+/articles/%E3%81%AA%E3%81%A4           /articles/250915-04   301
+
+# サンプルメモリーのリダイレクト
+/articles/%E3%82%B5%E3%83%B3%E3%83%97%E3%83%AB%E3%83%A1%E3%83%A2%E3%83%AA%E3%83%BC1   /articles/250915-05   301
+/articles/%E3%82%B5%E3%83%B3%E3%83%97%E3%83%AB%E3%83%A1%E3%83%A2%E3%83%AA%E3%83%BC2   /articles/250915-06   301
+/articles/%E3%82%B5%E3%83%B3%E3%83%97%E3%83%AB%E3%83%A1%E3%83%A2%E3%83%AA%E3%83%BC3   /articles/250915-07   301
+
+# その他のテスト記事
+/articles/test0915                      /articles/250915-08   301
+/articles/test0915_02                   /articles/250915-09   301
+/articles/test0915_02a                  /articles/250915-10   301
+/articles/0915-03                       /articles/250915-11   301
+/articles/0915-04                       /articles/250915-12   301
+/articles/0915-05                       /articles/250915-13   301
+/articles/0915-06                       /articles/250915-14   301
+/articles/0915-07                       /articles/250915-15   301
+/articles/0915-a                        /articles/250915-16   301
