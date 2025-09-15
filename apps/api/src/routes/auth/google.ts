@@ -76,7 +76,7 @@ export async function googleStart(req: Request, env: Env) {
     const parts = [
       `uk_oauth_state=${state}`,
       "Max-Age=300",         // 5分
-      "Path=/auth",
+      "Path=/",
       "HttpOnly",
       "SameSite=Lax"
     ];
