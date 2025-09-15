@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useSession, signIn, signOut } from 'next-auth/react'
+import { useAuth } from '@/contexts/AuthContext'
 import { useAuthAction } from '@/hooks/useAuthAction'
 import RealtimeSearch from '@/components/RealtimeSearch'
 import Link from 'next/link'
@@ -31,8 +31,7 @@ interface SidebarProps {
 
 export default function Sidebar({ onNavigate }: SidebarProps = {}) {
   const router = useRouter()
-  const { data: session } = useSession()
-  const user = session?.user
+  const { user, signOut } = useAuth()
   const { runAuthAction } = useAuthAction()
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [showTags, setShowTags] = useState(false)
@@ -51,7 +50,7 @@ export default function Sidebar({ onNavigate }: SidebarProps = {}) {
 
   const handleSignOut = () => {
     if (confirm('ログアウトしますか？')) {
-      signOut({ callbackUrl: '/' })
+      signOut()
       setShowUserMenu(false)
       onNavigate?.()
     }
@@ -190,7 +189,7 @@ export default function Sidebar({ onNavigate }: SidebarProps = {}) {
       </div>
       
       {/* ユーザーメニュー or ログインボタン */}
-      {session && user ? (
+      {user ? (
         // ログイン済み
         <div className="space-y-2">
           <div className="relative">

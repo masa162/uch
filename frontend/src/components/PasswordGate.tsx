@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useSession } from 'next-auth/react'
+import { useAuth } from '@/contexts/AuthContext'
 
 const SITE_PASSWORD = process.env.NEXT_PUBLIC_SITE_PASSWORD
 const SESSION_STORAGE_KEY = 'site_password_verified'
@@ -34,7 +34,7 @@ const isPasswordMatch = (input: string) => {
 
 export default function PasswordGate({ children }: { children: React.ReactNode }) {
   const router = useRouter()
-  const { status } = useSession()
+  const { user, loading } = useAuth()
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -46,14 +46,14 @@ export default function PasswordGate({ children }: { children: React.ReactNode }
       setIsAuthenticated(true)
       setError('')
       // 次の認証ステップへ誘導（まだログインしていなければ /signin へ）
-      if (status !== 'authenticated') {
+      if (!user) {
         // 現在のパスが /signin でなければ遷移
         if (typeof window !== 'undefined' && window.location.pathname !== '/signin') {
           router.push('/signin')
         }
       }
     }
-  }, [password])
+  }, [password, user, router])
 
   // セッション記憶での通過
   useEffect(() => {
@@ -71,7 +71,7 @@ export default function PasswordGate({ children }: { children: React.ReactNode }
       sessionStorage.setItem(SESSION_STORAGE_KEY, 'true')
       setIsAuthenticated(true)
       setError('')
-      if (status !== 'authenticated') {
+      if (!user) {
         if (typeof window !== 'undefined' && window.location.pathname !== '/signin') {
           router.push('/signin')
         }

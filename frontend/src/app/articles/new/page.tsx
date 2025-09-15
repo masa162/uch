@@ -2,13 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useSession } from 'next-auth/react'
+import { useAuth } from '@/contexts/AuthContext'
 
 import AuthenticatedLayout from '@/components/AuthenticatedLayout'
 
 export default function NewArticlePage() {
   const router = useRouter()
-  const { status } = useSession()
+  const { user, loading } = useAuth()
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [content, setContent] = useState('')
@@ -18,10 +18,10 @@ export default function NewArticlePage() {
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
-    if (status === 'unauthenticated') {
+    if (!loading && !user) {
       router.push('/signin')
     }
-  }, [status, router])
+  }, [loading, user, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

@@ -1,11 +1,10 @@
 'use client'
 
-import { useSession } from 'next-auth/react'
+import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 
 export const useAuthAction = () => {
-  const { data: session } = useSession()
-  const user = session?.user
+  const { user } = useAuth()
   const router = useRouter()
 
   const runAuthAction = (action: () => void, requireFullAuth: boolean = true) => {
