@@ -24,6 +24,7 @@ const routes: Record<string, (req: Request, env: Env) => Promise<Response> | Res
   "GET /health": (_req, _env) => handleHealth(),
   "GET /memories": (req, env) => handleMemories(req, env),
   "GET /api/articles": (req, env) => handleMemories(req, env), // エイリアス
+  "GET /api/articles/search": (req, env) => handleMemories(req, env), // 検索用エイリアス（qパラメータ対応）
   "POST /api/articles": async (req, env) => {
     const mod = await import("./routes/articles");
     return mod.createArticle(req, env);
@@ -68,7 +69,7 @@ function keyOf(req: Request) {
   const pathname = url.pathname;
   
   // 動的ルートの処理
-  if (pathname.startsWith('/api/articles/') && pathname !== '/api/articles') {
+  if (pathname.startsWith('/api/articles/') && pathname !== '/api/articles' && pathname !== '/api/articles/search') {
     return `${method} /api/articles/[id]`;
   }
   
