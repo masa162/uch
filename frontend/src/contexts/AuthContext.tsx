@@ -15,6 +15,7 @@ interface User {
 interface AuthContextType {
   user: User | null
   loading: boolean
+  authLoading: boolean
   isPasswordValidated: boolean
   setPasswordValidated: (validated: boolean) => void
   signOut: () => void

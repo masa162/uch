@@ -182,6 +182,7 @@ export function useCustomAuth() {
   return {
     user: authState.user,
     loading: authState.loading,
+    authLoading: authState.loading,
     isPasswordValidated: authState.isPasswordValidated,
     setPasswordValidated,
     signOut,
