@@ -52,11 +52,11 @@ export default function ProfilePage() {
       });
 
       if (response.ok) {
-        const data = await response.json();
+        const data = await response.json() as ProfileData;
         setProfile(data);
         setName(data.name || '');
       } else {
-        const errorData = await response.json();
+        const errorData = await response.json() as { message?: string };
         setError(errorData.message || 'プロフィールの取得に失敗しました');
       }
     } catch (err) {
@@ -90,14 +90,14 @@ export default function ProfilePage() {
       });
 
       if (response.ok) {
-        const updatedProfile = await response.json();
+        const updatedProfile = await response.json() as ProfileData;
         setProfile(updatedProfile);
         setSuccess('プロフィールを更新しました');
         
         // 認証状態も更新
         window.location.reload();
       } else {
-        const errorData = await response.json();
+        const errorData = await response.json() as { message?: string };
         setError(errorData.message || 'プロフィールの更新に失敗しました');
       }
     } catch (err) {
