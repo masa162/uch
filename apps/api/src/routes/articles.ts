@@ -28,7 +28,7 @@ export async function createArticle(req: Request, env: Env) {
     // スラッグ生成（タイトルから + 重複チェック）
     let baseSlug = title
       .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/[^\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAFa-z0-9\s-]/g, '') // 日本語文字も許可
       .replace(/\s+/g, '-')
       .trim();
     
@@ -60,6 +60,7 @@ export async function createArticle(req: Request, env: Env) {
 
     // 作成時のデータから直接レスポンスを生成（DBから再取得をスキップ）
     const now = new Date().toISOString();
+    const authorName = session.name || 'ユーザー';
     const formattedArticle = {
       id: articleId.toString(),
       title: title,
@@ -73,9 +74,9 @@ export async function createArticle(req: Request, env: Env) {
       createdAt: now,
       updatedAt: now,
       author: {
-        name: session.name || 'ユーザー',
+        name: authorName,
         email: session.email,
-        displayName: session.name || 'ユーザー'
+        displayName: authorName
       }
     };
 
@@ -183,7 +184,7 @@ export async function getArticle(req: Request, env: Env) {
     // スラッグ生成
     const slug = article.title
       .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/[^\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAFa-z0-9\s-]/g, '') // 日本語文字も許可
       .replace(/\s+/g, '-')
       .trim();
 

@@ -23,13 +23,35 @@ export async function handleMemories(req: Request, env: Env) {
     const results = await queryAll(env, sql, params);
     console.log('Query results:', results.length, 'records');
     
+    // ユーザー情報を取得
+    const userIds = [...new Set(results.map((r: any) => r.user_id).filter(Boolean))];
+    const users = new Map();
+    
+    if (userIds.length > 0) {
+      try {
+        const userResults = await queryAll(env, `
+          SELECT id, name FROM users WHERE id IN (${userIds.map(() => '?').join(',')})
+        `, userIds);
+        
+        userResults.forEach((user: any) => {
+          users.set(user.id, user.name);
+        });
+      } catch (error) {
+        console.error('Failed to fetch user names:', error);
+      }
+    }
+    
     // フロントエンドが期待するArticle形式に変換
     const articles = results.map((memory: any) => {
       console.log('Processing memory:', memory.id, memory.title, memory.user_id);
+      const authorName = memory.user_id === 'システム' || !memory.user_id 
+        ? 'システム' 
+        : (users.get(memory.user_id) || 'ユーザー');
+        
       return {
         id: memory.id.toString(),
         title: memory.title,
-        slug: memory.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
+        slug: memory.title.toLowerCase().replace(/\s+/g, '-').replace(/[^\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAFa-z0-9-]/g, ''),
         description: memory.content ? memory.content.substring(0, 150) + '...' : null,
         content: memory.content || '',
         pubDate: memory.created_at,
@@ -39,9 +61,9 @@ export async function handleMemories(req: Request, env: Env) {
         createdAt: memory.created_at,
         updatedAt: memory.updated_at,
         author: {
-          name: memory.user_id === 'システム' || !memory.user_id ? 'システム' : 'ユーザー',
+          name: authorName,
           email: null,
-          displayName: memory.user_id === 'システム' || !memory.user_id ? 'システム' : 'ユーザー'
+          displayName: authorName
         }
       };
     });
