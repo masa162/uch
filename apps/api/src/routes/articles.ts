@@ -25,12 +25,28 @@ export async function createArticle(req: Request, env: Env) {
       });
     }
 
-    // スラッグ生成（タイトルから）
-    const slug = title
+    // スラッグ生成（タイトルから + 重複チェック）
+    let baseSlug = title
       .toLowerCase()
       .replace(/[^a-z0-9\s-]/g, '')
       .replace(/\s+/g, '-')
       .trim();
+    
+    // 重複チェック
+    let slug = baseSlug;
+    let counter = 1;
+    while (true) {
+      const existing = await queryAll(env, `
+        SELECT id FROM memories WHERE LOWER(REPLACE(REPLACE(title, ' ', '-'), '[^a-z0-9-]', '')) = ?
+      `, [slug]);
+      
+      if (existing.length === 0) {
+        break;
+      }
+      
+      slug = `${baseSlug}-${counter}`;
+      counter++;
+    }
 
     // 記事をデータベースに保存
     console.log('Creating article with data:', { title, content });
@@ -97,27 +113,35 @@ export async function getArticle(req: Request, env: Env) {
 
     console.log('Getting article with slug:', articleSlug);
     
-    // スラッグベースで検索（タイトルからスラッグを生成して比較）
-    let articles = await queryAll(env, `
-      SELECT * FROM memories WHERE LOWER(REPLACE(REPLACE(title, ' ', '-'), '[^a-z0-9-]', '')) = ?
-    `, [articleSlug.toLowerCase()]);
-
-    if (!articles || articles.length === 0) {
-      // スラッグで見つからない場合、IDでも試す
-      const articlesById = await queryAll(env, `
+    // まずIDで検索（数値の場合）
+    let articles = [];
+    if (/^\d+$/.test(articleSlug)) {
+      articles = await queryAll(env, `
         SELECT * FROM memories WHERE id = ?
       `, [articleSlug]);
-      
-      if (!articlesById || articlesById.length === 0) {
-        return new Response(JSON.stringify({ 
-          error: "記事が見つかりません" 
-        }), {
-          status: 404,
-          headers: { "Content-Type": "application/json" },
-        });
-      }
-      
-      articles = articlesById;
+    }
+    
+    // IDで見つからない場合、スラッグベースで検索
+    if (!articles || articles.length === 0) {
+      articles = await queryAll(env, `
+        SELECT * FROM memories WHERE LOWER(REPLACE(REPLACE(title, ' ', '-'), '[^a-z0-9-]', '')) = ?
+      `, [articleSlug.toLowerCase()]);
+    }
+    
+    // それでも見つからない場合、部分一致で検索
+    if (!articles || articles.length === 0) {
+      articles = await queryAll(env, `
+        SELECT * FROM memories WHERE LOWER(title) LIKE ?
+      `, [`%${articleSlug.toLowerCase()}%`]);
+    }
+    
+    if (!articles || articles.length === 0) {
+      return new Response(JSON.stringify({ 
+        error: "記事が見つかりません" 
+      }), {
+        status: 404,
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
     const article = articles[0];
