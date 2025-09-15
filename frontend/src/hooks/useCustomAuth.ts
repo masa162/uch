@@ -59,6 +59,7 @@ export function useCustomAuth() {
           },
           loading: false
         }))
+        console.log('Auth state updated with user data')
       } else {
         console.log('Session check failed:', response.status)
         setAuthState(prev => ({
