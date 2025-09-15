@@ -33,10 +33,12 @@ export async function createArticle(req: Request, env: Env) {
       .trim();
 
     // 記事をデータベースに保存
+    console.log('Creating article with data:', { title, content });
     const result = await execute(env, `
       INSERT INTO memories (title, content, created_at, updated_at)
       VALUES (?, ?, datetime('now'), datetime('now'))
     `, [title, content]);
+    console.log('Article creation result:', result);
 
     const articleId = result.meta.last_row_id;
 
