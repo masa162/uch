@@ -291,6 +291,16 @@ export async function createSessionCookie(
 }
 
 /**
+ * セッション検証（記事作成用）
+ */
+export async function verifySession(
+  request: Request,
+  env: { SESSION_SECRET: string; COOKIE_DOMAIN?: string }
+): Promise<{ sub: string; name?: string; email?: string } | null> {
+  return await readSessionCookie(request, env);
+}
+
+/**
  * やさしいエラーメッセージを生成
  */
 export function createFriendlySessionErrorMessage(error: string): string {

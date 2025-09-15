@@ -24,6 +24,14 @@ const routes: Record<string, (req: Request, env: Env) => Promise<Response> | Res
   "GET /health": (_req, _env) => handleHealth(),
   "GET /memories": (req, env) => handleMemories(req, env),
   "GET /api/articles": (req, env) => handleMemories(req, env), // エイリアス
+  "POST /api/articles": async (req, env) => {
+    const mod = await import("./routes/articles");
+    return mod.createArticle(req, env);
+  },
+  "GET /api/articles/[id]": async (req, env) => {
+    const mod = await import("./routes/articles");
+    return mod.getArticle(req, env);
+  },
   "GET /auth/google/start": (req, env) => googleStart(req, env),
   "GET /auth/google/callback": (req, env) => handleGoogleAuthCallback(req, env),
   "GET /auth/line/start": (req, env) => handleLineAuthStart(req, env),
@@ -40,7 +48,15 @@ const routes: Record<string, (req: Request, env: Env) => Promise<Response> | Res
 
 function keyOf(req: Request) {
   const url = new URL(req.url);
-  return `${req.method.toUpperCase()} ${url.pathname}`;
+  const method = req.method.toUpperCase();
+  const pathname = url.pathname;
+  
+  // 動的ルートの処理
+  if (pathname.startsWith('/api/articles/') && pathname !== '/api/articles') {
+    return `${method} /api/articles/[id]`;
+  }
+  
+  return `${method} ${pathname}`;
 }
 
 // CORS設定
