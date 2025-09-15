@@ -38,10 +38,18 @@ function SignInView() {
   }, [router])
 
   const handleGoogleSignIn = async () => {
-    setLoading(true)
-    setError('')
-    await signIn("google", { callbackUrl: "/" })
-    setLoading(false)
+    try {
+      setLoading(true)
+      setError('')
+      const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.uchinokiroku.com'
+      if (typeof window !== 'undefined') {
+        window.location.href = `${apiBase}/auth/google/start`
+      }
+    } catch (err) {
+      setError('Googleサインインに失敗しました。もう一度お試しください。')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleLineSignIn = async () => {
@@ -49,9 +57,8 @@ function SignInView() {
       setLoading(true)
       setError('')
       const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.uchinokiroku.com'
-      const cb = typeof window !== 'undefined' ? window.location.origin + '/' : 'https://uchinokiroku.com/'
       if (typeof window !== 'undefined') {
-        window.location.href = `${apiBase}/api/auth/signin/line?callbackUrl=${encodeURIComponent(cb)}`
+        window.location.href = `${apiBase}/auth/line/start`
       }
     } catch (err) {
       setError('LINEサインインに失敗しました。もう一度お試しください。')

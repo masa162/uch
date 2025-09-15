@@ -1,0 +1,25 @@
+
+name = "uch-api"
+main = "src/index.ts"
+compatibility_date = "2025-09-15"
+compatibility_flags = ["nodejs_compat"]
+
+# 環境変数（値は Secrets で設定）
+[vars]
+# フロントエンドのベースURL（認証後のリダイレクト先）
+FRONTEND_URL = "https://uchinokiroku.com"
+
+# セッション署名用の秘密鍵（本番環境では長いランダム文字列を設定）
+# 開発環境では "development-secret-key-change-in-production"
+JWT_SECRET = "development-secret-key-change-in-production"
+SESSION_SECRET = "development-secret-key-change-in-production"
+SESSION_MAX_AGE_SEC = "2592000"
+# 本番では Dashboard 側 Secrets/Vars で COOKIE_DOMAIN=.uchinokiroku.com を設定
+
+# 環境変数はCloudflare Dashboardでのみ管理
+# 開発環境では .dev.vars を使用
+
+[[d1_databases]]
+binding = "DB"
+database_name = "uch-db"
+database_id = "10a55a58-a42d-4bb1-9ac7-07441807367f"
