@@ -38,7 +38,12 @@ export function useCustomAuth() {
       })
 
       if (response.ok) {
-        const userData = await response.json()
+        const userData = await response.json() as {
+          id: string
+          email?: string
+          name?: string
+          picture?: string
+        }
         setAuthState(prev => ({
           ...prev,
           user: {
