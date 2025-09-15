@@ -233,3 +233,86 @@ export async function getArticle(req: Request, env: Env) {
     });
   }
 }
+
+export async function updateArticle(req: Request, env: Env) {
+  try {
+    const session = await verifySession(req, env);
+    if (!session) {
+      return new Response(JSON.stringify({ error: "認証が必要です" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    const url = new URL(req.url);
+    const idParam = decodeURIComponent(url.pathname.split('/').pop() || '');
+    if (!idParam) {
+      return new Response(JSON.stringify({ error: 'IDが必要です' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+    }
+
+    const body = await req.json().catch(() => ({} as any));
+    const { title, description, content } = body as { title?: string; description?: string | null; content?: string };
+
+    if (!title && !description && !content) {
+      return new Response(JSON.stringify({ error: '更新項目がありません' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+    }
+
+    const fields: string[] = [];
+    const params: any[] = [];
+
+    if (typeof title === 'string') { fields.push('title = ?'); params.push(title); }
+    if (typeof content === 'string') { fields.push('content = ?'); params.push(content); }
+    // description はmemoriesテーブルに列が無いので、今は無視（将来の拡張に備えフロント互換は維持）
+
+    if (fields.length === 0) {
+      return new Response(JSON.stringify({ error: '更新可能な項目がありません' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+    }
+
+    // article_id で更新し、無ければ数値IDで更新
+    let sql = `UPDATE memories SET ${fields.join(', ')}, updated_at = datetime('now') WHERE article_id = ?`;
+    params.push(idParam);
+    let res = await execute(env, sql, params);
+
+    if ((res as any).meta?.changes === 0 && /^\d+$/.test(idParam)) {
+      // 数値id fallback
+      const params2 = [...params];
+      params2[params2.length - 1] = parseInt(idParam, 10);
+      sql = `UPDATE memories SET ${fields.join(', ')}, updated_at = datetime('now') WHERE id = ?`;
+      res = await execute(env, sql, params2);
+    }
+
+    // 更新後のレコードを返す
+    const getRes = await queryAll(env, `SELECT * FROM memories WHERE article_id = ? OR id = ? LIMIT 1`, [idParam, idParam]);
+    const row: any = getRes[0];
+    if (!row) {
+      return new Response(JSON.stringify({ error: '記事が見つかりません' }), { status: 404, headers: { 'Content-Type': 'application/json' } });
+    }
+
+    return new Response(JSON.stringify({
+      id: row.id.toString(),
+      articleId: row.article_id || row.id.toString(),
+      title: row.title,
+      slug: row.article_id || row.id.toString(),
+      description: row.content ? row.content.substring(0, 150) + '...' : null,
+      content: row.content || '',
+      pubDate: row.created_at,
+      heroImageUrl: null,
+      tags: [],
+      isPublished: true,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+      author: {
+        name: session.name || 'ユーザー',
+        email: session.email || null,
+        displayName: session.name || 'ユーザー',
+      },
+    }), { headers: { 'Content-Type': 'application/json' } });
+
+  } catch (error: any) {
+    console.error('記事更新エラー:', error);
+    return new Response(JSON.stringify({
+      error: '記事の更新に失敗しました',
+      details: error.message || '不明なエラー',
+    }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+  }
+}

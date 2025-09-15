@@ -32,6 +32,10 @@ const routes: Record<string, (req: Request, env: Env) => Promise<Response> | Res
     const mod = await import("./routes/articles");
     return mod.getArticle(req, env);
   },
+  "PATCH /api/articles/[id]": async (req, env) => {
+    const mod = await import("./routes/articles");
+    return mod.updateArticle(req, env);
+  },
   "GET /auth/google/start": (req, env) => googleStart(req, env),
   "GET /auth/google/callback": (req, env) => handleGoogleAuthCallback(req, env),
   "GET /auth/line/start": (req, env) => handleLineAuthStart(req, env),
@@ -85,7 +89,7 @@ function setCorsHeaders(response: Response, origin?: string): Response {
     headers.set('Access-Control-Allow-Origin', 'https://uchinokiroku.com');
   }
   
-  headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
   headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, Cookie');
   headers.set('Access-Control-Allow-Credentials', 'true');
   headers.set('Access-Control-Max-Age', '86400');
