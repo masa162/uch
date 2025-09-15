@@ -147,7 +147,7 @@ export function useCustomAuth() {
       });
 
       if (response.ok) {
-        const profileData = await response.json();
+        const profileData = await response.json() as { name?: string };
         // 名前が設定されていない、または空の場合は名前設定が必要
         return !profileData.name || profileData.name.trim().length === 0;
       }
