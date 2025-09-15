@@ -91,7 +91,7 @@ export default function Sidebar({ onNavigate }: SidebarProps = {}) {
     ;(async () => {
       try {
         setLoadingArchive(true)
-        const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://uch-api.belong2jazz.workers.dev'
+        const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.uchinokiroku.com'
         const res = await fetch(`${apiBase}/api/articles`, { credentials: 'include' })
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
         const items = (await res.json()) as any[]
@@ -261,7 +261,7 @@ export default function Sidebar({ onNavigate }: SidebarProps = {}) {
                   <>
                     <button
                       onClick={() => {
-                        const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://uch-api.belong2jazz.workers.dev'
+                        const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.uchinokiroku.com'
                         const cb = typeof window !== 'undefined' ? window.location.origin + '/' : 'https://uchinokiroku.com/'
                         if (typeof window !== 'undefined') {
                           window.location.href = `${apiBase}/api/auth/signin/google?callbackUrl=${encodeURIComponent(cb)}`
@@ -273,7 +273,7 @@ export default function Sidebar({ onNavigate }: SidebarProps = {}) {
                     </button>
                     <button
                       onClick={() => {
-                        const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://uch-api.belong2jazz.workers.dev'
+                        const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.uchinokiroku.com'
                         const cb = typeof window !== 'undefined' ? window.location.origin + '/' : 'https://uchinokiroku.com/'
                         if (typeof window !== 'undefined') {
                           window.location.href = `${apiBase}/api/auth/signin/line?callbackUrl=${encodeURIComponent(cb)}`
@@ -294,7 +294,7 @@ export default function Sidebar({ onNavigate }: SidebarProps = {}) {
         <div className="space-y-2">
           <button
             onClick={() => {
-              const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://uch-api.belong2jazz.workers.dev'
+              const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.uchinokiroku.com'
               const cb = typeof window !== 'undefined' ? window.location.origin + '/' : 'https://uchinokiroku.com/'
               if (typeof window !== 'undefined') {
                 window.location.href = `${apiBase}/api/auth/signin/google?callbackUrl=${encodeURIComponent(cb)}`
@@ -306,7 +306,7 @@ export default function Sidebar({ onNavigate }: SidebarProps = {}) {
           </button>
           <button
             onClick={() => {
-              const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://uch-api.belong2jazz.workers.dev'
+              const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.uchinokiroku.com'
               const cb = typeof window !== 'undefined' ? window.location.origin + '/' : 'https://uchinokiroku.com/'
               if (typeof window !== 'undefined') {
                 window.location.href = `${apiBase}/api/auth/signin/line?callbackUrl=${encodeURIComponent(cb)}`

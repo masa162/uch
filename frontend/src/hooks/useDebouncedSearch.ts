@@ -39,7 +39,7 @@ export const useSearchResults = () => {
     setError(null)
     
     try {
-      const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://uch-api.belong2jazz.workers.dev'
+      const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.uchinokiroku.com'
       const response = await fetch(`${apiBase}/api/articles/search?q=${encodeURIComponent(searchTerm)}`, {
         credentials: 'include'
       })

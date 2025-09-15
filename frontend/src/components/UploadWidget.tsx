@@ -12,7 +12,7 @@ export default function UploadWidget({ onUploaded }: { onUploaded?: () => void }
   const [busy, setBusy] = useState(false)
   const [results, setResults] = useState<UploadResult[]>([])
 
-  const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://uch-api.belong2jazz.workers.dev'
+  const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.uchinokiroku.com'
 
   const handleSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files

@@ -27,6 +27,15 @@ function SignInView() {
     setError(map[err] ?? map.Default)
   }, [searchParams])
 
+  // 認証成功パラメータを検出
+  useEffect(() => {
+    const authSuccess = searchParams?.get('auth')
+    if (authSuccess === 'success') {
+      // 認証成功時は認証状態を再確認
+      window.location.reload()
+    }
+  }, [searchParams])
+
   // 既にログインしている場合はトップへ
   useEffect(() => {
     if (!authLoading && user) {
@@ -38,7 +47,7 @@ function SignInView() {
     try {
       setLoading(true)
       setError('')
-      const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://uch-api.belong2jazz.workers.dev'
+      const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.uchinokiroku.com'
       if (typeof window !== 'undefined') {
         window.location.href = `${apiBase}/auth/google/start`
       }
@@ -53,7 +62,7 @@ function SignInView() {
     try {
       setLoading(true)
       setError('')
-      const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://uch-api.belong2jazz.workers.dev'
+      const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.uchinokiroku.com'
       if (typeof window !== 'undefined') {
         window.location.href = `${apiBase}/auth/line/start`
       }

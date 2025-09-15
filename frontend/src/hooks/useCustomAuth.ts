@@ -29,7 +29,7 @@ export function useCustomAuth() {
   // セッション確認のためのAPI呼び出し
   const checkSession = useCallback(async () => {
     try {
-      const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://uch-api.belong2jazz.workers.dev'
+      const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.uchinokiroku.com'
       const response = await fetch(`${apiBase}/auth/me`, {
         credentials: 'include',
         headers: {
@@ -87,7 +87,7 @@ export function useCustomAuth() {
   // サインアウト
   const signOut = useCallback(async () => {
     try {
-      const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://uch-api.belong2jazz.workers.dev'
+      const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.uchinokiroku.com'
       await fetch(`${apiBase}/auth/logout`, {
         method: 'POST',
         credentials: 'include'

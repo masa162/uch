@@ -27,7 +27,7 @@ export default function EditArticlePage() {
       if (!slug) return
       try {
         setLoading(true)
-        const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://uch-api.belong2jazz.workers.dev'
+        const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.uchinokiroku.com'
         const res = await fetch(`${apiBase}/api/articles/${encodeURIComponent(slug)}`, { credentials: 'include' })
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
         const data = (await res.json().catch(() => null)) as unknown
@@ -53,7 +53,7 @@ export default function EditArticlePage() {
     try {
       setSaving(true)
       setError(null)
-      const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://uch-api.belong2jazz.workers.dev'
+      const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.uchinokiroku.com'
       const res = await fetch(`${apiBase}/api/articles/${encodeURIComponent(slug!)}`, {
         method: 'PATCH',
         credentials: 'include',

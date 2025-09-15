@@ -38,7 +38,7 @@ export default function NewArticlePage() {
           .map(t => t.trim())
           .filter(Boolean),
       }
-      const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://uch-api.belong2jazz.workers.dev'
+      const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.uchinokiroku.com'
       const res = await fetch(`${apiBase}/api/articles`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
