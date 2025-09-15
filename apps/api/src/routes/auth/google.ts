@@ -167,23 +167,21 @@ export async function handleGoogleAuthCallback(req: Request, env: Env): Promise<
       allHeaders: Object.fromEntries(req.headers.entries())
     });
     
-    // 一時的にState検証を無効化（デバッグ用）
-    console.log("State validation temporarily disabled for debugging");
-    
-    // if (!cookieState || cookieState !== state) {
-    //   console.log("State validation failed:", {
-    //     cookieState: cookieState,
-    //     receivedState: state,
-    //     cookies: cookies
-    //   });
-    //   return new Response(JSON.stringify({
-    //     error: 'セキュリティエラー',
-    //     message: '認証リクエストが無効です。もう一度お試しください。'
-    //   }), {
-    //     status: 400,
-    //     headers: { 'Content-Type': 'application/json' }
-    //   });
-    // }
+    // State検証を有効化
+    if (!cookieState || cookieState !== state) {
+      console.log("State validation failed:", {
+        cookieState: cookieState,
+        receivedState: state,
+        cookies: cookies
+      });
+      return new Response(JSON.stringify({
+        error: 'セキュリティエラー',
+        message: '認証リクエストが無効です。もう一度お試しください。'
+      }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
 
     // 環境変数の確認
     console.log("Google OAuth Callback Env Debug:", {
