@@ -42,33 +42,20 @@ export async function createArticle(req: Request, env: Env) {
 
     const articleId = result.meta.last_row_id;
 
-    // 作成された記事を取得
-    const article = await queryOne(env, `
-      SELECT * FROM memories WHERE id = ?
-    `, [articleId]);
-
-    if (!article) {
-      return new Response(JSON.stringify({ 
-        error: "記事の作成に失敗しました" 
-      }), {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
-    // フロントエンドが期待する形式に変換
+    // 作成時のデータから直接レスポンスを生成（DBから再取得をスキップ）
+    const now = new Date().toISOString();
     const formattedArticle = {
-      id: article.id.toString(),
-      title: article.title,
+      id: articleId.toString(),
+      title: title,
       slug: slug,
-      description: description || (article.content ? article.content.substring(0, 150) + '...' : null),
-      content: article.content || '',
-      pubDate: article.created_at,
+      description: description || (content ? content.substring(0, 150) + '...' : null),
+      content: content || '',
+      pubDate: now,
       heroImageUrl: null,
       tags: tags || [],
       isPublished: isPublished,
-      createdAt: article.created_at,
-      updatedAt: article.updated_at,
+      createdAt: now,
+      updatedAt: now,
       author: {
         name: session.name || 'ユーザー',
         email: session.email,
