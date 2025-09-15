@@ -1,7 +1,7 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState } from 'react'
-import { useSession, signOut as nextAuthSignOut } from 'next-auth/react'
+import { createContext, useContext } from 'react'
+import { useCustomAuth } from '@/hooks/useCustomAuth'
 
 interface User {
   id: string
@@ -23,59 +23,10 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const { data: session, status } = useSession()
-  const [isPasswordValidated, setIsPasswordValidated] = useState(false)
-  const [isClient, setIsClient] = useState(false)
-
-  // クライアントサイドでのみ実行
-  useEffect(() => {
-    setIsClient(true)
-    const isValidated = localStorage.getItem('uchi_password_validated')
-    setIsPasswordValidated(isValidated === 'true')
-  }, [])
-
-  // NextAuth.jsのセッションからユーザー情報を取得
-  const user = session?.user ? {
-    id: session.user.id || '',
-    email: session.user.email,
-    name: session.user.name,
-    image: session.user.image,
-    username: session.user.name?.toLowerCase().replace(/\s+/g, '') || '',
-    role: 'USER'
-  } : null
-
-  const loading = status === 'loading'
-
-  const setPasswordValidated = (validated: boolean) => {
-    setIsPasswordValidated(validated)
-    if (typeof window !== 'undefined') {
-      if (validated) {
-        localStorage.setItem('uchi_password_validated', 'true')
-      } else {
-        localStorage.removeItem('uchi_password_validated')
-      }
-    }
-  }
-
-  const signOut = async () => {
-    // パスワード認証状態もリセット
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('uchi_password_validated')
-    }
-    setIsPasswordValidated(false)
-    
-    // NextAuth.jsのサインアウトを実行
-    await nextAuthSignOut({ callbackUrl: '/signin' })
-  }
+  const auth = useCustomAuth()
 
   return (
-    <AuthContext.Provider value={{
-      user,
-      loading,
-      isPasswordValidated,
-      setPasswordValidated,
-      signOut
-    }}>
+    <AuthContext.Provider value={auth}>
       {children}
     </AuthContext.Provider>
   )

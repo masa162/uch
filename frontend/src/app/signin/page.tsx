@@ -1,16 +1,17 @@
 'use client'
 
-import { getSession, signIn } from 'next-auth/react'
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { useAuth } from '@/contexts/AuthContext'
 
 function SignInView() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { user, loading: authLoading } = useAuth()
 
-  // NextAuth からの error クエリをフレンドリーに表示
+  // エラーメッセージの表示
   useEffect(() => {
     const err = searchParams?.get('error')
     if (!err) return
@@ -26,16 +27,12 @@ function SignInView() {
     setError(map[err] ?? map.Default)
   }, [searchParams])
 
-  // 既にログインしている場合はトップへ（履歴を汚さない・errorクエリを消す）
+  // 既にログインしている場合はトップへ
   useEffect(() => {
-    const checkSession = async () => {
-      const session = await getSession()
-      if (session) {
-        router.replace('/')
-      }
+    if (!authLoading && user) {
+      router.replace('/')
     }
-    checkSession()
-  }, [router])
+  }, [user, authLoading, router])
 
   const handleGoogleSignIn = async () => {
     try {
