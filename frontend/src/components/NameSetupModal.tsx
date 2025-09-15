@@ -49,7 +49,7 @@ export default function NameSetupModal({ isOpen, onClose }: NameSetupModalProps)
         // ページをリロードして認証状態を更新
         window.location.reload();
       } else {
-        const errorData = await response.json();
+        const errorData = await response.json() as { message?: string };
         setError(errorData.message || '名前の設定に失敗しました');
       }
     } catch (err) {
