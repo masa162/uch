@@ -49,11 +49,11 @@ export async function createArticle(req: Request, env: Env) {
     }
 
     // 記事をデータベースに保存
-    console.log('Creating article with data:', { title, content });
+    console.log('Creating article with data:', { title, content, userId: session.sub });
     const result = await execute(env, `
-      INSERT INTO memories (title, content, created_at, updated_at)
-      VALUES (?, ?, datetime('now'), datetime('now'))
-    `, [title, content]);
+      INSERT INTO memories (title, content, user_id, created_at, updated_at)
+      VALUES (?, ?, ?, datetime('now'), datetime('now'))
+    `, [title, content, session.sub]);
     console.log('Article creation result:', result);
 
     const articleId = result.meta.last_row_id;
@@ -117,21 +117,30 @@ export async function getArticle(req: Request, env: Env) {
     let articles = [];
     if (/^\d+$/.test(articleSlug)) {
       articles = await queryAll(env, `
-        SELECT * FROM memories WHERE id = ?
+        SELECT m.*, u.name as user_name, u.email as user_email
+        FROM memories m
+        LEFT JOIN users u ON m.user_id = u.id
+        WHERE m.id = ?
       `, [articleSlug]);
     }
     
     // IDで見つからない場合、スラッグベースで検索
     if (!articles || articles.length === 0) {
       articles = await queryAll(env, `
-        SELECT * FROM memories WHERE LOWER(REPLACE(REPLACE(title, ' ', '-'), '[^a-z0-9-]', '')) = ?
+        SELECT m.*, u.name as user_name, u.email as user_email
+        FROM memories m
+        LEFT JOIN users u ON m.user_id = u.id
+        WHERE LOWER(REPLACE(REPLACE(m.title, ' ', '-'), '[^a-z0-9-]', '')) = ?
       `, [articleSlug.toLowerCase()]);
     }
     
     // それでも見つからない場合、部分一致で検索
     if (!articles || articles.length === 0) {
       articles = await queryAll(env, `
-        SELECT * FROM memories WHERE LOWER(title) LIKE ?
+        SELECT m.*, u.name as user_name, u.email as user_email
+        FROM memories m
+        LEFT JOIN users u ON m.user_id = u.id
+        WHERE LOWER(m.title) LIKE ?
       `, [`%${articleSlug.toLowerCase()}%`]);
     }
     
@@ -168,9 +177,9 @@ export async function getArticle(req: Request, env: Env) {
       createdAt: article.created_at,
       updatedAt: article.updated_at,
       author: {
-        name: 'システム',
-        email: null,
-        displayName: 'システム'
+        name: article.user_name || 'システム',
+        email: article.user_email || null,
+        displayName: article.user_name || 'システム'
       }
     };
 

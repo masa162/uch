@@ -3,8 +3,25 @@ import type { Env } from "../index";
 
 export async function handleMemories(req: Request, env: Env) {
   try {
+    const url = new URL(req.url);
+    const searchQuery = url.searchParams.get('q');
+    
+    let sql = `
+      SELECT m.*, u.name as user_name, u.email as user_email
+      FROM memories m
+      LEFT JOIN users u ON m.user_id = u.id
+    `;
+    let params: any[] = [];
+    
+    if (searchQuery) {
+      sql += ` WHERE LOWER(m.title) LIKE ? OR LOWER(m.content) LIKE ?`;
+      params = [`%${searchQuery.toLowerCase()}%`, `%${searchQuery.toLowerCase()}%`];
+    }
+    
+    sql += ` ORDER BY m.created_at DESC`;
+    
     // フロントエンドが期待する形式に合わせてデータを整形
-    const results = await queryAll(env, "SELECT * FROM memories;");
+    const results = await queryAll(env, sql, params);
     
     // フロントエンドが期待するArticle形式に変換
     const articles = results.map((memory: any) => ({
@@ -20,9 +37,9 @@ export async function handleMemories(req: Request, env: Env) {
       createdAt: memory.created_at,
       updatedAt: memory.updated_at,
       author: {
-        name: 'システム',
-        email: null,
-        displayName: 'システム'
+        name: memory.user_name || 'システム',
+        email: memory.user_email || null,
+        displayName: memory.user_name || 'システム'
       }
     }));
     
