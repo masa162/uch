@@ -30,6 +30,7 @@ export function useCustomAuth() {
   const checkSession = useCallback(async () => {
     try {
       const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.uchinokiroku.com'
+      console.log('Checking session with API:', `${apiBase}/auth/me`)
       const response = await fetch(`${apiBase}/auth/me`, {
         credentials: 'include',
         headers: {
@@ -37,6 +38,7 @@ export function useCustomAuth() {
         }
       })
 
+      console.log('Session check response:', response.status, response.ok)
       if (response.ok) {
         const userData = await response.json() as {
           id: string
@@ -44,6 +46,7 @@ export function useCustomAuth() {
           name?: string
           picture?: string
         }
+        console.log('User data received:', userData)
         setAuthState(prev => ({
           ...prev,
           user: {
@@ -57,6 +60,7 @@ export function useCustomAuth() {
           loading: false
         }))
       } else {
+        console.log('Session check failed:', response.status)
         setAuthState(prev => ({
           ...prev,
           user: null,
