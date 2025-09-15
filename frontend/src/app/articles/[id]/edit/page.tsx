@@ -13,8 +13,8 @@ type Article = {
 }
 
 export default function EditArticlePage() {
-  const params = useParams<{ slug: string }>()
-  const slug = params?.slug
+  const params = useParams<{ id: string }>()
+  const id = params?.id
   const router = useRouter()
 
   const [form, setForm] = useState<Article>({ title: '', description: '', content: '', heroImageUrl: '', tags: [] })
@@ -24,11 +24,11 @@ export default function EditArticlePage() {
 
   useEffect(() => {
     const load = async () => {
-      if (!slug) return
+      if (!id) return
       try {
         setLoading(true)
         const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.uchinokiroku.com'
-        const res = await fetch(`${apiBase}/api/articles/${encodeURIComponent(slug)}`, { credentials: 'include' })
+        const res = await fetch(`${apiBase}/api/articles/${id}`, { credentials: 'include' })
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
         const data = (await res.json().catch(() => null)) as unknown
         const obj = (data && typeof data === 'object') ? (data as Record<string, any>) : {}
@@ -46,7 +46,7 @@ export default function EditArticlePage() {
       }
     }
     load()
-  }, [slug])
+  }, [id])
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -54,7 +54,7 @@ export default function EditArticlePage() {
       setSaving(true)
       setError(null)
       const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.uchinokiroku.com'
-      const res = await fetch(`${apiBase}/api/articles/${encodeURIComponent(slug!)}`, {
+      const res = await fetch(`${apiBase}/api/articles/${id}`, {
         method: 'PATCH',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -67,7 +67,7 @@ export default function EditArticlePage() {
         const text = await res.text().catch(() => '')
         throw new Error(`HTTP ${res.status} ${text}`)
       }
-      router.push(`/articles/${encodeURIComponent(slug!)}`)
+      router.push(`/articles/${id}`)
     } catch (e) {
       setError(e instanceof Error ? e.message : '保存に失敗しました')
     } finally {
@@ -114,7 +114,7 @@ export default function EditArticlePage() {
             </div>
             <div className="flex gap-3">
               <button className="btn btn-primary" type="submit" disabled={saving}>{saving ? '保存中...' : '保存する'}</button>
-              <button className="btn" type="button" onClick={() => router.push(`/articles/${encodeURIComponent(slug!)}`)}>キャンセル</button>
+              <button className="btn" type="button" onClick={() => router.push(`/articles/${id}`)}>キャンセル</button>
             </div>
           </form>
         </div>
