@@ -267,7 +267,10 @@ export default {
         GOOGLE_CLIENT_ID: env.GOOGLE_CLIENT_ID ? "設定済み" : "未設定",
         GOOGLE_CLIENT_SECRET: env.GOOGLE_CLIENT_SECRET ? "設定済み" : "未設定",
         GOOGLE_REDIRECT_URI: env.GOOGLE_REDIRECT_URI || "未設定",
-        FRONTEND_URL: env.FRONTEND_URL || "未設定"
+        FRONTEND_URL: env.FRONTEND_URL || "未設定",
+        STREAM_ACCOUNT_ID: (env as any).STREAM_ACCOUNT_ID || (env as any).STREAM_ACCOUNT ? "設定済み" : "未設定",
+        STREAM_TOKEN: (env as any).STREAM_TOKEN ? "設定済み（Secret）" : "未設定",
+        HAS_R2_BUCKET: !!(env as any).R2_BUCKET
       }), {
         headers: { "Content-Type": "application/json" }
       });
