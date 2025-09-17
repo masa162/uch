@@ -84,7 +84,12 @@ export default function GalleryPage() {
         })
       })
       
-      setItems((prev) => [...prev, ...data])
+      // 最初のロードの場合は置き換え、それ以降は追加
+      if (offset === 0) {
+        setItems(data)
+      } else {
+        setItems((prev) => [...prev, ...data])
+      }
       setOffset(prev => prev + data.length)
       if (data.length === 0) setHasMore(false)
     } catch (e) {
@@ -178,7 +183,13 @@ export default function GalleryPage() {
   }
 
   useEffect(() => {
-    console.log('Gallery page useEffect triggered - calling fetchMore')
+    console.log('Gallery page useEffect triggered - resetting state and calling fetchMore')
+    // 既存の状態をリセット
+    setItems([])
+    setOffset(0)
+    setHasMore(true)
+    setLoading(false)
+    // バックエンドから新しくデータを取得
     fetchMore()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
