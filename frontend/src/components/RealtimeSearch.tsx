@@ -146,13 +146,16 @@ const RealtimeSearch = ({ placeholder = "記事を検索...", className = "", on
             </div>
           ) : results.length === 0 ? (
             <div className="p-3 text-center text-base-content/70">
-              「{query}」の検索結果が見つかりませんでした
+              <div className="text-sm">「{query}」の検索結果が見つかりませんでした</div>
+              <div className="text-xs mt-1 text-base-content/50">
+                別のキーワードで検索するか、Enterキーで詳細検索を試してください
+              </div>
             </div>
           ) : (
             <>
               <div className="p-2 border-b border-base-300">
                 <p className="text-xs text-base-content/70">
-                  {results.length}件の検索結果
+                  「{query}」の検索結果: {results.length}件
                 </p>
               </div>
               {results.map((result, index) => (
@@ -172,9 +175,14 @@ const RealtimeSearch = ({ placeholder = "記事を検索...", className = "", on
                     dangerouslySetInnerHTML={{ __html: highlightText(result.content, query) }}
                   />
                   <div className="flex items-center justify-between mt-1">
-                    <span className="text-xs text-base-content/50">
-                      {new Date(result.createdAt).toLocaleDateString('ja-JP')}
-                    </span>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-xs text-base-content/50">
+                        by {result.author.name || 'システム'}
+                      </span>
+                      <span className="text-xs text-base-content/50">
+                        {new Date(result.createdAt).toLocaleDateString('ja-JP')}
+                      </span>
+                    </div>
                     {result.tags.length > 0 && (
                       <div className="flex space-x-1">
                         {result.tags.slice(0, 2).map((tag, tagIndex) => (
@@ -196,9 +204,9 @@ const RealtimeSearch = ({ placeholder = "記事を検索...", className = "", on
               <div className="p-2 border-t border-base-300">
                 <button
                   onClick={handleSearchSubmit}
-                  className="w-full text-center text-xs text-primary hover:text-primary-focus"
+                  className="w-full text-center text-xs text-primary hover:text-primary-focus py-2 rounded hover:bg-primary/5 transition-colors"
                 >
-                  すべての検索結果を見る →
+                  {results.length === 1 ? 'この記事を詳細表示' : `「${query}」のすべての検索結果を見る`} →
                 </button>
               </div>
             </>

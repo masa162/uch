@@ -40,16 +40,25 @@ export const useSearchResults = () => {
     
     try {
       const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.uchinokiroku.com'
-      const response = await fetch(`${apiBase}/api/articles/search?q=${encodeURIComponent(searchTerm)}`, {
+      const response = await fetch(`${apiBase}/api/articles?q=${encodeURIComponent(searchTerm)}`, {
         credentials: 'include'
       })
       if (response.ok) {
         const data = (await response.json()) as unknown
-        const items = (data && typeof data === 'object' && 'articles' in data)
-          ? (data as { articles?: SearchResult[] }).articles ?? []
-          : []
+        console.log('Search API response:', data)
+        
+        // レスポンスが配列の場合はそのまま使用、オブジェクトの場合はarticlesプロパティを確認
+        let items: SearchResult[] = []
+        if (Array.isArray(data)) {
+          items = data
+        } else if (data && typeof data === 'object' && 'articles' in data) {
+          items = (data as { articles?: SearchResult[] }).articles ?? []
+        }
+        
+        console.log('Search results:', items.length, 'items')
         setResults(items)
       } else {
+        console.error('Search API error:', response.status, response.statusText)
         setError('検索に失敗しました')
         setResults([])
       }
