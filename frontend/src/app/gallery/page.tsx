@@ -35,8 +35,15 @@ export default function GalleryPage() {
   const loader = useRef<HTMLDivElement | null>(null)
 
   const fetchMore = async () => {
-    if (loading || !hasMore) return
-    console.log('fetchMore called, offset:', offset, 'loading:', loading, 'hasMore:', hasMore)
+    console.log('fetchMore function called')
+    console.log('Current state - loading:', loading, 'hasMore:', hasMore, 'offset:', offset)
+    
+    if (loading || !hasMore) {
+      console.log('fetchMore early return - loading:', loading, 'hasMore:', hasMore)
+      return
+    }
+    
+    console.log('fetchMore proceeding with API call')
     setLoading(true)
     try {
       const url = `${apiBase}/api/media?offset=${offset}&limit=24`
@@ -150,6 +157,7 @@ export default function GalleryPage() {
   }
 
   useEffect(() => {
+    console.log('Gallery page useEffect triggered - calling fetchMore')
     fetchMore()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
