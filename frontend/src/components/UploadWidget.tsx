@@ -82,7 +82,8 @@ export default function UploadWidget({ onUploaded }: { onUploaded?: () => void }
             credentials: 'include',
           })
           if (!signRes.ok) throw new Error(`video sign ${signRes.status}`)
-          const { uploadURL, uid } = await signRes.json()
+          type StreamSignResponse = { uploadURL: string; uid: string }
+          const { uploadURL, uid } = (await signRes.json()) as StreamSignResponse
           const up = await fetch(uploadURL, {
             method: 'POST',
             body: orig,
