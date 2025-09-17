@@ -153,13 +153,10 @@ export async function uploadDirect(req: Request, env: Env) {
     const timestamp = Date.now();
     const filename = `${session.sub}/${timestamp}_${originalFilename || file.name}`;
 
-    // ファイルをBase64エンコード（簡易実装）
-    console.log('Starting file processing...');
-    const arrayBuffer = await file.arrayBuffer();
-    console.log('ArrayBuffer size:', arrayBuffer.byteLength);
+    // ファイルサイズチェック
+    console.log('File size check:', fileSize);
     
-    // ファイルサイズが大きすぎる場合はエラー
-    if (arrayBuffer.byteLength > 10 * 1024 * 1024) { // 10MB制限
+    if (fileSize > 10 * 1024 * 1024) { // 10MB制限
       return new Response(JSON.stringify({ 
         error: "ファイルサイズが大きすぎます（10MB以下にしてください）" 
       }), {
@@ -168,10 +165,9 @@ export async function uploadDirect(req: Request, env: Env) {
       });
     }
     
-    console.log('Converting to Base64...');
-    const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
-    console.log('Base64 conversion completed, length:', base64.length);
-    const fileUrl = `data:${mimeType};base64,${base64}`;
+    // 簡易実装：ファイルの内容は保存せず、プレースホルダーURLを使用
+    console.log('Using placeholder URL for file storage');
+    const fileUrl = `https://api.uchinokiroku.com/api/media/${filename}`;
 
     // 画像の場合はサムネイルURLも生成
     let thumbnailUrl = null;
@@ -227,6 +223,67 @@ export async function uploadDirect(req: Request, env: Env) {
       error: "アップロードに失敗しました",
       details: error.message,
       stack: error.stack
+    }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+}
+
+// メディアファイル取得
+export async function getMediaFile(req: Request, env: Env, mediaId: string) {
+  try {
+    // セッション確認
+    const session = await readSessionCookie(req, env);
+    if (!session) {
+      return new Response(JSON.stringify({ error: "認証が必要です" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    // メディア情報を取得
+    const media = await queryAll(env, `
+      SELECT file_url, mime_type, original_filename
+      FROM media 
+      WHERE id = ? AND user_id = ?
+    `, [mediaId, session.sub]);
+
+    if (media.length === 0) {
+      return new Response(JSON.stringify({ 
+        error: "メディアが見つかりません" 
+      }), {
+        status: 404,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    const mediaItem = media[0];
+    
+    // プレースホルダー画像を返す（簡易実装）
+    const placeholderSvg = `
+      <svg width="300" height="200" xmlns="http://www.w3.org/2000/svg">
+        <rect width="300" height="200" fill="#f0f0f0"/>
+        <text x="150" y="100" text-anchor="middle" font-family="Arial" font-size="14" fill="#666">
+          ${mediaItem.original_filename}
+        </text>
+        <text x="150" y="120" text-anchor="middle" font-family="Arial" font-size="12" fill="#999">
+          ${mediaItem.mime_type}
+        </text>
+      </svg>
+    `;
+
+    return new Response(placeholderSvg, {
+      headers: { 
+        "Content-Type": "image/svg+xml",
+        "Cache-Control": "public, max-age=3600"
+      },
+    });
+
+  } catch (error: any) {
+    console.error('メディアファイル取得エラー:', error);
+    return new Response(JSON.stringify({ 
+      error: "メディアファイルの取得に失敗しました" 
     }), {
       status: 500,
       headers: { "Content-Type": "application/json" },

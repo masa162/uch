@@ -74,6 +74,18 @@ const routes: Record<string, (req: Request, env: Env) => Promise<Response> | Res
     }
     return mod.deleteMedia(req, env, mediaId);
   },
+  "GET /api/media/[id]/image": async (req, env) => {
+    const mod = await import("./routes/media");
+    const url = new URL(req.url);
+    const mediaId = url.pathname.split('/')[3]; // /api/media/[id]/image
+    if (!mediaId) {
+      return new Response(JSON.stringify({ error: "メディアIDが必要です" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+    return mod.getMediaFile(req, env, mediaId);
+  },
   "POST /auth/logout": (_req, env) => {
     // import の循環回避のため遅延 import
     return import("./routes/auth/logout").then(m => m.authLogout(_req, env));
