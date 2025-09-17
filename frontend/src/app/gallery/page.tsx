@@ -39,8 +39,20 @@ export default function GalleryPage() {
     console.log('fetchMore called, offset:', offset, 'loading:', loading, 'hasMore:', hasMore)
     setLoading(true)
     try {
-      const res = await fetch(`${apiBase}/api/media?offset=${offset}&limit=24`, { credentials: 'include' })
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const url = `${apiBase}/api/media?offset=${offset}&limit=24`
+      console.log('Fetching media from URL:', url)
+      console.log('Request headers:', { credentials: 'include' })
+      
+      const res = await fetch(url, { credentials: 'include' })
+      console.log('Media API response status:', res.status, res.ok)
+      console.log('Media API response headers:', Object.fromEntries(res.headers.entries()))
+      
+      if (!res.ok) {
+        const errorText = await res.text()
+        console.error('Media API error response:', errorText)
+        throw new Error(`HTTP ${res.status}: ${errorText}`)
+      }
+      
       const data = (await res.json()) as MediaItem[]
       console.log('Fetched media data:', data.length, 'items')
       console.log('Media items details:', data)
