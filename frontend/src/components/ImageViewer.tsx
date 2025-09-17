@@ -3,13 +3,17 @@
 import { useEffect, useState } from 'react'
 
 type MediaItem = {
-  id: string
-  url: string
-  thumbnailUrl: string
-  createdAt: string
-  mimeType: string
-  originalFilename: string
-  fileSize: number
+  id: number
+  filename: string
+  original_filename: string
+  mime_type: string
+  file_size: number
+  file_url: string
+  thumbnail_url: string | null
+  width: number | null
+  height: number | null
+  duration: number | null
+  created_at: string
 }
 
 type ImageViewerProps = {
@@ -112,8 +116,8 @@ export default function ImageViewer({ image, images, currentIndex, onClose, onNa
         onTouchEnd={handleTouchEnd}
       >
         <img
-          src={image.url}
-          alt={image.originalFilename}
+          src={image.file_url}
+          alt={image.original_filename}
           className="max-w-full max-h-full object-contain"
           draggable={false}
         />
@@ -125,7 +129,7 @@ export default function ImageViewer({ image, images, currentIndex, onClose, onNa
           {currentIndex + 1} / {images.length}
         </div>
         <div className="text-xs opacity-60 mt-1">
-          {image.originalFilename}
+          {image.original_filename}
         </div>
       </div>
 
