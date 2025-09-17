@@ -4,12 +4,16 @@ const nextConfig = {
   reactStrictMode: true,
   
   async rewrites() {
-    // Proxy NextAuth endpoints to the API server
-    const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001'
+    // Proxy API endpoints to the API server
+    const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.uchinokiroku.com'
     return [
       {
         source: '/api/auth/:path*',
         destination: `${apiBase}/api/auth/:path*`,
+      },
+      {
+        source: '/api/:path*',
+        destination: `${apiBase}/api/:path*`,
       },
     ]
   },

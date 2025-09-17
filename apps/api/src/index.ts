@@ -4,6 +4,7 @@ import { googleStart, handleGoogleAuthCallback } from "./routes/auth/google";
 import { handleLineAuthStart, handleLineAuthCallback } from "./routes/auth/line";
 import { migrate } from "./routes/migrate";
 import { test } from "./routes/test";
+import { readSessionCookie } from "./lib/session"; // Added import for debug endpoint
 import type { Env } from "./index"; // 既にあるならそのままでOK
 
 export interface Env {
@@ -25,6 +26,25 @@ export interface Env {
 const routes: Record<string, (req: Request, env: Env) => Promise<Response> | Response> = {
   "GET /health": (_req, _env) => handleHealth(),
   "GET /api/test": (req, env) => test(req, env),
+  "GET /api/debug-media": async (req, env) => {
+    console.log('=== DEBUG MEDIA ENDPOINT CALLED ===');
+    console.log('Request URL:', req.url);
+    console.log('Request method:', req.method);
+    console.log('Request headers:', Object.fromEntries(req.headers.entries()));
+    console.log('Cookies:', req.headers.get('Cookie') || 'No cookies');
+    
+    const session = await readSessionCookie(req, env);
+    console.log('Session check result:', session ? 'authenticated' : 'not authenticated');
+    
+    return new Response(JSON.stringify({
+      message: "Debug endpoint reached!",
+      timestamp: new Date().toISOString(),
+      session: session ? { sub: session.sub, exp: session.exp } : null,
+      headers: Object.fromEntries(req.headers.entries())
+    }), {
+      headers: { "Content-Type": "application/json" },
+    });
+  },
   "POST /api/migrate": (req, env) => migrate(req, env),
   "GET /memories": (req, env) => handleMemories(req, env),
   "GET /api/articles": (req, env) => handleMemories(req, env), // エイリアス

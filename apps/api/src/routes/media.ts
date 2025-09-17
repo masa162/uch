@@ -5,11 +5,18 @@ import type { Env } from "../index";
 // メディア一覧取得
 export async function getMedia(req: Request, env: Env) {
   try {
-    console.log('getMedia called with cookies:', req.headers.get('Cookie') || 'No cookies');
+    console.log('=== getMedia API called ===');
+    console.log('Request URL:', req.url);
+    console.log('Request method:', req.method);
+    console.log('Request headers:', Object.fromEntries(req.headers.entries()));
+    console.log('Cookies:', req.headers.get('Cookie') || 'No cookies');
     
     // セッション確認
     const session = await readSessionCookie(req, env);
     console.log('getMedia session check result:', session ? 'authenticated' : 'not authenticated');
+    if (session) {
+      console.log('Session details:', { sub: session.sub, exp: session.exp });
+    }
     
     if (!session) {
       console.log('getMedia: No valid session found');
