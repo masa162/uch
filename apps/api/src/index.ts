@@ -82,6 +82,10 @@ const routes: Record<string, (req: Request, env: Env) => Promise<Response> | Res
     const mod = await import("./routes/media");
     return mod.generateUploadUrl(req, env);
   },
+  "POST /api/media/upload-r2": async (req, env) => {
+    const mod = await import("./routes/media");
+    return mod.uploadToR2(req, env);
+  },
   "POST /api/media/upload-direct": async (req, env) => {
     const mod = await import("./routes/media");
     return mod.uploadDirect(req, env);
@@ -112,6 +116,22 @@ const routes: Record<string, (req: Request, env: Env) => Promise<Response> | Res
     }
     return mod.getMediaFile(req, env, mediaId);
   },
+  // filename-path based fetch (e.g., /api/media/<userId>/<timestamp>_<name>)
+  "GET /api/media/by-filename": async (req, env) => {
+    const mod = await import("./routes/media");
+    const url = new URL(req.url);
+    const filenamePath = decodeURIComponent(url.pathname.replace(/^\/api\/media\//, ''));
+    return mod.getMediaByFilename(req, env, filenamePath);
+  },
+  // Cloudflare Stream
+  "POST /api/video/sign": async (req, env) => {
+    const mod = await import("./routes/media");
+    return mod.signVideoUpload(req, env);
+  },
+  "POST /api/media/register-video": async (req, env) => {
+    const mod = await import("./routes/media");
+    return mod.registerVideo(req, env);
+  },
   "POST /auth/logout": (_req, env) => {
     // import の循環回避のため遅延 import
     return import("./routes/auth/logout").then(m => m.authLogout(_req, env));
@@ -134,6 +154,21 @@ function keyOf(req: Request) {
   // 動的ルートの処理
   if (pathname.startsWith('/api/articles/') && pathname !== '/api/articles' && pathname !== '/api/articles/search') {
     return `${method} /api/articles/[id]`;
+  }
+  // /api/media/:id/image → GET /api/media/[id]/image
+  if (pathname.match(/^\/api\/media\/[^/]+\/image$/)) {
+    return `${method} /api/media/[id]/image`;
+  }
+  // /api/media/:id → DELETE /api/media/[id]
+  if (pathname.match(/^\/api\/media\/[^/]+$/)) {
+    return `${method} /api/media/[id]`;
+  }
+  // Any other GET under /api/media/* is treated as filename-path based fetch
+  if (method === 'GET' && pathname.startsWith('/api/media/')) {
+    // Exclude already handled specific patterns above
+    if (!pathname.match(/^\/api\/media\/[^/]+(\/image)?$/)) {
+      return `${method} /api/media/by-filename`;
+    }
   }
   
   return `${method} ${pathname}`;

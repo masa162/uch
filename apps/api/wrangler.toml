@@ -33,3 +33,8 @@ GOOGLE_REDIRECT_URI = "https://api.uchinokiroku.com/auth/google/callback"
 binding = "DB"
 database_name = "uch-db"
 database_id = "10a55a58-a42d-4bb1-9ac7-07441807367f"
+
+# R2 バケット（画像保管）
+[[r2_buckets]]
+binding = "R2_BUCKET"
+bucket_name = "uch-media"

@@ -29,6 +29,11 @@ function base64EncodeUtf8(input: string): string {
   }
 }
 
+function buildImageUrl(apiBase: string, item: MediaItem): string {
+  // API は /api/media/:id/image でバイナリを返す
+  return `${apiBase}/api/media/${item.id}/image`
+}
+
 type ViewMode = 'grid' | 'list'
 
 export default function GalleryPage() {
@@ -321,7 +326,7 @@ export default function GalleryPage() {
                     className="cursor-pointer"
                   >
                     <img
-                      src={item.thumbnail_url || item.file_url}
+                      src={buildImageUrl(apiBase, item)}
                       alt={item.original_filename}
                       className="w-full h-40 object-cover rounded-lg shadow group-hover:opacity-90 transition"
                       loading="lazy"
@@ -370,7 +375,7 @@ export default function GalleryPage() {
                     />
                   )}
                   <img
-                    src={item.thumbnail_url || item.file_url}
+                    src={buildImageUrl(apiBase, item)}
                     alt={item.original_filename}
                     className="w-16 h-16 object-cover rounded"
                     loading="lazy"
