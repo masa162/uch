@@ -49,6 +49,31 @@ const routes: Record<string, (req: Request, env: Env) => Promise<Response> | Res
     const mod = await import("./routes/auth/me");
     return mod.authMe(req, env);
   },
+  // メディア関連のルート
+  "GET /api/media": async (req, env) => {
+    const mod = await import("./routes/media");
+    return mod.getMedia(req, env);
+  },
+  "POST /api/media/generate-upload-url": async (req, env) => {
+    const mod = await import("./routes/media");
+    return mod.generateUploadUrl(req, env);
+  },
+  "POST /api/media/upload-direct": async (req, env) => {
+    const mod = await import("./routes/media");
+    return mod.uploadDirect(req, env);
+  },
+  "DELETE /api/media/[id]": async (req, env) => {
+    const mod = await import("./routes/media");
+    const url = new URL(req.url);
+    const mediaId = url.pathname.split('/').pop();
+    if (!mediaId) {
+      return new Response(JSON.stringify({ error: "メディアIDが必要です" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+    return mod.deleteMedia(req, env, mediaId);
+  },
   "POST /auth/logout": (_req, env) => {
     // import の循環回避のため遅延 import
     return import("./routes/auth/logout").then(m => m.authLogout(_req, env));

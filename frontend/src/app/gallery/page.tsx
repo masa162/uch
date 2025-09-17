@@ -6,13 +6,17 @@ import AuthenticatedLayout from '@/components/AuthenticatedLayout'
 import ImageViewer from '@/components/ImageViewer'
 
 type MediaItem = {
-  id: string
-  url: string
-  thumbnailUrl: string
-  createdAt: string
-  mimeType: string
-  originalFilename: string
-  fileSize: number
+  id: number
+  filename: string
+  original_filename: string
+  mime_type: string
+  file_size: number
+  file_url: string
+  thumbnail_url: string | null
+  width: number | null
+  height: number | null
+  duration: number | null
+  created_at: string
 }
 
 type ViewMode = 'grid' | 'list'
@@ -36,10 +40,10 @@ export default function GalleryPage() {
     try {
       const res = await fetch(`${apiBase}/api/media?offset=${offset}&limit=24`, { credentials: 'include' })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      const data = (await res.json()) as { items: MediaItem[]; nextOffset: number }
-      setItems((prev) => [...prev, ...data.items])
-      setOffset(data.nextOffset)
-      if (data.items.length === 0) setHasMore(false)
+      const data = (await res.json()) as MediaItem[]
+      setItems((prev) => [...prev, ...data])
+      setOffset(prev => prev + data.length)
+      if (data.length === 0) setHasMore(false)
     } catch (e) {
       setHasMore(false)
     } finally {
@@ -67,7 +71,7 @@ export default function GalleryPage() {
   }
 
   const selectAll = () => {
-    setSelectedItems(new Set(items.map(item => item.id)))
+    setSelectedItems(new Set(items.map(item => item.id.toString())))
   }
 
   const clearSelection = () => {
@@ -78,11 +82,11 @@ export default function GalleryPage() {
     if (selectedItems.size === 0) return
     
     for (const id of Array.from(selectedItems)) {
-      const item = items.find(i => i.id === id)
+      const item = items.find(i => i.id.toString() === id)
       if (item) {
         const link = document.createElement('a')
-        link.href = `${apiBase}/api/media/${id}/image`
-        link.download = item.originalFilename
+        link.href = item.file_url
+        link.download = item.original_filename
         link.click()
       }
     }
@@ -102,7 +106,7 @@ export default function GalleryPage() {
       }
       
       // 削除されたアイテムをリストから除外
-      setItems(prev => prev.filter(item => !selectedItems.has(item.id)))
+      setItems(prev => prev.filter(item => !selectedItems.has(item.id.toString())))
       setSelectedItems(new Set())
       setEditMode(false)
     } catch (error) {
@@ -245,13 +249,13 @@ export default function GalleryPage() {
                     className="cursor-pointer"
                   >
                     <img
-                      src={`${apiBase}/api/media/${item.id}/image`}
-                      alt={item.originalFilename}
+                      src={item.thumbnail_url || item.file_url}
+                      alt={item.original_filename}
                       className="w-full h-40 object-cover rounded-lg shadow group-hover:opacity-90 transition"
                       loading="lazy"
                     />
                     <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs p-2 rounded-b-lg opacity-0 group-hover:opacity-100 transition">
-                      {item.originalFilename}
+                      {item.original_filename}
                     </div>
                   </div>
                 </div>
@@ -279,19 +283,19 @@ export default function GalleryPage() {
                     />
                   )}
                   <img
-                    src={`${apiBase}/api/media/${item.id}/image`}
-                    alt={item.originalFilename}
+                    src={item.thumbnail_url || item.file_url}
+                    alt={item.original_filename}
                     className="w-16 h-16 object-cover rounded"
                     loading="lazy"
                   />
                   <div className="flex-1 min-w-0">
-                    <div className="font-medium truncate">{item.originalFilename}</div>
+                    <div className="font-medium truncate">{item.original_filename}</div>
                     <div className="text-sm text-base-content/60">
-                      {formatFileSize(item.fileSize)} • {formatDate(item.createdAt)}
+                      {formatFileSize(item.file_size)} • {formatDate(item.created_at)}
                     </div>
                   </div>
                   <div className="text-xs text-base-content/40">
-                    {item.mimeType}
+                    {item.mime_type}
                   </div>
                 </div>
               ))}

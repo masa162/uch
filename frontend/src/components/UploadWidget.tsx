@@ -23,33 +23,31 @@ export default function UploadWidget({ onUploaded }: { onUploaded?: () => void }
     for (const file of Array.from(files)) {
       const outcome: UploadResult = { ok: false, fileName: file.name }
       try {
-        // 1) ask API for presigned URL
+        // 1) ask API for upload URL
         const pres = await fetch(`${apiBase}/api/media/generate-upload-url`, {
           method: 'POST',
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ fileName: file.name, fileType: file.type || 'application/octet-stream' }),
-        })
-        if (!pres.ok) throw new Error(`presign ${pres.status}`)
-        const { url, storageKey } = (await pres.json()) as { url: string; storageKey: string }
-
-        // 2) PUT file to R2
-        const put = await fetch(url, { method: 'PUT', headers: { 'Content-Type': file.type }, body: file })
-        if (!put.ok) throw new Error(`upload ${put.status}`)
-
-        // 3) notify API
-        const done = await fetch(`${apiBase}/api/media/upload-complete`, {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
-            storageKey, 
-            originalFilename: file.name, 
-            fileType: file.type,
+            filename: file.name, 
+            mimeType: file.type || 'application/octet-stream',
             fileSize: file.size
           }),
         })
-        if (!done.ok) throw new Error(`record ${done.status}`)
+        if (!pres.ok) throw new Error(`presign ${pres.status}`)
+        const { uploadUrl, fields } = (await pres.json()) as { uploadUrl: string; fields: any }
+
+        // 2) Upload file directly to API
+        const formData = new FormData()
+        formData.append('file', file)
+        formData.append('originalFilename', file.name)
+        
+        const upload = await fetch(uploadUrl, {
+          method: 'POST',
+          credentials: 'include',
+          body: formData,
+        })
+        if (!upload.ok) throw new Error(`upload ${upload.status}`)
         outcome.ok = true
       } catch (err: any) {
         // Fallback: upload via API (multipart) when presigned PUT fails (likely CORS)
