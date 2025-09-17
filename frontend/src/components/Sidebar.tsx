@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { useAuthAction } from '@/hooks/useAuthAction'
+import { useTags } from '@/hooks/useTags'
 import RealtimeSearch from '@/components/RealtimeSearch'
 import Link from 'next/link'
 
@@ -33,14 +34,13 @@ export default function Sidebar({ onNavigate }: SidebarProps = {}) {
   const router = useRouter()
   const { user, signOut } = useAuth()
   const { runAuthAction } = useAuthAction()
+  const { tags, loading: loadingTags } = useTags()
   const [showUserMenu, setShowUserMenu] = useState(false)
   
   // デバッグ用：ユーザー情報をログ出力
   console.log('Sidebar user data:', user)
   const [showTags, setShowTags] = useState(false)
   const [showArchive, setShowArchive] = useState(false)
-  const [tags, setTags] = useState<Tag[]>([])
-  const [loadingTags, setLoadingTags] = useState(false)
   const [archiveHierarchy, setArchiveHierarchy] = useState<ArchiveHierarchy>({})
   const [loadingArchive, setLoadingArchive] = useState(false)
   const [expandedYears, setExpandedYears] = useState<Set<string>>(new Set())
@@ -60,7 +60,7 @@ export default function Sidebar({ onNavigate }: SidebarProps = {}) {
   }
 
   const handleTagClick = (tagName: string) => {
-    router.push(`/tags/${encodeURIComponent(tagName)}`)
+    router.push(`/search?q=${encodeURIComponent(tagName)}`)
     onNavigate?.()
   }
 
@@ -356,32 +356,29 @@ export default function Sidebar({ onNavigate }: SidebarProps = {}) {
       {/* 人気のタグ */}
       <div className="space-y-2">
         <h3 className="font-bold text-primary-dark">🏷️ 人気のタグ</h3>
-        <div className="flex flex-wrap gap-2">
-          <button 
-            onClick={() => handleTagClick('家族')}
-            className="badge badge-primary badge-outline hover:badge-primary cursor-pointer transition-colors"
-          >
-            家族
-          </button>
-          <button 
-            onClick={() => handleTagClick('思い出')}
-            className="badge badge-primary badge-outline hover:badge-primary cursor-pointer transition-colors"
-          >
-            思い出
-          </button>
-          <button 
-            onClick={() => handleTagClick('旅行')}
-            className="badge badge-primary badge-outline hover:badge-primary cursor-pointer transition-colors"
-          >
-            旅行
-          </button>
-          <button 
-            onClick={() => handleTagClick('料理')}
-            className="badge badge-primary badge-outline hover:badge-primary cursor-pointer transition-colors"
-          >
-            料理
-          </button>
-        </div>
+        {loadingTags ? (
+          <div className="flex justify-center">
+            <div className="loading loading-spinner loading-sm"></div>
+          </div>
+        ) : tags.length > 0 ? (
+          <div className="flex flex-wrap gap-2">
+            {tags.map((tag) => (
+              <button 
+                key={tag.name}
+                onClick={() => handleTagClick(tag.name)}
+                className="badge badge-primary badge-outline hover:badge-primary cursor-pointer transition-colors"
+                title={`${tag.count}件の記事`}
+              >
+                {tag.name}
+                <span className="ml-1 text-xs opacity-70">({tag.count})</span>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className="text-sm text-base-content/70">
+            タグがありません
+          </div>
+        )}
       </div>
 
       {/* 記事一覧（アーカイブ） */}

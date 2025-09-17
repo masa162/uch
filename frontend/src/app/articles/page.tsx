@@ -145,6 +145,20 @@ export default function ArticlesPage() {
                     <p>by {article.author?.name || 'Unknown'}</p>
                     <p>{formatDate(article.pubDate)}</p>
                   </div>
+                  {article.tags && article.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {article.tags.slice(0, 3).map((tag, index) => (
+                        <span key={index} className="badge badge-outline badge-xs">
+                          {tag}
+                        </span>
+                      ))}
+                      {article.tags.length > 3 && (
+                        <span className="badge badge-outline badge-xs">
+                          +{article.tags.length - 3}
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
               </Link>
             ))}

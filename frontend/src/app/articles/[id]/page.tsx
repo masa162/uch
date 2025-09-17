@@ -27,6 +27,8 @@ export default function ArticleDetailPage() {
   const [article, setArticle] = useState<Article | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [prevArticle, setPrevArticle] = useState<Article | null>(null)
+  const [nextArticle, setNextArticle] = useState<Article | null>(null)
 
   useEffect(() => {
     const fetchOne = async () => {
@@ -46,6 +48,24 @@ export default function ArticleDetailPage() {
         }
         const data = await res.json()
         setArticle(data as Article)
+        
+        // 前後の記事を取得
+        try {
+          const allArticlesRes = await fetch(`${apiBase}/api/articles`, { credentials: 'include' })
+          if (allArticlesRes.ok) {
+            const allArticles = await allArticlesRes.json() as Article[]
+            const currentIndex = allArticles.findIndex(a => a.id === id)
+            
+            if (currentIndex > 0) {
+              setPrevArticle(allArticles[currentIndex - 1])
+            }
+            if (currentIndex < allArticles.length - 1) {
+              setNextArticle(allArticles[currentIndex + 1])
+            }
+          }
+        } catch (e) {
+          console.error('Failed to fetch adjacent articles:', e)
+        }
       } catch (e) {
         setError(e instanceof Error ? e.message : '読み込みに失敗しました')
       } finally {
@@ -80,15 +100,68 @@ export default function ArticleDetailPage() {
       ) : article ? (
         <article className="prose max-w-none">
           <h1 className="mb-2">{article.title}</h1>
-          <p className="text-sm text-gray-500 mb-6">
-            by {article.author?.name || 'Unknown'} ・ {formatDate(article.pubDate)}
-          </p>
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-sm text-gray-500">
+              by {article.author?.name || 'Unknown'} ・ {formatDate(article.pubDate)}
+            </p>
+            {article.tags && article.tags.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {article.tags.map((tag, index) => (
+                  <Link
+                    key={index}
+                    href={`/search?q=${encodeURIComponent(tag)}`}
+                    className="badge badge-outline badge-sm hover:badge-primary transition-colors"
+                  >
+                    {tag}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
           {article.heroImageUrl && (
             <img src={article.heroImageUrl} alt={article.title} className="rounded-lg mb-6" />
           )}
           <ReactMarkdown remarkPlugins={[remarkGfm]}>
             {article.content || ''}
           </ReactMarkdown>
+          
+          {/* 前後の記事ナビゲーション */}
+          {(prevArticle || nextArticle) && (
+            <div className="mt-12 border-t pt-8">
+              <div className="flex justify-between items-start gap-4">
+                {prevArticle ? (
+                  <Link 
+                    href={`/articles/${prevArticle.id}`}
+                    className="flex-1 p-4 border border-base-300 rounded-lg hover:bg-base-100 transition-colors"
+                  >
+                    <div className="text-sm text-base-content/70 mb-1">← 前の記事</div>
+                    <div className="font-medium text-base-content">{prevArticle.title}</div>
+                    <div className="text-xs text-base-content/50 mt-1">
+                      by {prevArticle.author?.name || 'Unknown'} ・ {formatDate(prevArticle.pubDate)}
+                    </div>
+                  </Link>
+                ) : (
+                  <div className="flex-1"></div>
+                )}
+                
+                {nextArticle ? (
+                  <Link 
+                    href={`/articles/${nextArticle.id}`}
+                    className="flex-1 p-4 border border-base-300 rounded-lg hover:bg-base-100 transition-colors text-right"
+                  >
+                    <div className="text-sm text-base-content/70 mb-1">次の記事 →</div>
+                    <div className="font-medium text-base-content">{nextArticle.title}</div>
+                    <div className="text-xs text-base-content/50 mt-1">
+                      by {nextArticle.author?.name || 'Unknown'} ・ {formatDate(nextArticle.pubDate)}
+                    </div>
+                  </Link>
+                ) : (
+                  <div className="flex-1"></div>
+                )}
+              </div>
+            </div>
+          )}
+          
           <div className="mt-8 flex gap-3">
             <Link href={`/articles/${encodeURIComponent(id as string)}/edit`} className="btn btn-outline">編集する</Link>
             <Link href="/articles" className="btn">一覧へ戻る</Link>
