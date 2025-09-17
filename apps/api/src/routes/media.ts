@@ -5,9 +5,14 @@ import type { Env } from "../index";
 // メディア一覧取得
 export async function getMedia(req: Request, env: Env) {
   try {
+    console.log('getMedia called with cookies:', req.headers.get('Cookie') || 'No cookies');
+    
     // セッション確認
     const session = await readSessionCookie(req, env);
+    console.log('getMedia session check result:', session ? 'authenticated' : 'not authenticated');
+    
     if (!session) {
+      console.log('getMedia: No valid session found');
       return new Response(JSON.stringify({ error: "認証が必要です" }), {
         status: 401,
         headers: { "Content-Type": "application/json" },
@@ -19,6 +24,7 @@ export async function getMedia(req: Request, env: Env) {
     const limit = parseInt(url.searchParams.get('limit') || '24');
 
     // メディア一覧を取得
+    console.log('getMedia: Querying media for user_id:', session.sub, 'offset:', offset, 'limit:', limit);
     const media = await queryAll(env, `
       SELECT 
         id,
@@ -37,6 +43,9 @@ export async function getMedia(req: Request, env: Env) {
       ORDER BY created_at DESC
       LIMIT ? OFFSET ?
     `, [session.sub, limit, offset]);
+
+    console.log('getMedia: Found', media.length, 'media items');
+    console.log('getMedia: Media items:', media);
 
     return new Response(JSON.stringify(media), {
       headers: { "Content-Type": "application/json" },
