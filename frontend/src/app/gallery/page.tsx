@@ -55,9 +55,11 @@ export default function GalleryPage() {
       console.log('Fetching media from URL:', url)
       console.log('Request headers:', { credentials: 'include' })
       
+      console.log('Making fetch request to:', url)
       const res = await fetch(url, { credentials: 'include' })
       console.log('Media API response status:', res.status, res.ok)
       console.log('Media API response headers:', Object.fromEntries(res.headers.entries()))
+      console.log('Response URL:', res.url)
       
       if (!res.ok) {
         const errorText = await res.text()
@@ -65,7 +67,9 @@ export default function GalleryPage() {
         throw new Error(`HTTP ${res.status}: ${errorText}`)
       }
       
-      const data = (await res.json()) as MediaItem[]
+      const responseText = await res.text()
+      console.log('Raw response text:', responseText)
+      const data = JSON.parse(responseText) as MediaItem[]
       console.log('Fetched media data:', data.length, 'items')
       console.log('Media items details:', data)
       
