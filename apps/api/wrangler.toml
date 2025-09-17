@@ -16,14 +16,14 @@ SESSION_SECRET = "development-secret-key-change-in-production"
 SESSION_MAX_AGE_SEC = "2592000"
 # 本番では Dashboard 側 Secrets/Vars で COOKIE_DOMAIN=.uchinokiroku.com を設定
 
-# LINE OAuth設定（開発環境用）
-LINE_CLIENT_ID = "your-line-client-id"
-LINE_CLIENT_SECRET = "your-line-client-secret"
+# LINE OAuth設定（本番環境ではSecretsで管理）
+# LINE_CLIENT_ID = "your-line-client-id"
+# LINE_CLIENT_SECRET = "your-line-client-secret"
 LINE_REDIRECT_URI = "https://api.uchinokiroku.com/auth/line/callback"
 
-# Google OAuth設定（開発環境用）
-GOOGLE_CLIENT_ID = "your-google-client-id"
-GOOGLE_CLIENT_SECRET = "your-google-client-secret"
+# Google OAuth設定（本番環境ではSecretsで管理）
+# GOOGLE_CLIENT_ID = "your-google-client-id"
+# GOOGLE_CLIENT_SECRET = "your-google-client-secret"
 GOOGLE_REDIRECT_URI = "https://api.uchinokiroku.com/auth/google/callback"
 
 # 環境変数はCloudflare Dashboardでのみ管理
