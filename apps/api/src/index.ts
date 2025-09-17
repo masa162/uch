@@ -3,6 +3,7 @@ import { handleMemories } from "./routes/memories";
 import { googleStart, handleGoogleAuthCallback } from "./routes/auth/google";
 import { handleLineAuthStart, handleLineAuthCallback } from "./routes/auth/line";
 import { migrate } from "./routes/migrate";
+import { test } from "./routes/test";
 import type { Env } from "./index"; // 既にあるならそのままでOK
 
 export interface Env {
@@ -23,6 +24,7 @@ export interface Env {
 
 const routes: Record<string, (req: Request, env: Env) => Promise<Response> | Response> = {
   "GET /health": (_req, _env) => handleHealth(),
+  "GET /api/test": (req, env) => test(req, env),
   "POST /api/migrate": (req, env) => migrate(req, env),
   "GET /memories": (req, env) => handleMemories(req, env),
   "GET /api/articles": (req, env) => handleMemories(req, env), // エイリアス
