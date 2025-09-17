@@ -84,9 +84,12 @@ export default function UploadWidget({ onUploaded }: { onUploaded?: () => void }
           if (!signRes.ok) throw new Error(`video sign ${signRes.status}`)
           type StreamSignResponse = { uploadURL: string; uid: string }
           const { uploadURL, uid } = (await signRes.json()) as StreamSignResponse
+          // Stream の direct upload は multipart/form-data で file パートを要求
+          const fdStream = new FormData()
+          fdStream.append('file', orig)
           const up = await fetch(uploadURL, {
             method: 'POST',
-            body: orig,
+            body: fdStream,
           })
           if (!up.ok) {
             const t = await up.text().catch(() => '')

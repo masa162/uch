@@ -543,7 +543,19 @@ export async function signVideoUpload(req: Request, env: Env) {
     }
 
     const apiUrl = `https://api.cloudflare.com/client/v4/accounts/${accountId}/stream/direct_upload`;
-    const body = { creator: session.sub };
+    const maxDuration = parseInt((env as any).STREAM_MAX_DURATION_SECONDS || "900", 10); // 15分デフォルト
+    const allowedOrigins: string[] = [];
+    if ((env as any).FRONTEND_URL) {
+      try {
+        const u = new URL((env as any).FRONTEND_URL);
+        allowedOrigins.push(`${u.protocol}//${u.host}`);
+      } catch {}
+    }
+    const body: Record<string, any> = { 
+      creator: session.sub,
+      maxDurationSeconds: maxDuration,
+    };
+    if (allowedOrigins.length > 0) body.allowedOrigins = allowedOrigins;
     const res = await fetch(apiUrl, {
       method: 'POST',
       headers: {
