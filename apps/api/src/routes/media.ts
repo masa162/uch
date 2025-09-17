@@ -113,8 +113,12 @@ export async function generateUploadUrl(req: Request, env: Env) {
 // 直接アップロード処理
 export async function uploadDirect(req: Request, env: Env) {
   try {
+    console.log('uploadDirect called');
+    
     // セッション確認
     const session = await readSessionCookie(req, env);
+    console.log('Session check result:', session ? 'authenticated' : 'not authenticated');
+    
     if (!session) {
       return new Response(JSON.stringify({ error: "認証が必要です" }), {
         status: 401,
@@ -125,6 +129,14 @@ export async function uploadDirect(req: Request, env: Env) {
     const formData = await req.formData();
     const file = formData.get('file') as File;
     const originalFilename = formData.get('originalFilename') as string;
+
+    console.log('File info:', {
+      hasFile: !!file,
+      fileName: file?.name,
+      fileSize: file?.size,
+      fileType: file?.type,
+      originalFilename
+    });
 
     if (!file) {
       return new Response(JSON.stringify({ 
@@ -142,8 +154,23 @@ export async function uploadDirect(req: Request, env: Env) {
     const filename = `${session.sub}/${timestamp}_${originalFilename || file.name}`;
 
     // ファイルをBase64エンコード（簡易実装）
+    console.log('Starting file processing...');
     const arrayBuffer = await file.arrayBuffer();
+    console.log('ArrayBuffer size:', arrayBuffer.byteLength);
+    
+    // ファイルサイズが大きすぎる場合はエラー
+    if (arrayBuffer.byteLength > 10 * 1024 * 1024) { // 10MB制限
+      return new Response(JSON.stringify({ 
+        error: "ファイルサイズが大きすぎます（10MB以下にしてください）" 
+      }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+    
+    console.log('Converting to Base64...');
     const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+    console.log('Base64 conversion completed, length:', base64.length);
     const fileUrl = `data:${mimeType};base64,${base64}`;
 
     // 画像の場合はサムネイルURLも生成
@@ -161,6 +188,7 @@ export async function uploadDirect(req: Request, env: Env) {
     }
 
     // データベースに保存
+    console.log('Saving to database...');
     const result = await execute(env, `
       INSERT INTO media (
         user_id, filename, original_filename, mime_type, file_size, 
@@ -172,6 +200,7 @@ export async function uploadDirect(req: Request, env: Env) {
       fileUrl, thumbnailUrl, width, height, duration
     ]);
 
+    console.log('Database save result:', result);
     const mediaId = result.meta.last_row_id;
 
     return new Response(JSON.stringify({
@@ -193,8 +222,11 @@ export async function uploadDirect(req: Request, env: Env) {
 
   } catch (error: any) {
     console.error('アップロードエラー:', error);
+    console.error('Error stack:', error.stack);
     return new Response(JSON.stringify({ 
-      error: "アップロードに失敗しました" 
+      error: "アップロードに失敗しました",
+      details: error.message,
+      stack: error.stack
     }), {
       status: 500,
       headers: { "Content-Type": "application/json" },
