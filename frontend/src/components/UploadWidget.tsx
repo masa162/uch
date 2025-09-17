@@ -54,6 +54,7 @@ export default function UploadWidget({ onUploaded }: { onUploaded?: () => void }
         try {
           const fd = new FormData()
           fd.append('file', file)
+          fd.append('originalFilename', file.name)
           const up2 = await fetch(`${apiBase}/api/media/upload-direct`, {
             method: 'POST',
             credentials: 'include',
@@ -71,7 +72,12 @@ export default function UploadWidget({ onUploaded }: { onUploaded?: () => void }
     }
 
     setBusy(false)
-    if (outcomes.some((o) => o.ok)) onUploaded?.()
+    const hasSuccessfulUploads = outcomes.some((o) => o.ok)
+    console.log('Upload results:', outcomes, 'Has successful uploads:', hasSuccessfulUploads)
+    if (hasSuccessfulUploads) {
+      console.log('Calling onUploaded callback')
+      onUploaded?.()
+    }
     // reset input so same files can be picked again
     e.target.value = ''
   }

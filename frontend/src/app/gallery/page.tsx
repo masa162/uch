@@ -36,15 +36,18 @@ export default function GalleryPage() {
 
   const fetchMore = async () => {
     if (loading || !hasMore) return
+    console.log('fetchMore called, offset:', offset, 'loading:', loading, 'hasMore:', hasMore)
     setLoading(true)
     try {
       const res = await fetch(`${apiBase}/api/media?offset=${offset}&limit=24`, { credentials: 'include' })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const data = (await res.json()) as MediaItem[]
+      console.log('Fetched media data:', data.length, 'items')
       setItems((prev) => [...prev, ...data])
       setOffset(prev => prev + data.length)
       if (data.length === 0) setHasMore(false)
     } catch (e) {
+      console.error('Error fetching media:', e)
       setHasMore(false)
     } finally {
       setLoading(false)
@@ -152,7 +155,13 @@ export default function GalleryPage() {
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold">📷 メディアギャラリー</h1>
         <div className="flex items-center gap-2">
-          <UploadWidget onUploaded={() => { setItems([]); setOffset(0); setHasMore(true); fetchMore() }} />
+          <UploadWidget onUploaded={() => { 
+            console.log('onUploaded callback triggered, refreshing gallery...')
+            setItems([]); 
+            setOffset(0); 
+            setHasMore(true); 
+            fetchMore() 
+          }} />
         </div>
       </div>
 
