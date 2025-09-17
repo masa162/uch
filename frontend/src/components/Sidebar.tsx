@@ -34,6 +34,9 @@ export default function Sidebar({ onNavigate }: SidebarProps = {}) {
   const { user, signOut } = useAuth()
   const { runAuthAction } = useAuthAction()
   const [showUserMenu, setShowUserMenu] = useState(false)
+  
+  // デバッグ用：ユーザー情報をログ出力
+  console.log('Sidebar user data:', user)
   const [showTags, setShowTags] = useState(false)
   const [showArchive, setShowArchive] = useState(false)
   const [tags, setTags] = useState<Tag[]>([])
@@ -199,12 +202,12 @@ export default function Sidebar({ onNavigate }: SidebarProps = {}) {
             >
               <div className="avatar">
                 <div className="w-8 h-8 rounded-full bg-primary text-primary-content flex items-center justify-center text-sm font-bold">
-                  {user.name ? user.name.charAt(0).toUpperCase() : '👤'}
+                  {user.name ? user.name.charAt(0).toUpperCase() : (user.email ? user.email.charAt(0).toUpperCase() : '👤')}
                 </div>
               </div>
               <div className="flex-1 text-left">
                 <div className="text-sm font-semibold flex items-center gap-2">
-                  {user.name || 'ユーザー'}
+                  {user.name || user.email || 'ユーザー'}
                   {user.role === 'GUEST' && (
                     <span className="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded-full">
                       ゲスト

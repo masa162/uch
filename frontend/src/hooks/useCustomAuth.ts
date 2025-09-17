@@ -47,16 +47,18 @@ export function useCustomAuth() {
           picture?: string
         }
         console.log('User data received:', userData)
+        const newUser = {
+          id: userData.id || '',
+          email: userData.email,
+          name: userData.name,
+          image: userData.picture,
+          username: userData.name?.toLowerCase().replace(/\s+/g, '') || '',
+          role: 'USER'
+        }
+        console.log('Setting user data:', newUser)
         setAuthState(prev => ({
           ...prev,
-          user: {
-            id: userData.id || '',
-            email: userData.email,
-            name: userData.name,
-            image: userData.picture,
-            username: userData.name?.toLowerCase().replace(/\s+/g, '') || '',
-            role: 'USER'
-          },
+          user: newUser,
           loading: false
         }))
         console.log('Auth state updated with user data')
