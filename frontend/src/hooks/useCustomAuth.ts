@@ -40,28 +40,42 @@ export function useCustomAuth() {
 
       console.log('Session check response:', response.status, response.ok)
       if (response.ok) {
-        const userData = await response.json() as {
-          id: string
-          email?: string
-          name?: string
-          picture?: string
+        const responseData = await response.json() as {
+          ok: boolean
+          user?: {
+            id: string
+            email?: string
+            name?: string
+            picture?: string
+          }
         }
-        console.log('User data received:', userData)
-        const newUser = {
-          id: userData.id || '',
-          email: userData.email,
-          name: userData.name,
-          image: userData.picture,
-          username: userData.name?.toLowerCase().replace(/\s+/g, '') || '',
-          role: 'USER'
+        console.log('Response data received:', responseData)
+        
+        if (responseData.ok && responseData.user) {
+          const userData = responseData.user
+          const newUser = {
+            id: userData.id || '',
+            email: userData.email,
+            name: userData.name,
+            image: userData.picture,
+            username: userData.name?.toLowerCase().replace(/\s+/g, '') || '',
+            role: 'USER'
+          }
+          console.log('Setting user data:', newUser)
+          setAuthState(prev => ({
+            ...prev,
+            user: newUser,
+            loading: false
+          }))
+          console.log('Auth state updated with user data')
+        } else {
+          console.log('Invalid response format or user data missing')
+          setAuthState(prev => ({
+            ...prev,
+            user: null,
+            loading: false
+          }))
         }
-        console.log('Setting user data:', newUser)
-        setAuthState(prev => ({
-          ...prev,
-          user: newUser,
-          loading: false
-        }))
-        console.log('Auth state updated with user data')
       } else {
         console.log('Session check failed:', response.status)
         setAuthState(prev => ({
