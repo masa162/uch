@@ -233,8 +233,12 @@ export async function uploadDirect(req: Request, env: Env) {
 // メディアファイル取得
 export async function getMediaFile(req: Request, env: Env, mediaId: string) {
   try {
+    console.log('getMediaFile called with mediaId:', mediaId);
+    
     // セッション確認
     const session = await readSessionCookie(req, env);
+    console.log('Session check result:', session ? 'authenticated' : 'not authenticated');
+    
     if (!session) {
       return new Response(JSON.stringify({ error: "認証が必要です" }), {
         status: 401,
@@ -243,11 +247,14 @@ export async function getMediaFile(req: Request, env: Env, mediaId: string) {
     }
 
     // メディア情報を取得
+    console.log('Querying media with id:', mediaId, 'user_id:', session.sub);
     const media = await queryAll(env, `
       SELECT file_url, mime_type, original_filename
       FROM media 
       WHERE id = ? AND user_id = ?
     `, [mediaId, session.sub]);
+    
+    console.log('Media query result:', media);
 
     if (media.length === 0) {
       return new Response(JSON.stringify({ 

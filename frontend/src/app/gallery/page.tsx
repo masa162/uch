@@ -43,6 +43,7 @@ export default function GalleryPage() {
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const data = (await res.json()) as MediaItem[]
       console.log('Fetched media data:', data.length, 'items')
+      console.log('Media items details:', data)
       setItems((prev) => [...prev, ...data])
       setOffset(prev => prev + data.length)
       if (data.length === 0) setHasMore(false)
@@ -262,6 +263,21 @@ export default function GalleryPage() {
                       alt={item.original_filename}
                       className="w-full h-40 object-cover rounded-lg shadow group-hover:opacity-90 transition"
                       loading="lazy"
+                      onError={(e) => {
+                        console.error('Image load error for item:', item.id, item.original_filename, e);
+                        // エラー時はプレースホルダー画像を表示
+                        e.currentTarget.src = `data:image/svg+xml;base64,${btoa(`
+                          <svg width="300" height="200" xmlns="http://www.w3.org/2000/svg">
+                            <rect width="300" height="200" fill="#f0f0f0"/>
+                            <text x="150" y="100" text-anchor="middle" font-family="Arial" font-size="14" fill="#666">
+                              ${item.original_filename}
+                            </text>
+                            <text x="150" y="120" text-anchor="middle" font-family="Arial" font-size="12" fill="#999">
+                              ${item.mime_type}
+                            </text>
+                          </svg>
+                        `)}`;
+                      }}
                     />
                     <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs p-2 rounded-b-lg opacity-0 group-hover:opacity-100 transition">
                       {item.original_filename}
@@ -296,6 +312,18 @@ export default function GalleryPage() {
                     alt={item.original_filename}
                     className="w-16 h-16 object-cover rounded"
                     loading="lazy"
+                    onError={(e) => {
+                      console.error('Image load error for item:', item.id, item.original_filename, e);
+                      // エラー時はプレースホルダー画像を表示
+                      e.currentTarget.src = `data:image/svg+xml;base64,${btoa(`
+                        <svg width="64" height="64" xmlns="http://www.w3.org/2000/svg">
+                          <rect width="64" height="64" fill="#f0f0f0"/>
+                          <text x="32" y="32" text-anchor="middle" font-family="Arial" font-size="8" fill="#666">
+                            ${item.original_filename}
+                          </text>
+                        </svg>
+                      `)}`;
+                    }}
                   />
                   <div className="flex-1 min-w-0">
                     <div className="font-medium truncate">{item.original_filename}</div>

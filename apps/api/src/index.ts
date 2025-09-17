@@ -77,7 +77,9 @@ const routes: Record<string, (req: Request, env: Env) => Promise<Response> | Res
   "GET /api/media/[id]/image": async (req, env) => {
     const mod = await import("./routes/media");
     const url = new URL(req.url);
-    const mediaId = url.pathname.split('/')[3]; // /api/media/[id]/image
+    const pathParts = url.pathname.split('/');
+    const mediaId = pathParts[pathParts.length - 2]; // /api/media/[id]/image
+    console.log('Media file request:', { pathname: url.pathname, mediaId, pathParts });
     if (!mediaId) {
       return new Response(JSON.stringify({ error: "メディアIDが必要です" }), {
         status: 400,
