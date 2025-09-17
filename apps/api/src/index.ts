@@ -149,12 +149,31 @@ const routes: Record<string, (req: Request, env: Env) => Promise<Response> | Res
 function keyOf(req: Request) {
   const url = new URL(req.url);
   const method = req.method.toUpperCase();
-  const pathname = url.pathname;
+  // 正規化（末尾スラッシュを除去、ただしルートは除く）
+  let pathname = url.pathname;
+  if (pathname.length > 1 && pathname.endsWith('/')) pathname = pathname.replace(/\/+$/, '');
   
   // 動的ルートの処理
   if (pathname.startsWith('/api/articles/') && pathname !== '/api/articles' && pathname !== '/api/articles/search') {
     return `${method} /api/articles/[id]`;
   }
+  // まずは固定パスを優先マッチ
+  if (pathname === '/api/video/sign') {
+    return `${method} /api/video/sign`;
+  }
+  if (pathname === '/api/media/register-video') {
+    return `${method} /api/media/register-video`;
+  }
+  if (pathname === '/api/media/generate-upload-url') {
+    return `${method} /api/media/generate-upload-url`;
+  }
+  if (pathname === '/api/media/upload-r2') {
+    return `${method} /api/media/upload-r2`;
+  }
+  if (pathname === '/api/media/upload-direct') {
+    return `${method} /api/media/upload-direct`;
+  }
+
   // /api/media/:id/image → GET /api/media/[id]/image
   if (pathname.match(/^\/api\/media\/[^/]+\/image$/)) {
     return `${method} /api/media/[id]/image`;
