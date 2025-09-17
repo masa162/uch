@@ -29,7 +29,15 @@ function base64EncodeUtf8(input: string): string {
   }
 }
 
-function buildImageUrl(apiBase: string, item: MediaItem): string {
+function isVideo(item: MediaItem) {
+  return item.mime_type?.startsWith('video/')
+}
+
+function getThumbUrl(apiBase: string, item: MediaItem): string {
+  if (isVideo(item)) {
+    if (item.thumbnail_url) return item.thumbnail_url
+    return ''
+  }
   // API は /api/media/:id/image でバイナリを返す
   return `${apiBase}/api/media/${item.id}/image`
 }
@@ -326,26 +334,29 @@ export default function GalleryPage() {
                     className="cursor-pointer"
                   >
                     <img
-                      src={buildImageUrl(apiBase, item)}
+                      src={getThumbUrl(apiBase, item)}
                       alt={item.original_filename}
                       className="w-full h-40 object-cover rounded-lg shadow group-hover:opacity-90 transition"
                       loading="lazy"
                       onError={(e) => {
                         console.error('Image load error for item:', item.id, item.original_filename, e);
-                      // エラー時はプレースホルダー画像を表示（UTF-8対応）
-                      e.currentTarget.src = `data:image/svg+xml;base64,${base64EncodeUtf8(`
+                        // エラー時はプレースホルダー画像を表示（UTF-8対応）
+                        e.currentTarget.src = `data:image/svg+xml;base64,${base64EncodeUtf8(`
                           <svg width="300" height="200" xmlns="http://www.w3.org/2000/svg">
                             <rect width="300" height="200" fill="#f0f0f0"/>
-                            <text x="150" y="100" text-anchor="middle" font-family="Arial" font-size="14" fill="#666">
-                              ${item.original_filename}
-                            </text>
-                            <text x="150" y="120" text-anchor="middle" font-family="Arial" font-size="12" fill="#999">
-                              ${item.mime_type}
-                            </text>
+                            <text x="150" y="105" text-anchor="middle" font-family="Arial" font-size="14" fill="#666">${isVideo(item) ? '動画' : item.original_filename}</text>
                           </svg>
                         `)}`;
                       }}
                     />
+                    {/* 動画には再生アイコンを重ねる */}
+                    {item.mime_type?.startsWith('video/') && (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="bg-black/50 rounded-full p-3">
+                          <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                        </div>
+                      </div>
+                    )}
                     <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs p-2 rounded-b-lg opacity-0 group-hover:opacity-100 transition">
                       {item.original_filename}
                     </div>
@@ -375,19 +386,17 @@ export default function GalleryPage() {
                     />
                   )}
                   <img
-                    src={buildImageUrl(apiBase, item)}
+                    src={getThumbUrl(apiBase, item)}
                     alt={item.original_filename}
                     className="w-16 h-16 object-cover rounded"
                     loading="lazy"
                     onError={(e) => {
                       console.error('Image load error for item:', item.id, item.original_filename, e);
-                    // エラー時はプレースホルダー画像を表示（UTF-8対応）
-                    e.currentTarget.src = `data:image/svg+xml;base64,${base64EncodeUtf8(`
+                      // エラー時はプレースホルダー画像を表示（UTF-8対応）
+                      e.currentTarget.src = `data:image/svg+xml;base64,${base64EncodeUtf8(`
                         <svg width="64" height="64" xmlns="http://www.w3.org/2000/svg">
                           <rect width="64" height="64" fill="#f0f0f0"/>
-                          <text x="32" y="32" text-anchor="middle" font-family="Arial" font-size="8" fill="#666">
-                            ${item.original_filename}
-                          </text>
+                          <text x="32" y="34" text-anchor="middle" font-family="Arial" font-size="8" fill="#666">${isVideo(item) ? '動画' : item.original_filename}</text>
                         </svg>
                       `)}`;
                     }}
@@ -423,4 +432,3 @@ export default function GalleryPage() {
     </AuthenticatedLayout>
   )
 }
-

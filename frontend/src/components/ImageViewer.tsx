@@ -75,6 +75,9 @@ export default function ImageViewer({ image, images, currentIndex, onClose, onNa
 
   if (!image) return null
 
+  const isVideo = image.mime_type?.startsWith('video/')
+  const streamUid = isVideo ? image.filename : '' // registerVideo で filename に uid を保存
+
   return (
     <div 
       className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center"
@@ -108,22 +111,32 @@ export default function ImageViewer({ image, images, currentIndex, onClose, onNa
         </button>
       )}
 
-      {/* 画像表示エリア */}
+      {/* 表示エリア */}
       <div 
         className="max-w-[90vw] max-h-[90vh] flex items-center justify-center"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        <img
-          src={image.file_url}
-          alt={image.original_filename}
-          className="max-w-full max-h-full object-contain"
-          draggable={false}
-        />
+        {isVideo ? (
+          // Cloudflare Stream 埋め込み（uid から iframe）
+          <iframe
+            src={`https://iframe.videodelivery.net/${streamUid}`}
+            allow="accelerometer; autoplay; encrypted-media; picture-in-picture"
+            allowFullScreen
+            className="w-[90vw] h-[50vh] md:h-[70vh] rounded"
+          />
+        ) : (
+          <img
+            src={image.file_url}
+            alt={image.original_filename}
+            className="max-w-full max-h-full object-contain"
+            draggable={false}
+          />
+        )}
       </div>
 
-      {/* 画像情報 */}
+      {/* 情報 */}
       <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white text-center">
         <div className="text-sm opacity-80">
           {currentIndex + 1} / {images.length}

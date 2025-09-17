@@ -159,15 +159,21 @@ function keyOf(req: Request) {
   if (pathname.match(/^\/api\/media\/[^/]+\/image$/)) {
     return `${method} /api/media/[id]/image`;
   }
-  // /api/media/:id → DELETE /api/media/[id]
-  if (pathname.match(/^\/api\/media\/[^/]+$/)) {
-    return `${method} /api/media/[id]`;
-  }
   // Any other GET under /api/media/* is treated as filename-path based fetch
+  // （/api/media/<userId>/<timestamp>_<name> 等）
   if (method === 'GET' && pathname.startsWith('/api/media/')) {
     // Exclude already handled specific patterns above
     if (!pathname.match(/^\/api\/media\/[^/]+(\/image)?$/)) {
       return `${method} /api/media/by-filename`;
+    }
+  }
+  // /api/media/:id → DELETE /api/media/[id]
+  if (pathname.match(/^\/api\/media\/[^/]+$/)) {
+    // Exclude reserved endpoints like generate-upload-url, upload-r2, upload-direct, register-video
+    const seg = pathname.split('/').pop() || '';
+    const reserved = new Set(['generate-upload-url','upload-r2','upload-direct','register-video','by-filename']);
+    if (!reserved.has(seg) && method === 'DELETE') {
+      return `${method} /api/media/[id]`;
     }
   }
   
