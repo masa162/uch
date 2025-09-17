@@ -170,10 +170,15 @@ export function useCustomAuth() {
       const urlParams = new URLSearchParams(window.location.search)
       if (urlParams.get('auth') === 'success') {
         console.log('Auth success parameter detected, checking session...')
-        // 認証成功時は少し待ってからセッションを再確認（Cookie設定の遅延を考慮）
-        setTimeout(() => {
-          checkSession()
-        }, 1000)
+        // 認証成功時は複数回セッションを再確認（Cookie設定の遅延を考慮）
+        const checkSessionMultiple = async () => {
+          for (let i = 0; i < 3; i++) {
+            console.log(`Session check attempt ${i + 1}/3`)
+            await checkSession()
+            await new Promise(resolve => setTimeout(resolve, 2000)) // 2秒待機
+          }
+        }
+        checkSessionMultiple()
         // URLからクエリパラメータを削除
         const newUrl = new URL(window.location.href)
         newUrl.searchParams.delete('auth')
