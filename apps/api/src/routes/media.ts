@@ -174,8 +174,12 @@ export async function uploadDirect(req: Request, env: Env) {
       });
     }
     
-    // 簡易実装：ファイルの内容は保存せず、プレースホルダーURLを使用
-    console.log('Using placeholder URL for file storage');
+    // ファイルの内容をBase64エンコードして保存
+    console.log('Converting file to Base64...');
+    const arrayBuffer = await file.arrayBuffer();
+    const base64Content = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+    console.log('File converted to Base64, length:', base64Content.length);
+    
     const fileUrl = `https://api.uchinokiroku.com/api/media/${filename}`;
 
     // 画像の場合はサムネイルURLも生成
@@ -197,12 +201,12 @@ export async function uploadDirect(req: Request, env: Env) {
     const result = await execute(env, `
       INSERT INTO media (
         user_id, filename, original_filename, mime_type, file_size, 
-        file_url, thumbnail_url, width, height, duration, 
+        file_url, thumbnail_url, width, height, duration, file_content,
         created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
     `, [
       session.sub, filename, originalFilename || file.name, mimeType, fileSize,
-      fileUrl, thumbnailUrl, width, height, duration
+      fileUrl, thumbnailUrl, width, height, duration, base64Content
     ]);
 
     console.log('Database save result:', result);
@@ -258,7 +262,7 @@ export async function getMediaFile(req: Request, env: Env, mediaId: string) {
     // メディア情報を取得
     console.log('Querying media with id:', mediaId, 'user_id:', session.sub);
     const media = await queryAll(env, `
-      SELECT file_url, mime_type, original_filename
+      SELECT file_content, mime_type, original_filename
       FROM media 
       WHERE id = ? AND user_id = ?
     `, [mediaId, session.sub]);
@@ -276,22 +280,35 @@ export async function getMediaFile(req: Request, env: Env, mediaId: string) {
 
     const mediaItem = media[0];
     
-    // プレースホルダー画像を返す（簡易実装）
-    const placeholderSvg = `
-      <svg width="300" height="200" xmlns="http://www.w3.org/2000/svg">
-        <rect width="300" height="200" fill="#f0f0f0"/>
-        <text x="150" y="100" text-anchor="middle" font-family="Arial" font-size="14" fill="#666">
-          ${mediaItem.original_filename}
-        </text>
-        <text x="150" y="120" text-anchor="middle" font-family="Arial" font-size="12" fill="#999">
-          ${mediaItem.mime_type}
-        </text>
-      </svg>
-    `;
+    if (!mediaItem.file_content) {
+      // ファイル内容がない場合はプレースホルダー画像を返す
+      const placeholderSvg = `
+        <svg width="300" height="200" xmlns="http://www.w3.org/2000/svg">
+          <rect width="300" height="200" fill="#f0f0f0"/>
+          <text x="150" y="100" text-anchor="middle" font-family="Arial" font-size="14" fill="#666">
+            ${mediaItem.original_filename}
+          </text>
+          <text x="150" y="120" text-anchor="middle" font-family="Arial" font-size="12" fill="#999">
+            ${mediaItem.mime_type}
+          </text>
+        </svg>
+      `;
 
-    return new Response(placeholderSvg, {
+      return new Response(placeholderSvg, {
+        headers: { 
+          "Content-Type": "image/svg+xml",
+          "Cache-Control": "public, max-age=3600"
+        },
+      });
+    }
+    
+    // Base64コンテンツをデコードして返す
+    console.log('Returning file content for:', mediaItem.original_filename);
+    const fileBuffer = Buffer.from(mediaItem.file_content, 'base64');
+    
+    return new Response(fileBuffer, {
       headers: { 
-        "Content-Type": "image/svg+xml",
+        "Content-Type": mediaItem.mime_type,
         "Cache-Control": "public, max-age=3600"
       },
     });
