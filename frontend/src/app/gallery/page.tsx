@@ -22,7 +22,10 @@ type MediaItem = {
 type ViewMode = 'grid' | 'list'
 
 export default function GalleryPage() {
+  console.log('GalleryPage component rendering')
   const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.uchinokiroku.com'
+  console.log('API Base URL:', apiBase)
+  
   const [items, setItems] = useState<MediaItem[]>([])
   const [offset, setOffset] = useState(0)
   const [loading, setLoading] = useState(false)
@@ -33,6 +36,8 @@ export default function GalleryPage() {
   const [viewerImage, setViewerImage] = useState<MediaItem | null>(null)
   const [viewerIndex, setViewerIndex] = useState(0)
   const loader = useRef<HTMLDivElement | null>(null)
+  
+  console.log('GalleryPage initial state - items:', items.length, 'loading:', loading, 'hasMore:', hasMore, 'offset:', offset)
 
   const fetchMore = async () => {
     console.log('fetchMore function called')
@@ -63,6 +68,18 @@ export default function GalleryPage() {
       const data = (await res.json()) as MediaItem[]
       console.log('Fetched media data:', data.length, 'items')
       console.log('Media items details:', data)
+      
+      // 各メディアアイテムのURLを詳細にログ出力
+      data.forEach((item, index) => {
+        console.log(`Media item ${index}:`, {
+          id: item.id,
+          original_filename: item.original_filename,
+          file_url: item.file_url,
+          thumbnail_url: item.thumbnail_url,
+          mime_type: item.mime_type
+        })
+      })
+      
       setItems((prev) => [...prev, ...data])
       setOffset(prev => prev + data.length)
       if (data.length === 0) setHasMore(false)
