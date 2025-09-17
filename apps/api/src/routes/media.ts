@@ -165,9 +165,9 @@ export async function uploadDirect(req: Request, env: Env) {
     // ファイルサイズチェック
     console.log('File size check:', fileSize);
     
-    if (fileSize > 10 * 1024 * 1024) { // 10MB制限
+    if (fileSize > 1 * 1024 * 1024) { // 1MB制限（Cloudflare Workersの制限を考慮）
       return new Response(JSON.stringify({ 
-        error: "ファイルサイズが大きすぎます（10MB以下にしてください）" 
+        error: "ファイルサイズが大きすぎます（1MB以下にしてください）" 
       }), {
         status: 400,
         headers: { "Content-Type": "application/json" },
@@ -176,9 +176,29 @@ export async function uploadDirect(req: Request, env: Env) {
     
     // ファイルの内容をBase64エンコードして保存
     console.log('Converting file to Base64...');
-    const arrayBuffer = await file.arrayBuffer();
-    const base64Content = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
-    console.log('File converted to Base64, length:', base64Content.length);
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const uint8Array = new Uint8Array(arrayBuffer);
+      
+      // 大きなファイルの場合はチャンクに分けて処理
+      let base64Content = '';
+      const chunkSize = 8192; // 8KB chunks
+      
+      for (let i = 0; i < uint8Array.length; i += chunkSize) {
+        const chunk = uint8Array.slice(i, i + chunkSize);
+        base64Content += btoa(String.fromCharCode(...chunk));
+      }
+      
+      console.log('File converted to Base64, length:', base64Content.length);
+    } catch (error) {
+      console.error('Base64 encoding error:', error);
+      return new Response(JSON.stringify({ 
+        error: "ファイルのエンコードに失敗しました" 
+      }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
     
     const fileUrl = `https://api.uchinokiroku.com/api/media/${filename}`;
 
