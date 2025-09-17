@@ -53,7 +53,7 @@ export default function GalleryPage() {
 
   const handleImageClick = (item: MediaItem, index: number) => {
     if (editMode) {
-      toggleSelection(item.id)
+      toggleSelection(item.id.toString())
     } else {
       setViewerImage(item)
       setViewerIndex(index)
@@ -238,8 +238,8 @@ export default function GalleryPage() {
                     <div className="absolute top-2 left-2 z-10">
                       <input
                         type="checkbox"
-                        checked={selectedItems.has(item.id)}
-                        onChange={() => toggleSelection(item.id)}
+                        checked={selectedItems.has(item.id.toString())}
+                        onChange={() => toggleSelection(item.id.toString())}
                         className="checkbox checkbox-primary"
                       />
                     </div>
@@ -270,15 +270,15 @@ export default function GalleryPage() {
                 <div
                   key={item.id}
                   className={`flex items-center gap-4 p-3 rounded-lg border ${
-                    selectedItems.has(item.id) ? 'bg-primary/10 border-primary' : 'bg-base-100 border-base-300'
+                    selectedItems.has(item.id.toString()) ? 'bg-primary/10 border-primary' : 'bg-base-100 border-base-300'
                   } ${editMode ? 'cursor-pointer hover:bg-base-200' : ''}`}
                   onClick={() => handleImageClick(item, index)}
                 >
                   {editMode && (
                     <input
                       type="checkbox"
-                      checked={selectedItems.has(item.id)}
-                      onChange={() => toggleSelection(item.id)}
+                      checked={selectedItems.has(item.id.toString())}
+                      onChange={() => toggleSelection(item.id.toString())}
                       className="checkbox checkbox-primary"
                     />
                   )}
