@@ -19,6 +19,16 @@ type MediaItem = {
   created_at: string
 }
 
+// UTF-8 文字列を base64 に安全に変換
+function base64EncodeUtf8(input: string): string {
+  try {
+    return btoa(unescape(encodeURIComponent(input)))
+  } catch {
+    // それでも失敗する場合は簡易フォールバック
+    return btoa(input.replace(/[^\x00-\x7F]/g, '?'))
+  }
+}
+
 type ViewMode = 'grid' | 'list'
 
 export default function GalleryPage() {
@@ -317,8 +327,8 @@ export default function GalleryPage() {
                       loading="lazy"
                       onError={(e) => {
                         console.error('Image load error for item:', item.id, item.original_filename, e);
-                        // エラー時はプレースホルダー画像を表示
-                        e.currentTarget.src = `data:image/svg+xml;base64,${btoa(`
+                      // エラー時はプレースホルダー画像を表示（UTF-8対応）
+                      e.currentTarget.src = `data:image/svg+xml;base64,${base64EncodeUtf8(`
                           <svg width="300" height="200" xmlns="http://www.w3.org/2000/svg">
                             <rect width="300" height="200" fill="#f0f0f0"/>
                             <text x="150" y="100" text-anchor="middle" font-family="Arial" font-size="14" fill="#666">
@@ -366,8 +376,8 @@ export default function GalleryPage() {
                     loading="lazy"
                     onError={(e) => {
                       console.error('Image load error for item:', item.id, item.original_filename, e);
-                      // エラー時はプレースホルダー画像を表示
-                      e.currentTarget.src = `data:image/svg+xml;base64,${btoa(`
+                    // エラー時はプレースホルダー画像を表示（UTF-8対応）
+                    e.currentTarget.src = `data:image/svg+xml;base64,${base64EncodeUtf8(`
                         <svg width="64" height="64" xmlns="http://www.w3.org/2000/svg">
                           <rect width="64" height="64" fill="#f0f0f0"/>
                           <text x="32" y="32" text-anchor="middle" font-family="Arial" font-size="8" fill="#666">

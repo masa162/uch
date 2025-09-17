@@ -47,7 +47,10 @@ export default function UploadWidget({ onUploaded }: { onUploaded?: () => void }
           credentials: 'include',
           body: formData,
         })
-        if (!upload.ok) throw new Error(`upload ${upload.status}`)
+        if (!upload.ok) {
+          const errText = await upload.text().catch(() => '')
+          throw new Error(`upload ${upload.status}: ${errText}`)
+        }
         outcome.ok = true
       } catch (err: any) {
         // Fallback: upload via API (multipart) when presigned PUT fails (likely CORS)
@@ -60,7 +63,10 @@ export default function UploadWidget({ onUploaded }: { onUploaded?: () => void }
             credentials: 'include',
             body: fd,
           })
-          if (!up2.ok) throw new Error(`direct ${up2.status}`)
+          if (!up2.ok) {
+            const errText2 = await up2.text().catch(() => '')
+            throw new Error(`direct ${up2.status}: ${errText2}`)
+          }
           outcome.ok = true
           outcome.error = undefined
         } catch (e2: any) {
