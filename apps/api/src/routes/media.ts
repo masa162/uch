@@ -548,9 +548,12 @@ export async function signVideoUpload(req: Request, env: Env) {
     if ((env as any).FRONTEND_URL) {
       try {
         const u = new URL((env as any).FRONTEND_URL);
-        allowedOrigins.push(`${u.protocol}//${u.host}`);
+        // Stream の allowedOrigins はプロトコルなしのドメイン/ホストのみ
+        allowedOrigins.push(u.host);
       } catch {}
     }
+    // ローカル開発時の直アクセス許可（任意）
+    allowedOrigins.push('localhost:3000');
     const body: Record<string, any> = { 
       creator: session.sub,
       maxDurationSeconds: maxDuration,
