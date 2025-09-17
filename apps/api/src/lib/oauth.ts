@@ -19,21 +19,30 @@ export function generateRandomString(length: number = 32): string {
   return result;
 }
 
-// Base64URLエンコード
+// Base64URLエンコード（UTF-8対応）
 export function base64UrlEncode(input: string): string {
-  return btoa(input)
+  // UTF-8エンコードしてからBase64エンコード
+  const utf8Bytes = new TextEncoder().encode(input);
+  const base64 = btoa(String.fromCharCode(...utf8Bytes));
+  return base64
     .replace(/\+/g, '-')
     .replace(/\//g, '_')
     .replace(/=/g, '');
 }
 
-// Base64URLデコード
+// Base64URLデコード（UTF-8対応）
 export function base64UrlDecode(input: string): string {
   // パディングを追加
   const padded = input + '='.repeat((4 - input.length % 4) % 4);
   // URL-safe文字を標準Base64文字に変換
   const standard = padded.replace(/-/g, '+').replace(/_/g, '/');
-  return atob(standard);
+  const binaryString = atob(standard);
+  // UTF-8デコード
+  const utf8Bytes = new Uint8Array(binaryString.length);
+  for (let i = 0; i < binaryString.length; i++) {
+    utf8Bytes[i] = binaryString.charCodeAt(i);
+  }
+  return new TextDecoder().decode(utf8Bytes);
 }
 
 // JWTペイロードの型定義
@@ -76,13 +85,26 @@ export async function signJWT(payload: JWTPayload, secret: string): Promise<stri
 // JWT検証（HMAC-SHA256）
 export async function verifyJWT(token: string, secret: string): Promise<JWTPayload | null> {
   try {
+    console.log("JWT verification started:", {
+      tokenLength: token.length,
+      hasSecret: !!secret,
+      secretLength: secret.length
+    });
+    
     const parts = token.split('.');
     if (parts.length !== 3) {
+      console.log("JWT verification failed: Invalid token format");
       return null;
     }
     
     const [header, payload, signature] = parts;
     const signatureInput = `${header}.${payload}`;
+    
+    console.log("JWT parts:", {
+      headerLength: header.length,
+      payloadLength: payload.length,
+      signatureLength: signature.length
+    });
     
     // 署名の検証
     const key = await crypto.subtle.importKey(

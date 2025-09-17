@@ -169,8 +169,11 @@ export function useCustomAuth() {
     if (typeof window !== 'undefined') {
       const urlParams = new URLSearchParams(window.location.search)
       if (urlParams.get('auth') === 'success') {
-        // 認証成功時はセッションを再確認
-        checkSession()
+        console.log('Auth success parameter detected, checking session...')
+        // 認証成功時は少し待ってからセッションを再確認（Cookie設定の遅延を考慮）
+        setTimeout(() => {
+          checkSession()
+        }, 1000)
         // URLからクエリパラメータを削除
         const newUrl = new URL(window.location.href)
         newUrl.searchParams.delete('auth')

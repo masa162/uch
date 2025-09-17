@@ -13,8 +13,8 @@ export interface Env {
   GOOGLE_CLIENT_ID: string;
   GOOGLE_CLIENT_SECRET: string;
   GOOGLE_REDIRECT_URI: string;
-  LINE_CLIENT_ID: string;
-  LINE_CLIENT_SECRET: string;
+  LINE_CHANNEL_ID: string;
+  LINE_CHANNEL_SECRET: string;
   LINE_REDIRECT_URI: string;
   // COOKIE_DOMAIN は本番だけ（ダッシュボード Vars/Secrets）
   COOKIE_DOMAIN?: string;
@@ -126,6 +126,42 @@ export default {
       });
       return setCorsHeaders(response, origin);
     }
+    
+    // デバッグ用：LINE認証コールバックの詳細確認
+    if (url.pathname === "/__debug/line-callback") {
+      try {
+        const code = url.searchParams.get('code');
+        const state = url.searchParams.get('state');
+        
+        // 環境変数の確認
+        const envCheck = {
+          hasChannelId: !!env.LINE_CHANNEL_ID,
+          hasChannelSecret: !!env.LINE_CHANNEL_SECRET,
+          hasRedirectUri: !!env.LINE_REDIRECT_URI,
+          channelIdLength: env.LINE_CHANNEL_ID?.length || 0,
+          redirectUri: env.LINE_REDIRECT_URI
+        };
+        
+        const response = new Response(JSON.stringify({
+          code,
+          state,
+          envCheck,
+          cookies: req.headers.get('Cookie') || 'No cookies'
+        }), {
+          headers: { "Content-Type": "application/json" }
+        });
+        return setCorsHeaders(response, origin);
+      } catch (error) {
+        const response = new Response(JSON.stringify({
+          error: error.message,
+          stack: error.stack
+        }), {
+          status: 500,
+          headers: { "Content-Type": "application/json" }
+        });
+        return setCorsHeaders(response, origin);
+      }
+    }
 
     // デバッグ用：環境変数の確認
     if (url.pathname === "/__debug/env") {
@@ -144,7 +180,7 @@ export default {
     const handler = routes[key];
 
     // デバッグ用: 実際に来たパスをログ
-    console.log("[router]", key);
+    console.log("[router]", key, "handler exists:", !!handler);
 
     if (handler) {
       const response = await handler(req, env);

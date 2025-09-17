@@ -225,16 +225,31 @@ export async function readSessionCookie(
 ): Promise<{ sub: string; name?: string; email?: string } | null> {
   const cookieHeader = request.headers.get('Cookie');
   if (!cookieHeader) {
+    console.log("No cookie header found");
     return null;
   }
 
+  console.log("Cookie header:", cookieHeader);
+  
   const m = cookieHeader.match(/uk_session=([^;]+)/);
-  if (!m) return null;
+  if (!m) {
+    console.log("No uk_session cookie found");
+    return null;
+  }
+  
+  console.log("Found uk_session cookie:", m[1].substring(0, 50) + "...");
   
   const payload = await verifyJWT(m[1], env.SESSION_SECRET);
   if (!payload) {
+    console.log("JWT verification failed");
     return null;
   }
+
+  console.log("JWT verification successful:", {
+    sub: payload.sub,
+    name: payload.name,
+    email: payload.email
+  });
 
   return {
     sub: payload.sub,
