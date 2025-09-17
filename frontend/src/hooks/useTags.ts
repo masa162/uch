@@ -21,7 +21,7 @@ export const useTags = () => {
       })
       
       if (response.ok) {
-        const articles = await response.json()
+        const articles = await response.json() as any[]
         
         // 全記事からタグを抽出してカウント
         const tagCounts: Record<string, number> = {}
