@@ -459,7 +459,7 @@ export default function GalleryPage() {
 
       {/* 画像ビューアー */}
       <ImageViewer
-        image={viewerImage}
+        image={viewerImage && items.length > viewerIndex ? items[viewerIndex] : null}
         images={items}
         currentIndex={viewerIndex}
         onClose={() => setViewerImage(null)}
