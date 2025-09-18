@@ -146,6 +146,13 @@ const routes: Record<string, (req: Request, env: Env) => Promise<Response> | Res
   },
 };
 
+function safeDecodeURIComponent(value: string): string {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
 function keyOf(req: Request) {
   const url = new URL(req.url);
   const method = req.method.toUpperCase();
@@ -181,8 +188,11 @@ function keyOf(req: Request) {
   // Any other GET under /api/media/* is treated as filename-path based fetch
   // （/api/media/<userId>/<timestamp>_<name> 等）
   if (method === 'GET' && pathname.startsWith('/api/media/')) {
-    // Exclude already handled specific patterns above
-    if (!pathname.match(/^\/api\/media\/[^/]+(\/image)?$/)) {
+    const remainder = pathname.replace(/^\/api\/media\//, '');
+    const decodedRemainder = safeDecodeURIComponent(remainder);
+    const hasNestedPath = remainder.includes('/') || decodedRemainder.includes('/');
+
+    if (hasNestedPath || !pathname.match(/^\/api\/media\/[^/]+(\/image)?$/)) {
       return `${method} /api/media/by-filename`;
     }
   }

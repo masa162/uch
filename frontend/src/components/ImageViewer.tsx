@@ -22,9 +22,10 @@ type ImageViewerProps = {
   currentIndex: number
   onClose: () => void
   onNavigate: (index: number) => void
+  resolveMediaUrl: (url: string | null) => string
 }
 
-export default function ImageViewer({ image, images, currentIndex, onClose, onNavigate }: ImageViewerProps) {
+export default function ImageViewer({ image, images, currentIndex, onClose, onNavigate, resolveMediaUrl }: ImageViewerProps) {
   const [touchStart, setTouchStart] = useState<number | null>(null)
   const [touchEnd, setTouchEnd] = useState<number | null>(null)
 
@@ -128,7 +129,7 @@ export default function ImageViewer({ image, images, currentIndex, onClose, onNa
           />
         ) : (
           <img
-            src={image.file_url}
+            src={resolveMediaUrl(image.file_url) || image.file_url}
             alt={image.original_filename}
             className="max-w-full max-h-full object-contain"
             draggable={false}

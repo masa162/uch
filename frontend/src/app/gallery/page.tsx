@@ -33,15 +33,6 @@ function isVideo(item: MediaItem) {
   return item.mime_type?.startsWith('video/')
 }
 
-function getThumbUrl(apiBase: string, item: MediaItem): string {
-  if (isVideo(item)) {
-    if (item.thumbnail_url) return item.thumbnail_url
-    return ''
-  }
-  // API は /api/media/:id/image でバイナリを返す
-  return `${apiBase}/api/media/${item.id}/image`
-}
-
 type ViewMode = 'grid' | 'list'
 
 export default function GalleryPage() {
@@ -49,6 +40,41 @@ export default function GalleryPage() {
   const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.uchinokiroku.com'
   console.log('API Base URL:', apiBase)
   
+  const resolveMediaUrl = (rawUrl: string | null) => {
+    if (!rawUrl) return ''
+    const trimmed = rawUrl.trim()
+    const absolutePattern = /^https?:\/\//i
+
+    if (absolutePattern.test(trimmed)) {
+      try {
+        const url = new URL(trimmed)
+        url.pathname = encodeURI(decodeURIComponent(url.pathname))
+        return url.toString()
+      } catch {
+        return trimmed
+      }
+    }
+
+    let path = trimmed.startsWith('/') ? trimmed : `/${trimmed}`
+    try {
+      path = encodeURI(decodeURIComponent(path))
+    } catch {
+      path = encodeURI(path)
+    }
+
+    return `${apiBase}${path}`
+  }
+
+  const getThumbUrl = (item: MediaItem) => {
+    if (isVideo(item)) {
+      if (item.thumbnail_url) return resolveMediaUrl(item.thumbnail_url)
+      return ''
+    }
+    if (item.thumbnail_url) {
+      return resolveMediaUrl(item.thumbnail_url)
+    }
+    return `${apiBase}/api/media/${item.id}/image`
+  }
   const [items, setItems] = useState<MediaItem[]>([])
   const [offset, setOffset] = useState(0)
   const [loading, setLoading] = useState(false)
@@ -157,7 +183,7 @@ export default function GalleryPage() {
       const item = items.find(i => i.id.toString() === id)
       if (item) {
         const link = document.createElement('a')
-        link.href = item.file_url
+        link.href = resolveMediaUrl(item.file_url)
         link.download = item.original_filename
         link.click()
       }
@@ -334,7 +360,7 @@ export default function GalleryPage() {
                     className="cursor-pointer"
                   >
                     <img
-                      src={getThumbUrl(apiBase, item)}
+                      src={getThumbUrl(item)}
                       alt={item.original_filename}
                       className="w-full h-40 object-cover rounded-lg shadow group-hover:opacity-90 transition"
                       loading="lazy"
@@ -386,7 +412,7 @@ export default function GalleryPage() {
                     />
                   )}
                   <img
-                    src={getThumbUrl(apiBase, item)}
+                    src={getThumbUrl(item)}
                     alt={item.original_filename}
                     className="w-16 h-16 object-cover rounded"
                     loading="lazy"
@@ -428,6 +454,7 @@ export default function GalleryPage() {
         currentIndex={viewerIndex}
         onClose={() => setViewerImage(null)}
         onNavigate={setViewerIndex}
+        resolveMediaUrl={resolveMediaUrl}
       />
     </AuthenticatedLayout>
   )
