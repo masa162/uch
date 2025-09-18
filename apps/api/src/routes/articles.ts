@@ -131,59 +131,19 @@ export async function getArticle(req: Request, env: Env) {
 
     console.log('Getting article with ID:', articleSlug);
     
-    // article_idで検索
-    let articles = await queryAll(env, `
-      SELECT m.*, 
-             CASE 
-               WHEN m.user_id = 'システム' OR m.user_id IS NULL THEN 'システム'
-               ELSE COALESCE(u.name, 'システム')
-             END as user_name,
-             CASE 
-               WHEN m.user_id = 'システム' OR m.user_id IS NULL THEN NULL
-               ELSE u.email
-             END as user_email
+    // 記事とタグを同時に取得するクエリ
+    const query = `
+      SELECT 
+        m.*, 
+        u.name as user_name,
+        u.email as user_email,
+        (SELECT GROUP_CONCAT(t.name) FROM tags t JOIN memory_tags mt ON t.id = mt.tag_id WHERE mt.memory_id = m.id) as tags_concat
       FROM memories m
-      LEFT JOIN users u ON m.user_id = u.id AND m.user_id != 'システム'
-      WHERE m.article_id = ?
-    `, [articleSlug]);
+      LEFT JOIN users u ON m.user_id = u.id
+      WHERE m.article_id = ? OR m.id = ? OR m.title = ?
+    `;
     
-    // article_idで見つからない場合、数値IDで検索（後方互換性）
-    if (!articles || articles.length === 0) {
-      if (/^\d+$/.test(articleSlug)) {
-        articles = await queryAll(env, `
-          SELECT m.*, 
-                 CASE 
-                   WHEN m.user_id = 'システム' OR m.user_id IS NULL THEN 'システム'
-                   ELSE COALESCE(u.name, 'システム')
-                 END as user_name,
-                 CASE 
-                   WHEN m.user_id = 'システム' OR m.user_id IS NULL THEN NULL
-                   ELSE u.email
-                 END as user_email
-          FROM memories m
-          LEFT JOIN users u ON m.user_id = u.id AND m.user_id != 'システム'
-          WHERE m.id = ?
-        `, [articleSlug]);
-      }
-    }
-    
-    // それでも見つからない場合、タイトルで検索（後方互換性）
-    if (!articles || articles.length === 0) {
-      articles = await queryAll(env, `
-        SELECT m.*, 
-               CASE 
-                 WHEN m.user_id = 'システム' OR m.user_id IS NULL THEN 'システム'
-                 ELSE COALESCE(u.name, 'システム')
-               END as user_name,
-               CASE 
-                 WHEN m.user_id = 'システム' OR m.user_id IS NULL THEN NULL
-                 ELSE u.email
-               END as user_email
-        FROM memories m
-        LEFT JOIN users u ON m.user_id = u.id AND m.user_id != 'システム'
-        WHERE m.title = ?
-      `, [articleSlug]);
-    }
+    const articles = await queryAll(env, query, [articleSlug, /^\d+$/.test(articleSlug) ? articleSlug : -1, articleSlug]);
     
     if (!articles || articles.length === 0) {
       return new Response(JSON.stringify({ 
@@ -197,6 +157,9 @@ export async function getArticle(req: Request, env: Env) {
     const article = articles[0];
     console.log('Article found:', article);
 
+    // タグを配列に変換
+    const tags = article.tags_concat ? article.tags_concat.split(',') : [];
+
     // フロントエンドが期待する形式に変換
     const formattedArticle = {
       id: article.id.toString(),
@@ -207,7 +170,7 @@ export async function getArticle(req: Request, env: Env) {
       content: article.content || '',
       pubDate: article.created_at,
       heroImageUrl: null,
-      tags: [],
+      tags: tags, // 取得したタグを設定
       isPublished: true,
       createdAt: article.created_at,
       updatedAt: article.updated_at,
@@ -340,5 +303,34 @@ export async function deleteArticle(req: Request, env: Env) {
   } catch (error: any) {
     console.error('記事削除エラー:', error);
     return new Response(JSON.stringify({ error: '記事の削除に失敗しました', details: error.message || '不明なエラー' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+  }
+}
+
+export async function getTags(req: Request, env: Env) {
+  try {
+    const query = `
+      SELECT
+        t.id,
+        t.name,
+        COUNT(mt.memory_id) as count
+      FROM tags t
+      LEFT JOIN memory_tags mt ON t.id = mt.tag_id
+      GROUP BY t.id, t.name
+      ORDER BY count DESC, t.name ASC
+      LIMIT 20
+    `;
+    const tags = await queryAll(env, query);
+    return new Response(JSON.stringify(tags), {
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (error: any) {
+    console.error('タグ一覧取得エラー:', error);
+    return new Response(JSON.stringify({ 
+      error: "タグ一覧の取得に失敗しました",
+      details: error.message 
+    }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 }
