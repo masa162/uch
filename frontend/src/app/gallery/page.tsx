@@ -93,11 +93,46 @@ export default function GalleryPage() {
     console.log('fetchMore function called', overrideOffset)
     const targetOffset = typeof overrideOffset === "number" ? overrideOffset : offset
     console.log('Current state - loading:', loading, 'hasMore:', hasMore, 'offset:', offset, 'targetOffset:', targetOffset)
-    
+
     if ((loading && targetOffset !== 0) || (!hasMore && targetOffset !== 0)) {
       console.log('fetchMore early return - loading:', loading, 'hasMore:', hasMore, 'targetOffset:', targetOffset)
       return
     }
+
+    console.log('fetchMore proceeding with API call')
+    setLoading(true)
+    try {
+      const res = await fetch(`${apiBase}/api/media?offset=${targetOffset}&limit=${PAGE_SIZE}`, { credentials: 'include' })
+
+      if (!res.ok) {
+        const errorText = await res.text()
+        console.error('Media API error response:', errorText)
+        throw new Error(`HTTP ${res.status}: ${errorText}`)
+      }
+
+      const data = await res.json() as MediaItem[]
+      console.log('Fetched media data:', data.length, 'items (targetOffset:', targetOffset, ')')
+
+      if (targetOffset === 0) {
+        setItems(data)
+        setOffset(data.length)
+        setHasMore(data.length === PAGE_SIZE)
+        setSelectedItems(new Set())
+      } else {
+        setItems(prev => [...prev, ...data])
+        setOffset(prev => prev + data.length)
+        if (data.length === 0) setHasMore(false)
+      }
+    } catch (e) {
+      console.error('Error fetching media:', e)
+      if (targetOffset !== 0) {
+        setHasMore(false)
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handleImageClick = (item: MediaItem, index: number) => {
     if (editMode) {
       toggleSelection(item.id.toString())
