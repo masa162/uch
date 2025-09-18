@@ -392,6 +392,19 @@ export async function getMediaByFilename(req: Request, env: Env, filenamePath: s
 
     const item = rows[0];
     if (!item.file_content) {
+      // R2 に保存されている場合は R2 から読み出して返す
+      if ((env as any).R2_BUCKET && filename) {
+        const obj = await (env as any).R2_BUCKET.get(filename);
+        if (obj && obj.body) {
+          return new Response(obj.body as ReadableStream, {
+            headers: {
+              "Content-Type": item.mime_type || obj.httpMetadata?.contentType || "application/octet-stream",
+              "Cache-Control": "public, max-age=3600",
+            },
+          });
+        }
+      }
+      // R2にもない場合
       return new Response(JSON.stringify({ error: "ファイル内容がありません" }), {
         status: 404,
         headers: { "Content-Type": "application/json" },
