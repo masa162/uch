@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import UploadWidget from '@/components/UploadWidget'
 import AuthenticatedLayout from '@/components/AuthenticatedLayout'
 import ImageViewer from '@/components/ImageViewer'
@@ -89,7 +89,8 @@ export default function GalleryPage() {
   
   console.log('GalleryPage initial state - items:', items.length, 'loading:', loading, 'hasMore:', hasMore, 'offset:', offset)
 
-  const fetchMore = async (overrideOffset?: number) => {
+
+  const fetchMore = useCallback(async (overrideOffset?: number) => {
     console.log('fetchMore function called', overrideOffset)
     const targetOffset = typeof overrideOffset === "number" ? overrideOffset : offset
     console.log('Current state - loading:', loading, 'hasMore:', hasMore, 'offset:', offset, 'targetOffset:', targetOffset)
@@ -110,7 +111,7 @@ export default function GalleryPage() {
         throw new Error(`HTTP ${res.status}: ${errorText}`)
       }
 
-      const data = await res.json() as MediaItem[]
+      const data = (await res.json()) as MediaItem[]
       console.log('Fetched media data:', data.length, 'items (targetOffset:', targetOffset, ')')
 
       if (targetOffset === 0) {
@@ -131,7 +132,22 @@ export default function GalleryPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [apiBase, hasMore, loading, offset])
+
+  const refreshTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const refreshGallery = useCallback(() => {
+    if (refreshTimeoutRef.current) {
+      clearTimeout(refreshTimeoutRef.current)
+      refreshTimeoutRef.current = null
+    }
+
+    void fetchMore(0)
+
+    refreshTimeoutRef.current = setTimeout(() => {
+      void fetchMore(0)
+      refreshTimeoutRef.current = null
+    }, 1500)
+  }, [fetchMore])
 
   const handleImageClick = (item: MediaItem, index: number) => {
     if (editMode) {
@@ -216,25 +232,34 @@ export default function GalleryPage() {
   }
 
   useEffect(() => {
-    console.log('Gallery page useEffect triggered - resetting state and calling fetchMore')
-    // 既存の状態をリセット
-    setItems([])
-    setOffset(0)
-    setHasMore(true)
-    setLoading(false)
-    // バックエンドから新しくデータを取得
-    void fetchMore(0)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+    console.log('Gallery page initial load - refreshing gallery')
+    refreshGallery()
+
+    return () => {
+      if (refreshTimeoutRef.current) {
+        clearTimeout(refreshTimeoutRef.current)
+        refreshTimeoutRef.current = null
+      }
+    }
+  }, [refreshGallery])
 
   useEffect(() => {
-    if (!loader.current) return
+    const node = loader.current
+    if (!node) return
+
     const io = new IntersectionObserver((entries) => {
-      if (entries[0].isIntersecting) fetchMore()
+      if (entries[0].isIntersecting) {
+        void fetchMore()
+      }
     })
-    io.observe(loader.current)
-    return () => io.disconnect()
-  }, [loader.current])
+
+    io.observe(node)
+
+    return () => {
+      io.unobserve(node)
+      io.disconnect()
+    }
+  }, [fetchMore])
 
   return (
     <AuthenticatedLayout>
@@ -243,12 +268,7 @@ export default function GalleryPage() {
         <div className="flex items-center gap-2">
           <UploadWidget onUploaded={() => {
             console.log('onUploaded callback triggered, refreshing gallery...')
-            setItems([])
-            setOffset(0)
-            setHasMore(true)
-            setSelectedItems(new Set())
-            void fetchMore(0)
-            setTimeout(() => { void fetchMore(0) }, 1500)
+            refreshGallery()
           }} />
         </div>
       </div>
