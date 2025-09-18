@@ -305,6 +305,7 @@ export async function getMediaFile(req: Request, env: Env, mediaId: string) {
     }
 
     const mediaItem = media[0];
+    const dispositionHeader = `attachment; filename*=UTF-8''${encodeURIComponent(mediaItem.original_filename || 'download')}`;
     
     if (!mediaItem.file_content) {
       // R2 に保存されている場合は R2 から読み出して返す
@@ -315,6 +316,7 @@ export async function getMediaFile(req: Request, env: Env, mediaId: string) {
             headers: {
               "Content-Type": mediaItem.mime_type || obj.httpMetadata?.contentType || "application/octet-stream",
               "Cache-Control": "public, max-age=3600",
+              "Content-Disposition": dispositionHeader,
             },
           });
         }
@@ -347,7 +349,8 @@ export async function getMediaFile(req: Request, env: Env, mediaId: string) {
     return new Response(fileBuffer, {
       headers: { 
         "Content-Type": mediaItem.mime_type,
-        "Cache-Control": "public, max-age=3600"
+        "Cache-Control": "public, max-age=3600",
+        "Content-Disposition": dispositionHeader,
       },
     });
 
@@ -391,6 +394,8 @@ export async function getMediaByFilename(req: Request, env: Env, filenamePath: s
     }
 
     const item = rows[0];
+    const dispositionHeader = `attachment; filename*=UTF-8''${encodeURIComponent(item.original_filename || 'download')}`;
+
     if (!item.file_content) {
       // R2 に保存されている場合は R2 から読み出して返す
       if ((env as any).R2_BUCKET && filename) {
@@ -400,6 +405,7 @@ export async function getMediaByFilename(req: Request, env: Env, filenamePath: s
             headers: {
               "Content-Type": item.mime_type || obj.httpMetadata?.contentType || "application/octet-stream",
               "Cache-Control": "public, max-age=3600",
+              "Content-Disposition": dispositionHeader,
             },
           });
         }
@@ -416,6 +422,7 @@ export async function getMediaByFilename(req: Request, env: Env, filenamePath: s
       headers: {
         "Content-Type": item.mime_type,
         "Cache-Control": "public, max-age=3600",
+        "Content-Disposition": dispositionHeader,
       },
     });
   } catch (error: any) {
