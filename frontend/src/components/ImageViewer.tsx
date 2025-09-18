@@ -78,6 +78,7 @@ export default function ImageViewer({ image, images, currentIndex, onClose, onNa
 
   const isVideo = image.mime_type?.startsWith('video/')
   const streamUid = isVideo ? image.filename : '' // registerVideo で filename に uid を保存
+  const imageSrc = resolveMediaUrl(image.file_url) || resolveMediaUrl(image.thumbnail_url) || resolveMediaUrl(`/api/media/${image.id}/image`)
 
   return (
     <div 
@@ -129,7 +130,7 @@ export default function ImageViewer({ image, images, currentIndex, onClose, onNa
           />
         ) : (
           <img
-            src={resolveMediaUrl(image.file_url) || image.file_url}
+            src={imageSrc}
             alt={image.original_filename}
             className="max-w-full max-h-full object-contain"
             draggable={false}

@@ -39,6 +39,7 @@ export default function GalleryPage() {
   console.log('GalleryPage component rendering')
   const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.uchinokiroku.com'
   console.log('API Base URL:', apiBase)
+  const PAGE_SIZE = 24
   
   const resolveMediaUrl = (rawUrl: string | null) => {
     if (!rawUrl) return ''
@@ -88,67 +89,15 @@ export default function GalleryPage() {
   
   console.log('GalleryPage initial state - items:', items.length, 'loading:', loading, 'hasMore:', hasMore, 'offset:', offset)
 
-  const fetchMore = async () => {
-    console.log('fetchMore function called')
-    console.log('Current state - loading:', loading, 'hasMore:', hasMore, 'offset:', offset)
+  const fetchMore = async (overrideOffset?: number) => {
+    console.log('fetchMore function called', overrideOffset)
+    const targetOffset = typeof overrideOffset === "number" ? overrideOffset : offset
+    console.log('Current state - loading:', loading, 'hasMore:', hasMore, 'offset:', offset, 'targetOffset:', targetOffset)
     
-    if (loading || !hasMore) {
-      console.log('fetchMore early return - loading:', loading, 'hasMore:', hasMore)
+    if ((loading && targetOffset !== 0) || (!hasMore && targetOffset !== 0)) {
+      console.log('fetchMore early return - loading:', loading, 'hasMore:', hasMore, 'targetOffset:', targetOffset)
       return
     }
-    
-    console.log('fetchMore proceeding with API call')
-    setLoading(true)
-    try {
-      const url = `${apiBase}/api/media?offset=${offset}&limit=24`
-      console.log('Fetching media from URL:', url)
-      console.log('Request headers:', { credentials: 'include' })
-      
-      console.log('Making fetch request to:', url)
-      const res = await fetch(url, { credentials: 'include' })
-      console.log('Media API response status:', res.status, res.ok)
-      console.log('Media API response headers:', Object.fromEntries(res.headers.entries()))
-      console.log('Response URL:', res.url)
-      
-      if (!res.ok) {
-        const errorText = await res.text()
-        console.error('Media API error response:', errorText)
-        throw new Error(`HTTP ${res.status}: ${errorText}`)
-      }
-      
-      const responseText = await res.text()
-      console.log('Raw response text:', responseText)
-      const data = JSON.parse(responseText) as MediaItem[]
-      console.log('Fetched media data:', data.length, 'items')
-      console.log('Media items details:', data)
-      
-      // 各メディアアイテムのURLを詳細にログ出力
-      data.forEach((item, index) => {
-        console.log(`Media item ${index}:`, {
-          id: item.id,
-          original_filename: item.original_filename,
-          file_url: item.file_url,
-          thumbnail_url: item.thumbnail_url,
-          mime_type: item.mime_type
-        })
-      })
-      
-      // 最初のロードの場合は置き換え、それ以降は追加
-      if (offset === 0) {
-        setItems(data)
-      } else {
-        setItems((prev) => [...prev, ...data])
-      }
-      setOffset(prev => prev + data.length)
-      if (data.length === 0) setHasMore(false)
-    } catch (e) {
-      console.error('Error fetching media:', e)
-      setHasMore(false)
-    } finally {
-      setLoading(false)
-    }
-  }
-
   const handleImageClick = (item: MediaItem, index: number) => {
     if (editMode) {
       toggleSelection(item.id.toString())
@@ -239,7 +188,7 @@ export default function GalleryPage() {
     setHasMore(true)
     setLoading(false)
     // バックエンドから新しくデータを取得
-    fetchMore()
+    void fetchMore(0)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -257,12 +206,14 @@ export default function GalleryPage() {
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold">📷 メディアギャラリー</h1>
         <div className="flex items-center gap-2">
-          <UploadWidget onUploaded={() => { 
+          <UploadWidget onUploaded={() => {
             console.log('onUploaded callback triggered, refreshing gallery...')
-            setItems([]); 
-            setOffset(0); 
-            setHasMore(true); 
-            fetchMore() 
+            setItems([])
+            setOffset(0)
+            setHasMore(true)
+            setSelectedItems(new Set())
+            void fetchMore(0)
+            setTimeout(() => { void fetchMore(0) }, 1500)
           }} />
         </div>
       </div>
