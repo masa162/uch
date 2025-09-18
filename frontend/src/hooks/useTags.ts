@@ -25,8 +25,12 @@ export const useTags = () => {
         const data = await response.json() as Tag[]
         setTags(data)
       } else {
-        const errData = await response.json()
-        setError(errData.error || 'タグの取得に失敗しました')
+        const errData = await response.json();
+        let message = 'タグの取得に失敗しました';
+        if (errData && typeof errData === 'object' && 'error' in errData && typeof errData.error === 'string') {
+          message = errData.error;
+        }
+        setError(message);
       }
     } catch (error) {
       console.error('Tags fetch error:', error)
