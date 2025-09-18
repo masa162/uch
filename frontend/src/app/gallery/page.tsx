@@ -78,7 +78,7 @@ export default function GalleryPage() {
   }
   const [items, setItems] = useState<MediaItem[]>([])
   const [offset, setOffset] = useState(0)
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true) // Start with loading true for initial fetch
   const [hasMore, setHasMore] = useState(true)
   const [viewMode, setViewMode] = useState<ViewMode>('grid')
   const [editMode, setEditMode] = useState(false)
@@ -86,22 +86,27 @@ export default function GalleryPage() {
   const [viewerImage, setViewerImage] = useState<MediaItem | null>(null)
   const [viewerIndex, setViewerIndex] = useState(0)
   const loader = useRef<HTMLDivElement | null>(null)
-  
+  const isFetching = useRef(false) // Ref to prevent concurrent fetches
+
   console.log('GalleryPage initial state - items:', items.length, 'loading:', loading, 'hasMore:', hasMore, 'offset:', offset)
 
-
   const fetchMore = useCallback(async (overrideOffset?: number) => {
-    console.log('fetchMore function called', overrideOffset)
-    const targetOffset = typeof overrideOffset === "number" ? overrideOffset : offset
-    console.log('Current state - loading:', loading, 'hasMore:', hasMore, 'offset:', offset, 'targetOffset:', targetOffset)
-
-    if ((loading && targetOffset !== 0) || (!hasMore && targetOffset !== 0)) {
-      console.log('fetchMore early return - loading:', loading, 'hasMore:', hasMore, 'targetOffset:', targetOffset)
+    if (isFetching.current) {
+      console.log('fetchMore early return - already fetching')
       return
     }
 
-    console.log('fetchMore proceeding with API call')
+    const isRefresh = typeof overrideOffset === 'number'
+    const targetOffset = isRefresh ? overrideOffset : offset
+
+    if (!hasMore && !isRefresh) {
+      console.log('fetchMore early return - no more items')
+      return
+    }
+
+    isFetching.current = true
     setLoading(true)
+    
     try {
       const res = await fetch(`${apiBase}/api/media?offset=${targetOffset}&limit=${PAGE_SIZE}`, { credentials: 'include' })
 
@@ -114,7 +119,7 @@ export default function GalleryPage() {
       const data = (await res.json()) as MediaItem[]
       console.log('Fetched media data:', data.length, 'items (targetOffset:', targetOffset, ')')
 
-      if (targetOffset === 0) {
+      if (isRefresh) {
         setItems(data)
         setOffset(data.length)
         setHasMore(data.length === PAGE_SIZE)
@@ -122,17 +127,16 @@ export default function GalleryPage() {
       } else {
         setItems(prev => [...prev, ...data])
         setOffset(prev => prev + data.length)
-        if (data.length === 0) setHasMore(false)
+        setHasMore(data.length > 0)
       }
     } catch (e) {
       console.error('Error fetching media:', e)
-      if (targetOffset !== 0) {
-        setHasMore(false)
-      }
+      setHasMore(false) // Stop fetching on error
     } finally {
       setLoading(false)
+      isFetching.current = false
     }
-  }, [apiBase, hasMore, loading, offset])
+  }, [apiBase, offset, hasMore])
 
   const refreshTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const refreshGallery = useCallback(() => {
