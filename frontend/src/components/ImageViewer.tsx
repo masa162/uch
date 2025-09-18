@@ -28,6 +28,16 @@ type ImageViewerProps = {
 export default function ImageViewer({ image, images, currentIndex, onClose, onNavigate, resolveMediaUrl }: ImageViewerProps) {
   const [touchStart, setTouchStart] = useState<number | null>(null)
   const [touchEnd, setTouchEnd] = useState<number | null>(null)
+  const [currentSrc, setCurrentSrc] = useState<string>('')
+  const [errorCount, setErrorCount] = useState(0)
+
+  useEffect(() => {
+    if (image) {
+      // When the image prop changes, reset the source to the primary URL and clear errors
+      setCurrentSrc(resolveMediaUrl(image.file_url))
+      setErrorCount(0)
+    }
+  }, [image, resolveMediaUrl])
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -43,6 +53,30 @@ export default function ImageViewer({ image, images, currentIndex, onClose, onNa
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [currentIndex, images.length, onClose, onNavigate])
+
+  const handleImageError = () => {
+    if (!image) return
+
+    const nextErrorCount = errorCount + 1
+    setErrorCount(nextErrorCount)
+
+    // Try fallbacks in order
+    if (nextErrorCount === 1) {
+      // 1. Try thumbnail_url
+      const thumbnailUrl = resolveMediaUrl(image.thumbnail_url)
+      if (thumbnailUrl) {
+        setCurrentSrc(thumbnailUrl)
+        return
+      }
+    }
+    
+    if (nextErrorCount <= 2) {
+      // 2. Try direct API endpoint (if thumbnail was null or also failed)
+      setCurrentSrc(resolveMediaUrl(`/api/media/${image.id}/image`))
+      return
+    }
+    // All fallbacks have failed
+  }
 
   const handleTouchStart = (e: React.TouchEvent) => {
     setTouchEnd(null)
@@ -78,7 +112,6 @@ export default function ImageViewer({ image, images, currentIndex, onClose, onNa
 
   const isVideo = image.mime_type?.startsWith('video/')
   const streamUid = isVideo ? image.filename : '' // registerVideo で filename に uid を保存
-  const imageSrc = resolveMediaUrl(image.file_url) || resolveMediaUrl(image.thumbnail_url) || resolveMediaUrl(`/api/media/${image.id}/image`)
 
   return (
     <div 
@@ -130,10 +163,11 @@ export default function ImageViewer({ image, images, currentIndex, onClose, onNa
           />
         ) : (
           <img
-            src={imageSrc}
+            src={currentSrc}
             alt={image.original_filename}
             className="max-w-full max-h-full object-contain"
             draggable={false}
+            onError={handleImageError}
           />
         )}
       </div>
