@@ -146,16 +146,14 @@ export default function ArticleDetailPage() {
           {/* 添付メディア */}
           {article.media && article.media.length > 0 && (
             <div className="mt-8 border-t pt-8">
-              <h3 className="text-lg font-bold mb-4">📷 添付メディア</h3>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <div className="space-y-4">
                 {article.media.map((media) => (
                   <div key={media.id} className="border border-base-300 rounded-lg overflow-hidden">
                     {media.mime_type.startsWith('image/') ? (
                       <img
                         src={`https://api.uchinokiroku.com/api/media/${media.id}`}
                         alt={media.original_filename}
-                        className="w-full h-32 object-cover cursor-pointer hover:opacity-80 transition-opacity"
-                        onClick={() => window.open(`https://api.uchinokiroku.com/api/media/${media.id}`, '_blank')}
+                        className="w-full max-w-full h-auto object-contain"
                         onError={(e) => {
                           e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjEyOCIgdmlld0JveD0iMCAwIDIwMCAxMjgiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMTI4IiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xMDAgODBDOTAuNDc3IDgwIDgyIDcxLjUyMyA4MiA2MkM4MiA1Mi40NzcgOTAuNDc3IDQ0IDEwMCA0NEMxMDkuNTIzIDQ0IDExOCA1Mi40NzcgMTE4IDYyQzExOCA3MS41MjMgMTA5LjUyMyA4MCAxMDAgODBaIiBmaWxsPSIjOUNBM0FGIi8+Cjwvc3ZnPgo='
                         }}
@@ -163,7 +161,7 @@ export default function ArticleDetailPage() {
                     ) : media.mime_type.startsWith('video/') ? (
                       <div className="relative">
                         <video
-                          className="w-full h-32 object-cover"
+                          className="w-full h-auto object-contain"
                           controls
                           preload="metadata"
                         >
