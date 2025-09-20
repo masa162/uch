@@ -14,7 +14,7 @@ export async function createArticle(req: Request, env: Env) {
     }
 
     const body = await req.json();
-    const { title, content, description, tags, isPublished = true, mediaIds = [] } = body;
+    const { title, content, tags, isPublished = true, mediaIds = [] } = body;
 
     if (!title || !content) {
       return new Response(JSON.stringify({ 
