@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import AuthenticatedLayout from '@/components/AuthenticatedLayout';
 import NameSetupModal from '@/components/NameSetupModal';
 import Link from 'next/link';
@@ -27,12 +28,19 @@ interface Article {
 
 export default function HomePage() {
   const { user, checkNameSetup } = useAuth();
+  const router = useRouter();
   const [recentArticles, setRecentArticles] = useState<Article[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showNameSetup, setShowNameSetup] = useState(false)
-  const [secretWord, setSecretWord] = useState('')
-  const [showSecretMessage, setShowSecretMessage] = useState(false)
+
+  // 未認証ユーザーをランディングページにリダイレクト
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/landing')
+      return
+    }
+  }, [loading, user, router])
 
   useEffect(() => {
     const fetchRecentArticles = async () => {
@@ -83,16 +91,6 @@ export default function HomePage() {
     })
   }
 
-  const handleSecretWordSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (secretWord.toLowerCase() === 'きぼう') {
-      setShowSecretMessage(true)
-      setTimeout(() => setShowSecretMessage(false), 5000) // 5秒後に自動で閉じる
-      setSecretWord('')
-    } else {
-      setSecretWord('')
-    }
-  }
 
   return (
     <AuthenticatedLayout>
@@ -106,37 +104,6 @@ export default function HomePage() {
           <p className="text-gray-600">今日も家族の大切な思い出を、やさしく残していきましょう 💝</p>
         </div>
 
-        {/* あいことば機能 */}
-        <div className="card bg-gradient-to-r from-blue-50 to-purple-50 shadow-lg">
-          <div className="card-body">
-            <h2 className="card-title text-center">🌟 あいことば</h2>
-            <form onSubmit={handleSecretWordSubmit} className="flex flex-col items-center space-y-4">
-              <input
-                type="text"
-                value={secretWord}
-                onChange={(e) => setSecretWord(e.target.value)}
-                placeholder="あいことばを入力してください"
-                className="input input-bordered w-full max-w-xs text-center"
-                autoComplete="off"
-              />
-              <button type="submit" className="btn btn-primary btn-sm">
-                送信
-              </button>
-            </form>
-            
-            {/* 特別メッセージ */}
-            {showSecretMessage && (
-              <div className="mt-4 p-4 bg-yellow-100 border border-yellow-300 rounded-lg text-center animate-pulse">
-                <div className="text-lg font-bold text-yellow-800 mb-2">✨ 特別なメッセージ ✨</div>
-                <p className="text-yellow-700">
-                  希望の光が、あなたの心を照らしていますね。<br />
-                  どんな困難も乗り越えられる強さが、あなたの中にあります。<br />
-                  今日という日が、素晴らしい一日になりますように 🌈
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {/* 記事一覧カード */}

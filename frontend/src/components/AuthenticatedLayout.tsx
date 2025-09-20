@@ -22,9 +22,9 @@ export default function AuthenticatedLayout({ children }: AuthenticatedLayoutPro
   useEffect(() => {
     if (loading || skipAuth) return // ローディング中または認証スキップ時は何もしない
     
-    // ユーザーがない場合のみサインイン画面にリダイレクト
+    // ユーザーがない場合のみランディング画面にリダイレクト
     if (!user) {
-      router.push('/signin')
+      router.push('/landing')
       return
     }
   }, [loading, router, user, skipAuth])
