@@ -40,16 +40,23 @@ export default function NewArticlePage() {
   // メディア一覧を取得
   const fetchMediaItems = async () => {
     try {
+      console.log('📸 fetchMediaItems: 開始')
       const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.uchinokiroku.com'
+      console.log('📸 fetchMediaItems: API Base:', apiBase)
       const res = await fetch(`${apiBase}/api/media?limit=50`, {
         credentials: 'include',
       })
+      console.log('📸 fetchMediaItems: レスポンス status:', res.status)
       if (res.ok) {
         const data = await res.json() as MediaItem[]
+        console.log('📸 fetchMediaItems: 取得したメディア数:', data.length)
+        console.log('📸 fetchMediaItems: メディアデータ:', data)
         setMediaItems(data)
+      } else {
+        console.error('📸 fetchMediaItems: レスポンスエラー', res.status, res.statusText)
       }
     } catch (error) {
-      console.error('メディア取得エラー:', error)
+      console.error('📸 fetchMediaItems: メディア取得エラー:', error)
     }
   }
 
@@ -60,11 +67,14 @@ export default function NewArticlePage() {
   }, [user])
 
   const toggleMediaSelection = (mediaId: number) => {
-    setSelectedMediaIds(prev => 
-      prev.includes(mediaId)
+    console.log('🎯 toggleMediaSelection: mediaId:', mediaId)
+    setSelectedMediaIds(prev => {
+      const newSelection = prev.includes(mediaId)
         ? prev.filter(id => id !== mediaId)
         : [...prev, mediaId]
-    )
+      console.log('🎯 toggleMediaSelection: 前:', prev, '→ 後:', newSelection)
+      return newSelection
+    })
   }
 
   const getMediaThumbnailUrl = (item: MediaItem) => {
@@ -80,6 +90,10 @@ export default function NewArticlePage() {
     setError(null)
     setSubmitting(true)
     try {
+      console.log('📤 handleSubmit: 送信前の状態確認')
+      console.log('📤 selectedMediaIds:', selectedMediaIds)
+      console.log('📤 selectedMediaIds length:', selectedMediaIds.length)
+
       const body = {
         title,
         content,
@@ -90,13 +104,23 @@ export default function NewArticlePage() {
           .filter(Boolean),
         mediaIds: selectedMediaIds,
       }
+
+      console.log('📤 送信するbody:', body)
+      console.log('📤 送信するbody.mediaIds:', body.mediaIds)
+      console.log('📤 JSON.stringify(body):', JSON.stringify(body))
+
       const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.uchinokiroku.com'
+      console.log('📤 送信先API:', `${apiBase}/api/articles`)
+
       const res = await fetch(`${apiBase}/api/articles`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify(body),
       })
+
+      console.log('📤 レスポンス status:', res.status)
+      console.log('📤 レスポンス headers:', Object.fromEntries(res.headers.entries()))
       if (!res.ok) {
         const text = await res.text().catch(() => '')
         throw new Error(`HTTP ${res.status} ${text}`)

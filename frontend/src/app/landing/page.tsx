@@ -30,6 +30,27 @@ export default function LandingPage() {
     }
   }
 
+  const handleDevLogin = async () => {
+    try {
+      const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.uchinokiroku.com'
+      const response = await fetch(`${apiBase}/api/dev-login`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+
+      if (response.ok) {
+        router.push('/')
+      } else {
+        console.error('Dev login failed')
+      }
+    } catch (error) {
+      console.error('Dev login error:', error)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center px-4">
       <div className="max-w-md w-full">
@@ -95,7 +116,7 @@ export default function LandingPage() {
                 </p>
               </div>
               
-              <button 
+              <button
                 onClick={handleLineAuth}
                 className="btn btn-success w-full text-lg py-4 mb-4"
               >
@@ -104,7 +125,17 @@ export default function LandingPage() {
                 </svg>
                 LINEでログイン
               </button>
-              
+
+              {/* 開発環境用のログインボタン */}
+              {process.env.NODE_ENV === 'development' && (
+                <button
+                  onClick={handleDevLogin}
+                  className="btn btn-warning w-full text-lg py-4 mb-4"
+                >
+                  🛠️ 開発ログイン（テスト用）
+                </button>
+              )}
+
               <p className="text-center text-sm text-gray-500">
                 初回の方も同じボタンからアカウント作成できます
               </p>

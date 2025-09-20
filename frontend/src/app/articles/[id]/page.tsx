@@ -7,6 +7,20 @@ import Link from 'next/link'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 
+type MediaItem = {
+  id: number
+  filename: string
+  original_filename: string
+  mime_type: string
+  file_size: number
+  file_url: string
+  thumbnail_url: string | null
+  width: number | null
+  height: number | null
+  duration: number | null
+  created_at: string
+}
+
 type Article = {
   id: string
   title: string
@@ -16,6 +30,7 @@ type Article = {
   pubDate: string
   heroImageUrl: string | null
   tags: string[]
+  media?: MediaItem[]
   author: { name: string | null; email: string | null }
 }
 
@@ -47,6 +62,9 @@ export default function ArticleDetailPage() {
           return
         }
         const data = await res.json()
+        console.log('🎬 記事詳細取得:', data)
+        console.log('🎬 取得したメディア:', data.media)
+        console.log('🎬 メディア数:', data.media?.length || 0)
         setArticle(data as Article)
         
         // 前後の記事を取得
@@ -124,7 +142,55 @@ export default function ArticleDetailPage() {
           <ReactMarkdown remarkPlugins={[remarkGfm]}>
             {article.content || ''}
           </ReactMarkdown>
-          
+
+          {/* 添付メディア */}
+          {article.media && article.media.length > 0 && (
+            <div className="mt-8 border-t pt-8">
+              <h3 className="text-lg font-bold mb-4">📷 添付メディア</h3>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {article.media.map((media) => (
+                  <div key={media.id} className="border border-base-300 rounded-lg overflow-hidden">
+                    {media.mime_type.startsWith('image/') ? (
+                      <img
+                        src={`https://api.uchinokiroku.com/api/media/${media.id}`}
+                        alt={media.original_filename}
+                        className="w-full h-32 object-cover cursor-pointer hover:opacity-80 transition-opacity"
+                        onClick={() => window.open(`https://api.uchinokiroku.com/api/media/${media.id}`, '_blank')}
+                        onError={(e) => {
+                          e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjEyOCIgdmlld0JveD0iMCAwIDIwMCAxMjgiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMTI4IiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xMDAgODBDOTAuNDc3IDgwIDgyIDcxLjUyMyA4MiA2MkM4MiA1Mi40NzcgOTAuNDc3IDQ0IDEwMCA0NEMxMDkuNTIzIDQ0IDExOCA1Mi40NzcgMTE4IDYyQzExOCA3MS41MjMgMTA5LjUyMyA4MCAxMDAgODBaIiBmaWxsPSIjOUNBM0FGIi8+Cjwvc3ZnPgo='
+                        }}
+                      />
+                    ) : media.mime_type.startsWith('video/') ? (
+                      <div className="relative">
+                        <video
+                          className="w-full h-32 object-cover"
+                          controls
+                          preload="metadata"
+                        >
+                          <source src={`https://api.uchinokiroku.com/api/media/${media.id}`} type={media.mime_type} />
+                          お使いのブラウザは動画をサポートしていません。
+                        </video>
+                      </div>
+                    ) : (
+                      <div className="w-full h-32 bg-base-200 flex items-center justify-center">
+                        <div className="text-center">
+                          <div className="text-2xl mb-2">📄</div>
+                          <div className="text-xs text-base-content/60">ファイル</div>
+                        </div>
+                      </div>
+                    )}
+                    <div className="p-2">
+                      <div className="text-sm font-medium truncate">{media.original_filename}</div>
+                      <div className="text-xs text-base-content/60">
+                        {Math.round(media.file_size / 1024)}KB
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* 前後の記事ナビゲーション */}
           {(prevArticle || nextArticle) && (
             <div className="mt-12 border-t pt-8">

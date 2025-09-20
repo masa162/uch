@@ -23,6 +23,20 @@ export interface Env {
   COOKIE_DOMAIN?: string;
 }
 
+// 開発環境用のCORSヘッダーを追加する関数
+function addCorsHeaders(response: Response): Response {
+  const newResponse = new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers: response.headers,
+  });
+
+  newResponse.headers.set("Access-Control-Allow-Origin", "http://localhost:3001");
+  newResponse.headers.set("Access-Control-Allow-Credentials", "true");
+
+  return newResponse;
+}
+
 const routes: Record<string, (req: Request, env: Env) => Promise<Response> | Response> = {
   "GET /health": (_req, _env) => handleHealth(),
   "GET /api/test": (req, env) => test(req, env),
@@ -32,10 +46,10 @@ const routes: Record<string, (req: Request, env: Env) => Promise<Response> | Res
     console.log('Request method:', req.method);
     console.log('Request headers:', Object.fromEntries(req.headers.entries()));
     console.log('Cookies:', req.headers.get('Cookie') || 'No cookies');
-    
+
     const session = await readSessionCookie(req, env);
     console.log('Session check result:', session ? 'authenticated' : 'not authenticated');
-    
+
     return new Response(JSON.stringify({
       message: "Debug endpoint reached!",
       timestamp: new Date().toISOString(),
@@ -45,13 +59,69 @@ const routes: Record<string, (req: Request, env: Env) => Promise<Response> | Res
       headers: { "Content-Type": "application/json" },
     });
   },
+  "OPTIONS /api/dev-login": (req, env) => {
+    return new Response(null, {
+      status: 200,
+      headers: {
+        "Access-Control-Allow-Origin": "http://localhost:3001",
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
+        "Access-Control-Allow-Credentials": "true",
+        "Access-Control-Max-Age": "86400"
+      }
+    });
+  },
+  "POST /api/dev-login": async (req, env) => {
+    // 開発環境でのみ使用するテストセッション作成
+    const { createSessionCookie } = await import("./lib/session");
+
+    const testUserId = "06CN9Z2T33E70TH22BSCQ3ZP"; // 既存のテストユーザーID
+    console.log('🛠️ Dev login: Creating session for user:', testUserId);
+    const testUser = {
+      id: testUserId,
+      name: "テストユーザー",
+      email: "test@example.com"
+    };
+    const sessionToken = await createSessionCookie(testUser, env);
+    console.log('🛠️ Dev login: Session token created:', sessionToken ? 'Success' : 'Failed');
+
+    const response = new Response(JSON.stringify({
+      success: true,
+      message: "Development session created",
+      userId: testUserId
+    }), {
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "http://localhost:3001",
+        "Access-Control-Allow-Credentials": "true"
+      },
+    });
+
+    response.headers.set("Set-Cookie", sessionToken);
+    return response;
+  },
   "POST /api/migrate": (req, env) => migrate(req, env),
   "GET /memories": (req, env) => handleMemories(req, env),
-  "GET /api/articles": (req, env) => handleMemories(req, env), // エイリアス
+  "OPTIONS /api/articles": (req, env) => {
+    return new Response(null, {
+      status: 200,
+      headers: {
+        "Access-Control-Allow-Origin": "http://localhost:3001",
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
+        "Access-Control-Allow-Credentials": "true"
+      }
+    });
+  },
+  "GET /api/articles": async (req, env) => {
+    const response = await handleMemories(req, env);
+    return addCorsHeaders(response);
+  }, // エイリアス
   "GET /api/articles/search": (req, env) => handleMemories(req, env), // 検索用エイリアス（qパラメータ対応）
   "POST /api/articles": async (req, env) => {
     const mod = await import("./routes/articles");
-    return mod.createArticle(req, env);
+    const response = await mod.createArticle(req, env);
+    return addCorsHeaders(response);
   },
   "GET /api/articles/[id]": async (req, env) => {
     const mod = await import("./routes/articles");
@@ -69,19 +139,43 @@ const routes: Record<string, (req: Request, env: Env) => Promise<Response> | Res
     const mod = await import("./routes/articles");
     return mod.getTags(req, env);
   },
+  "OPTIONS /api/media": (req, env) => {
+    return new Response(null, {
+      status: 200,
+      headers: {
+        "Access-Control-Allow-Origin": "http://localhost:3001",
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
+        "Access-Control-Allow-Credentials": "true"
+      }
+    });
+  },
+  "GET /api/media": async (req, env) => {
+    const mod = await import("./routes/media");
+    const response = await mod.getMedia(req, env);
+    return addCorsHeaders(response);
+  },
   "GET /auth/google/start": (req, env) => googleStart(req, env),
   "GET /auth/google/callback": (req, env) => handleGoogleAuthCallback(req, env),
   "GET /auth/line/start": (req, env) => handleLineAuthStart(req, env),
   "GET /auth/line/callback": (req, env) => handleLineAuthCallback(req, env),
+  "OPTIONS /auth/me": (req, env) => {
+    return new Response(null, {
+      status: 200,
+      headers: {
+        "Access-Control-Allow-Origin": "http://localhost:3001",
+        "Access-Control-Allow-Methods": "GET, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
+        "Access-Control-Allow-Credentials": "true"
+      }
+    });
+  },
   "GET /auth/me": async (req, env) => {
     const mod = await import("./routes/auth/me");
-    return mod.authMe(req, env);
+    const response = await mod.authMe(req, env);
+    return addCorsHeaders(response);
   },
-  // メディア関連のルート
-  "GET /api/media": async (req, env) => {
-    const mod = await import("./routes/media");
-    return mod.getMedia(req, env);
-  },
+  // メディア関連のルート（重複削除済み）
   "POST /api/media/generate-upload-url": async (req, env) => {
     const mod = await import("./routes/media");
     return mod.generateUploadUrl(req, env);
@@ -221,6 +315,7 @@ function setCorsHeaders(response: Response, origin?: string): Response {
   const allowedOrigins = [
     'https://uchinokiroku.com',
     'http://localhost:3000',
+    'http://localhost:3001',
     'https://localhost:3000'
   ];
   

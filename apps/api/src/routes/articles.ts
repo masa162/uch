@@ -14,9 +14,22 @@ export async function createArticle(req: Request, env: Env) {
     }
 
     const body = await req.json();
+
+    console.log('🔥 createArticle: Raw request body:', JSON.stringify(body));
+    console.log('🔥 createArticle: body type:', typeof body);
+    console.log('🔥 createArticle: body keys:', Object.keys(body));
+
     const { title, content, tags, isPublished = true, mediaIds = [] } = body;
 
-    console.log('createArticle received data:', { title, content, tags, isPublished, mediaIds });
+    console.log('🔥 createArticle: Destructured values:');
+    console.log('🔥   title:', title);
+    console.log('🔥   content:', content?.substring(0, 50) + '...');
+    console.log('🔥   tags:', tags);
+    console.log('🔥   isPublished:', isPublished);
+    console.log('🔥   mediaIds:', mediaIds);
+    console.log('🔥   mediaIds type:', typeof mediaIds);
+    console.log('🔥   mediaIds isArray:', Array.isArray(mediaIds));
+    console.log('🔥   mediaIds length:', mediaIds?.length);
 
     if (!title || !content) {
       return new Response(JSON.stringify({ 
@@ -218,13 +231,18 @@ export async function getArticle(req: Request, env: Env) {
     const tags = article.tags_concat ? article.tags_concat.split(',') : [];
 
     // 関連するメディアを取得
+    console.log('🎬 getArticle: メディア取得開始 memory_id:', article.id);
     const mediaQuery = `
       SELECT m.* FROM media m
       JOIN memory_media mm ON m.id = mm.media_id
       WHERE mm.memory_id = ?
       ORDER BY m.created_at ASC
     `;
+    console.log('🎬 メディアクエリ:', mediaQuery);
+    console.log('🎬 メディアクエリパラメータ:', [article.id]);
     const relatedMedia = await queryAll(env, mediaQuery, [article.id]);
+    console.log('🎬 取得したメディア数:', relatedMedia?.length || 0);
+    console.log('🎬 取得したメディア:', relatedMedia);
 
     // フロントエンドが期待する形式に変換
     const formattedArticle = {
