@@ -46,7 +46,7 @@ export default function NewArticlePage() {
         credentials: 'include',
       })
       if (res.ok) {
-        const data = await res.json()
+        const data = await res.json() as MediaItem[]
         setMediaItems(data)
       }
     } catch (error) {
