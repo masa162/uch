@@ -16,6 +16,8 @@ export async function createArticle(req: Request, env: Env) {
     const body = await req.json();
     const { title, content, tags, isPublished = true, mediaIds = [] } = body;
 
+    console.log('createArticle received data:', { title, content, tags, isPublished, mediaIds });
+
     if (!title || !content) {
       return new Response(JSON.stringify({ 
         error: "タイトルと内容は必須です" 
@@ -68,23 +70,32 @@ export async function createArticle(req: Request, env: Env) {
     const dbArticleId = result.meta.last_row_id;
 
     // メディアとの関連付けを保存
+    console.log('Processing mediaIds:', mediaIds, 'for memory_id:', dbArticleId);
     if (mediaIds && mediaIds.length > 0) {
       for (const mediaId of mediaIds) {
         try {
+          console.log('Checking media:', mediaId, 'for user:', session.sub);
           // メディアが存在し、ユーザーが所有しているか確認
           const mediaCheck = await queryAll(env, `
             SELECT id FROM media WHERE id = ? AND user_id = ?
           `, [mediaId, session.sub]);
-          
+
+          console.log('Media check result:', mediaCheck);
           if (mediaCheck.length > 0) {
+            console.log('Inserting memory_media:', dbArticleId, mediaId);
             await execute(env, `
               INSERT INTO memory_media (memory_id, media_id) VALUES (?, ?)
             `, [dbArticleId, mediaId]);
+            console.log('Successfully linked media', mediaId, 'to memory', dbArticleId);
+          } else {
+            console.log('Media not found or not owned by user:', mediaId);
           }
         } catch (error) {
           console.error('メディア関連付けエラー:', error);
         }
       }
+    } else {
+      console.log('No mediaIds to process');
     }
 
     // タグの処理
@@ -121,7 +132,7 @@ export async function createArticle(req: Request, env: Env) {
       articleId: finalArticleId,
       title: title,
       slug: finalArticleId, // スラッグをarticle_idに変更
-      description: description || (content ? content.substring(0, 150) + '...' : null),
+      description: content ? content.substring(0, 150) + '...' : null,
       content: content || '',
       pubDate: nowString,
       heroImageUrl: null,
@@ -270,9 +281,9 @@ export async function updateArticle(req: Request, env: Env) {
     }
 
     const body = await req.json().catch(() => ({} as any));
-    const { title, description, content, mediaIds = [], tags = [] } = body as { title?: string; description?: string | null; content?: string; mediaIds?: number[]; tags?: string[] };
+    const { title, content, mediaIds = [], tags = [] } = body as { title?: string; content?: string; mediaIds?: number[]; tags?: string[] };
 
-    if (!title && !description && !content) {
+    if (!title && !content) {
       return new Response(JSON.stringify({ error: '更新項目がありません' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
     }
 
