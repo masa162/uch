@@ -23,8 +23,6 @@ export default function NewArticlePage() {
   const { user, loading } = useAuth()
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
-  const [tags, setTags] = useState('')
-  const [heroImageUrl, setHeroImageUrl] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([])
@@ -97,11 +95,8 @@ export default function NewArticlePage() {
       const body = {
         title,
         content,
-        heroImageUrl: heroImageUrl || null,
-        tags: tags
-          .split(',')
-          .map(t => t.trim())
-          .filter(Boolean),
+        heroImageUrl: null, // AI執事導入まで空に設定
+        tags: [], // AI執事導入まで空に設定
         mediaIds: selectedMediaIds,
       }
 
@@ -175,25 +170,6 @@ export default function NewArticlePage() {
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-medium mb-2">タグ（カンマ区切り、例: 家族, 思い出）</label>
-            <input
-              className="input input-bordered w-full"
-              value={tags}
-              onChange={(e) => setTags(e.target.value)}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-2">Hero画像URL（省略可）</label>
-            <input
-              className="input input-bordered w-full"
-              value={heroImageUrl}
-              onChange={(e) => setHeroImageUrl(e.target.value)}
-              placeholder="https://..."
-            />
-          </div>
-        </div>
 
         {/* メディア選択セクション */}
         <div>
