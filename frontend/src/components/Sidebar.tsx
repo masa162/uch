@@ -298,36 +298,6 @@ export default function Sidebar({ onNavigate }: SidebarProps = {}) {
         </div>
       )}
       
-      {/* 発見とメモ */}
-      <div className="space-y-2">
-        <h3 className="font-bold text-primary-dark">🔍 発見とメモ</h3>
-        <ul className="menu">
-          <li>
-            <button
-              onClick={() => handleNavigation('/articles')}
-              className="w-full flex items-center text-left hover:bg-primary-light hover:text-primary-dark transition-colors"
-            >
-              📚 記事一覧
-            </button>
-          </li>
-          <li>
-            <button
-              onClick={() => handleNavigation('/search')}
-              className="w-full flex items-center text-left hover:bg-primary-light hover:text-primary-dark transition-colors"
-            >
-              🔍 検索
-            </button>
-          </li>
-          <li>
-            <button
-              onClick={() => handleNavigation('/about')}
-              className="w-full flex items-center text-left hover:bg-primary-light hover:text-primary-dark transition-colors"
-            >
-              🏠 このサイトについて
-            </button>
-          </li>
-        </ul>
-      </div>
       
       {/* 人気のタグ */}
       <div className="space-y-2">
@@ -438,6 +408,21 @@ export default function Sidebar({ onNavigate }: SidebarProps = {}) {
         >
           📷 メディアギャラリー
         </button>
+      </div>
+
+      {/* 発見とメモ */}
+      <div className="space-y-2">
+        <h3 className="font-bold text-primary-dark">🔍 発見とメモ</h3>
+        <ul className="menu">
+          <li>
+            <button
+              onClick={() => handleNavigation('/about')}
+              className="w-full flex items-center text-left hover:bg-primary-light hover:text-primary-dark transition-colors"
+            >
+              🏠 このサイトについて
+            </button>
+          </li>
+        </ul>
       </div>
     </div>
   );
