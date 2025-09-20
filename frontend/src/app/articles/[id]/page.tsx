@@ -61,11 +61,11 @@ export default function ArticleDetailPage() {
           setError(`読み込みに失敗しました (HTTP ${res.status})`)
           return
         }
-        const data = await res.json()
+        const data = await res.json() as Article
         console.log('🎬 記事詳細取得:', data)
         console.log('🎬 取得したメディア:', data.media)
         console.log('🎬 メディア数:', data.media?.length || 0)
-        setArticle(data as Article)
+        setArticle(data)
         
         // 前後の記事を取得
         try {
