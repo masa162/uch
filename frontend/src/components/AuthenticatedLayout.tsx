@@ -16,18 +16,27 @@ export default function AuthenticatedLayout({ children }: AuthenticatedLayoutPro
   const router = useRouter()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
-  // 開発環境では認証チェックをスキップ
-  const skipAuth = process.env.NEXT_PUBLIC_SKIP_AUTH === 'true'
-
   useEffect(() => {
-    if (loading || skipAuth) return // ローディング中または認証スキップ時は何もしない
+    if (loading) return // ローディング中は何もしない
     
     // ユーザーがない場合のみランディング画面にリダイレクト
     if (!user) {
       router.push('/landing')
       return
     }
-  }, [loading, router, user, skipAuth])
+  }, [loading, router, user])
+
+  // 認証されていない場合は何も表示しない（セキュリティ強化）
+  if (!loading && !user) {
+    return (
+      <div className="min-h-screen bg-base-200 flex items-center justify-center">
+        <div className="text-center">
+          <div className="loading loading-spinner loading-lg"></div>
+          <p className="mt-4 text-gray-600">認証確認中...</p>
+        </div>
+      </div>
+    )
+  }
 
   // ローディング中の場合はローディング画面を表示
   if (loading) {
