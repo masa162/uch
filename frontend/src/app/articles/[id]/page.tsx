@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import AuthenticatedLayout from '@/components/AuthenticatedLayout'
 import Link from 'next/link'
@@ -32,6 +32,103 @@ type Article = {
   tags: string[]
   media?: MediaItem[]
   author: { name: string | null; email: string | null }
+}
+
+// HLS Video Player Component with hls.js
+function HLSVideoPlayer({ src, poster, media }: { src: string; poster?: string; media: MediaItem }) {
+  const videoRef = useRef<HTMLVideoElement>(null)
+
+  useEffect(() => {
+    let hls: any = null
+
+    const initializePlayer = async () => {
+      if (!videoRef.current) return
+
+      const video = videoRef.current
+
+      // Safari has native HLS support
+      if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        console.log('🎬 ネイティブHLSサポート（Safari）使用')
+        video.src = src
+        return
+      }
+
+      // For other browsers, use hls.js
+      const Hls = (await import('hls.js')).default
+
+      if (Hls.isSupported()) {
+        console.log('🎬 hls.js使用でHLS再生開始')
+        hls = new Hls({
+          debug: false,
+          enableWorker: true,
+          lowLatencyMode: false,
+        })
+
+        hls.loadSource(src)
+        hls.attachMedia(video)
+
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          console.log('🎬 HLSマニフェスト解析完了')
+        })
+
+        hls.on(Hls.Events.ERROR, (event: any, data: any) => {
+          console.error('🎬 HLSエラー:', data)
+          if (data.fatal) {
+            switch (data.type) {
+              case Hls.ErrorTypes.NETWORK_ERROR:
+                console.log('🎬 ネットワークエラー、リトライ中...')
+                hls.startLoad()
+                break
+              case Hls.ErrorTypes.MEDIA_ERROR:
+                console.log('🎬 メディアエラー、リカバリ中...')
+                hls.recoverMediaError()
+                break
+              default:
+                console.log('🎬 回復不可能なエラー')
+                hls.destroy()
+                break
+            }
+          }
+        })
+      } else {
+        console.error('🎬 HLSサポートなし')
+      }
+    }
+
+    initializePlayer()
+
+    return () => {
+      if (hls) {
+        hls.destroy()
+      }
+    }
+  }, [src])
+
+  return (
+    <>
+      <video
+        ref={videoRef}
+        className="w-full h-auto object-contain max-h-96"
+        controls
+        preload="metadata"
+        poster={poster}
+        onError={(e) => {
+          console.error('🎬 動画エラー:', e)
+        }}
+        onLoadStart={() => {
+          console.log('🎬 動画読み込み開始:', src)
+        }}
+        onCanPlay={() => {
+          console.log('🎬 動画再生可能')
+        }}
+      />
+      <div className="text-xs text-gray-500 mt-2">
+        動画ファイル: {media.original_filename} ({media.mime_type})
+        <br />
+        Cloudflare Stream HLS: {src}
+      </div>
+    </>
+  )
 }
 
 export default function ArticleDetailPage() {
@@ -162,33 +259,12 @@ export default function ArticleDetailPage() {
                       <div className="relative">
                         {/* Cloudflare Streamの場合とローカルファイルの場合を分岐 */}
                         {media.file_url && media.file_url.includes('manifest/video.m3u8') ? (
-                          // Cloudflare Stream HLS
-                          <video
-                            className="w-full h-auto object-contain max-h-96"
-                            controls
-                            preload="metadata"
+                          // Cloudflare Stream HLS with hls.js
+                          <HLSVideoPlayer
+                            src={media.file_url}
                             poster={media.thumbnail_url || undefined}
-                            onError={(e) => {
-                              console.error('🎬 Cloudflare Stream動画読み込みエラー:', {
-                                mediaId: media.id,
-                                filename: media.original_filename,
-                                mimeType: media.mime_type,
-                                hlsUrl: media.file_url,
-                                error: e
-                              })
-                            }}
-                            onLoadStart={() => {
-                              console.log('🎬 Cloudflare Stream動画読み込み開始:', {
-                                mediaId: media.id,
-                                filename: media.original_filename,
-                                hlsUrl: media.file_url
-                              })
-                            }}
-                          >
-                            <source src={media.file_url} type="application/vnd.apple.mpegurl" />
-                            <source src={media.file_url} type="application/x-mpegURL" />
-                            お使いのブラウザは動画をサポートしていません。
-                          </video>
+                            media={media}
+                          />
                         ) : (
                           // 通常のファイル配信
                           <video
@@ -218,16 +294,6 @@ export default function ArticleDetailPage() {
                             お使いのブラウザは動画をサポートしていません。
                           </video>
                         )}
-                        {/* デバッグ情報 */}
-                        <div className="text-xs text-gray-500 mt-2">
-                          動画ファイル: {media.original_filename} ({media.mime_type})
-                          <br />
-                          {media.file_url && media.file_url.includes('manifest/video.m3u8') ? (
-                            <>Cloudflare Stream HLS: {media.file_url}</>
-                          ) : (
-                            <>API URL: https://api.uchinokiroku.com/api/media/{media.id}</>
-                          )}
-                        </div>
                       </div>
                     ) : (
                       <div className="w-full h-32 bg-base-200 flex items-center justify-center">
