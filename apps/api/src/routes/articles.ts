@@ -14,7 +14,7 @@ export async function createArticle(req: Request, env: Env) {
     }
 
     const body = await req.json();
-    const { title, content, description, tags, isPublished = true } = body;
+    const { title, content, description, tags, isPublished = true, mediaIds = [] } = body;
 
     if (!title || !content) {
       return new Response(JSON.stringify({ 
@@ -66,6 +66,26 @@ export async function createArticle(req: Request, env: Env) {
     console.log('Article creation result:', result);
 
     const dbArticleId = result.meta.last_row_id;
+
+    // メディアとの関連付けを保存
+    if (mediaIds && mediaIds.length > 0) {
+      for (const mediaId of mediaIds) {
+        try {
+          // メディアが存在し、ユーザーが所有しているか確認
+          const mediaCheck = await queryAll(env, `
+            SELECT id FROM media WHERE id = ? AND user_id = ?
+          `, [mediaId, session.sub]);
+          
+          if (mediaCheck.length > 0) {
+            await execute(env, `
+              INSERT INTO memory_media (memory_id, media_id) VALUES (?, ?)
+            `, [dbArticleId, mediaId]);
+          }
+        } catch (error) {
+          console.error('メディア関連付けエラー:', error);
+        }
+      }
+    }
 
     // 作成時のデータから直接レスポンスを生成（DBから再取得をスキップ）
     const nowString = new Date().toISOString();
@@ -160,6 +180,15 @@ export async function getArticle(req: Request, env: Env) {
     // タグを配列に変換
     const tags = article.tags_concat ? article.tags_concat.split(',') : [];
 
+    // 関連するメディアを取得
+    const mediaQuery = `
+      SELECT m.* FROM media m
+      JOIN memory_media mm ON m.id = mm.media_id
+      WHERE mm.memory_id = ?
+      ORDER BY m.created_at ASC
+    `;
+    const relatedMedia = await queryAll(env, mediaQuery, [article.id]);
+
     // フロントエンドが期待する形式に変換
     const formattedArticle = {
       id: article.id.toString(),
@@ -174,6 +203,7 @@ export async function getArticle(req: Request, env: Env) {
       isPublished: true,
       createdAt: article.created_at,
       updatedAt: article.updated_at,
+      media: relatedMedia || [], // 関連メディアを追加
       author: {
         name: article.user_name || 'システム',
         email: article.user_email || null,
