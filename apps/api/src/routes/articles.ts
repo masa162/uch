@@ -244,7 +244,7 @@ export async function updateArticle(req: Request, env: Env) {
     }
 
     const body = await req.json().catch(() => ({} as any));
-    const { title, description, content } = body as { title?: string; description?: string | null; content?: string };
+    const { title, description, content, mediaIds = [] } = body as { title?: string; description?: string | null; content?: string; mediaIds?: number[] };
 
     if (!title && !description && !content) {
       return new Response(JSON.stringify({ error: '更新項目がありません' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
@@ -281,6 +281,41 @@ export async function updateArticle(req: Request, env: Env) {
       return new Response(JSON.stringify({ error: '記事が見つかりません' }), { status: 404, headers: { 'Content-Type': 'application/json' } });
     }
 
+    // メディア関連付けを更新
+    if (mediaIds !== undefined) {
+      // 既存の関連付けを削除
+      await execute(env, `DELETE FROM memory_media WHERE memory_id = ?`, [row.id]);
+      
+      // 新しい関連付けを追加
+      if (mediaIds.length > 0) {
+        for (const mediaId of mediaIds) {
+          try {
+            // メディアが存在し、ユーザーが所有しているか確認
+            const mediaCheck = await queryAll(env, `
+              SELECT id FROM media WHERE id = ? AND user_id = ?
+            `, [mediaId, session.sub]);
+            
+            if (mediaCheck.length > 0) {
+              await execute(env, `
+                INSERT INTO memory_media (memory_id, media_id) VALUES (?, ?)
+              `, [row.id, mediaId]);
+            }
+          } catch (error) {
+            console.error('メディア関連付けエラー:', error);
+          }
+        }
+      }
+    }
+
+    // 関連するメディアを取得
+    const mediaQuery = `
+      SELECT m.* FROM media m
+      JOIN memory_media mm ON m.id = mm.media_id
+      WHERE mm.memory_id = ?
+      ORDER BY m.created_at ASC
+    `;
+    const relatedMedia = await queryAll(env, mediaQuery, [row.id]);
+
     return new Response(JSON.stringify({
       id: row.id.toString(),
       articleId: row.article_id || row.id.toString(),
@@ -294,6 +329,7 @@ export async function updateArticle(req: Request, env: Env) {
       isPublished: true,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
+      media: relatedMedia || [], // 関連メディアを追加
       author: {
         name: session.name || 'ユーザー',
         email: session.email || null,
