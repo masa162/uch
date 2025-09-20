@@ -161,13 +161,43 @@ export default function ArticleDetailPage() {
                     ) : media.mime_type.startsWith('video/') ? (
                       <div className="relative">
                         <video
-                          className="w-full h-auto object-contain"
+                          className="w-full h-auto object-contain max-h-96"
                           controls
                           preload="metadata"
+                          poster={media.thumbnail_url || undefined}
+                          onError={(e) => {
+                            console.error('🎬 動画読み込みエラー:', {
+                              mediaId: media.id,
+                              filename: media.original_filename,
+                              mimeType: media.mime_type,
+                              src: `https://api.uchinokiroku.com/api/media/${media.id}`,
+                              error: e
+                            })
+                          }}
+                          onLoadStart={() => {
+                            console.log('🎬 動画読み込み開始:', {
+                              mediaId: media.id,
+                              filename: media.original_filename,
+                              mimeType: media.mime_type,
+                              src: `https://api.uchinokiroku.com/api/media/${media.id}`
+                            })
+                          }}
+                          onCanPlay={() => {
+                            console.log('🎬 動画再生可能:', {
+                              mediaId: media.id,
+                              filename: media.original_filename
+                            })
+                          }}
                         >
                           <source src={`https://api.uchinokiroku.com/api/media/${media.id}`} type={media.mime_type} />
                           お使いのブラウザは動画をサポートしていません。
                         </video>
+                        {/* デバッグ情報 */}
+                        <div className="text-xs text-gray-500 mt-2">
+                          動画ファイル: {media.original_filename} ({media.mime_type})
+                          <br />
+                          URL: https://api.uchinokiroku.com/api/media/{media.id}
+                        </div>
                       </div>
                     ) : (
                       <div className="w-full h-32 bg-base-200 flex items-center justify-center">
