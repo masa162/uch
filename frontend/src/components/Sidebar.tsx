@@ -342,14 +342,6 @@ export default function Sidebar({ onNavigate }: SidebarProps = {}) {
               🔍 検索
             </button>
           </li>
-          <li>
-            <button
-              onClick={() => handleNavigation('/gallery')}
-              className="w-full flex items-center text-left hover:bg-primary-light hover:text-primary-dark transition-colors"
-            >
-              📷 メディアギャラリー
-            </button>
-          </li>
         </ul>
       </div>
       
@@ -451,6 +443,17 @@ export default function Sidebar({ onNavigate }: SidebarProps = {}) {
             ))}
           </div>
         )}
+      </div>
+
+      {/* メディアギャラリー */}
+      <div className="space-y-2">
+        <h3 className="font-bold text-primary-dark">📷 メディアギャラリー</h3>
+        <button
+          onClick={() => handleNavigation('/gallery')}
+          className="w-full flex items-center text-left hover:bg-primary-light hover:text-primary-dark transition-colors px-2 py-1 rounded"
+        >
+          📷 メディアギャラリー
+        </button>
       </div>
     </div>
   );
