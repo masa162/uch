@@ -87,6 +87,32 @@ export async function createArticle(req: Request, env: Env) {
       }
     }
 
+    // タグの処理
+    if (tags && tags.length > 0) {
+      for (const tagName of tags) {
+        try {
+          // タグが存在するか確認
+          let existingTag = await queryAll(env, `SELECT id FROM tags WHERE name = ?`, [tagName]);
+          let tagId;
+          
+          if (existingTag.length > 0) {
+            tagId = existingTag[0].id;
+          } else {
+            // 新しいタグを作成
+            const tagResult = await execute(env, `INSERT INTO tags (name) VALUES (?)`, [tagName]);
+            tagId = tagResult.meta.last_row_id;
+          }
+          
+          // 記事とタグの関連付け
+          await execute(env, `
+            INSERT INTO memory_tags (memory_id, tag_id) VALUES (?, ?)
+          `, [dbArticleId, tagId]);
+        } catch (error) {
+          console.error('タグ処理エラー:', error);
+        }
+      }
+    }
+
     // 作成時のデータから直接レスポンスを生成（DBから再取得をスキップ）
     const nowString = new Date().toISOString();
     const authorName = session.name || 'ユーザー';
@@ -244,7 +270,7 @@ export async function updateArticle(req: Request, env: Env) {
     }
 
     const body = await req.json().catch(() => ({} as any));
-    const { title, description, content, mediaIds = [] } = body as { title?: string; description?: string | null; content?: string; mediaIds?: number[] };
+    const { title, description, content, mediaIds = [], tags = [] } = body as { title?: string; description?: string | null; content?: string; mediaIds?: number[]; tags?: string[] };
 
     if (!title && !description && !content) {
       return new Response(JSON.stringify({ error: '更新項目がありません' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
@@ -307,6 +333,38 @@ export async function updateArticle(req: Request, env: Env) {
       }
     }
 
+    // タグの処理
+    if (tags !== undefined) {
+      // 既存のタグ関連付けを削除
+      await execute(env, `DELETE FROM memory_tags WHERE memory_id = ?`, [row.id]);
+      
+      // 新しいタグ関連付けを追加
+      if (tags.length > 0) {
+        for (const tagName of tags) {
+          try {
+            // タグが存在するか確認
+            let existingTag = await queryAll(env, `SELECT id FROM tags WHERE name = ?`, [tagName]);
+            let tagId;
+            
+            if (existingTag.length > 0) {
+              tagId = existingTag[0].id;
+            } else {
+              // 新しいタグを作成
+              const tagResult = await execute(env, `INSERT INTO tags (name) VALUES (?)`, [tagName]);
+              tagId = tagResult.meta.last_row_id;
+            }
+            
+            // 記事とタグの関連付け
+            await execute(env, `
+              INSERT INTO memory_tags (memory_id, tag_id) VALUES (?, ?)
+            `, [row.id, tagId]);
+          } catch (error) {
+            console.error('タグ処理エラー:', error);
+          }
+        }
+      }
+    }
+
     // 関連するメディアを取得
     const mediaQuery = `
       SELECT m.* FROM media m
@@ -315,6 +373,16 @@ export async function updateArticle(req: Request, env: Env) {
       ORDER BY m.created_at ASC
     `;
     const relatedMedia = await queryAll(env, mediaQuery, [row.id]);
+
+    // 関連するタグを取得
+    const tagsQuery = `
+      SELECT t.name FROM tags t
+      JOIN memory_tags mt ON t.id = mt.tag_id
+      WHERE mt.memory_id = ?
+      ORDER BY t.name ASC
+    `;
+    const relatedTags = await queryAll(env, tagsQuery, [row.id]);
+    const tagNames = relatedTags.map((tag: any) => tag.name);
 
     return new Response(JSON.stringify({
       id: row.id.toString(),
@@ -325,7 +393,7 @@ export async function updateArticle(req: Request, env: Env) {
       content: row.content || '',
       pubDate: row.created_at,
       heroImageUrl: null,
-      tags: [],
+      tags: tagNames,
       isPublished: true,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
