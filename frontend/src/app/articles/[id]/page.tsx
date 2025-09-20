@@ -122,11 +122,13 @@ function HLSVideoPlayer({ src, poster, media }: { src: string; poster?: string; 
           console.log('🎬 動画再生可能')
         }}
       />
+      {/* デバッグ情報は本番では非表示
       <div className="text-xs text-gray-500 mt-2">
         動画ファイル: {media.original_filename} ({media.mime_type})
         <br />
         Cloudflare Stream HLS: {src}
       </div>
+      */}
     </>
   )
 }
@@ -303,12 +305,14 @@ export default function ArticleDetailPage() {
                         </div>
                       </div>
                     )}
+                    {/* ファイル情報は本番では非表示
                     <div className="p-2">
                       <div className="text-sm font-medium truncate">{media.original_filename}</div>
                       <div className="text-xs text-base-content/60">
                         {Math.round(media.file_size / 1024)}KB
                       </div>
                     </div>
+                    */}
                   </div>
                 ))}
               </div>
