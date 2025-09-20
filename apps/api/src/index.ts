@@ -188,6 +188,18 @@ const routes: Record<string, (req: Request, env: Env) => Promise<Response> | Res
     const mod = await import("./routes/media");
     return mod.uploadDirect(req, env);
   },
+  "GET /api/media/[id]": async (req, env) => {
+    const mod = await import("./routes/media");
+    const url = new URL(req.url);
+    const mediaId = url.pathname.split('/').pop();
+    if (!mediaId) {
+      return new Response(JSON.stringify({ error: "メディアIDが必要です" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+    return mod.getMediaFile(req, env, mediaId);
+  },
   "DELETE /api/media/[id]": async (req, env) => {
     const mod = await import("./routes/media");
     const url = new URL(req.url);
@@ -294,12 +306,12 @@ function keyOf(req: Request) {
       return `${method} /api/media/by-filename`;
     }
   }
-  // /api/media/:id → DELETE /api/media/[id]
+  // /api/media/:id → GET /api/media/[id] or DELETE /api/media/[id]
   if (pathname.match(/^\/api\/media\/[^/]+$/)) {
     // Exclude reserved endpoints like generate-upload-url, upload-r2, upload-direct, register-video
     const seg = pathname.split('/').pop() || '';
     const reserved = new Set(['generate-upload-url','upload-r2','upload-direct','register-video','by-filename']);
-    if (!reserved.has(seg) && method === 'DELETE') {
+    if (!reserved.has(seg) && (method === 'DELETE' || method === 'GET')) {
       return `${method} /api/media/[id]`;
     }
   }
