@@ -318,6 +318,14 @@ export default function Sidebar({ onNavigate }: SidebarProps = {}) {
               🔍 検索
             </button>
           </li>
+          <li>
+            <button
+              onClick={() => handleNavigation('/about')}
+              className="w-full flex items-center text-left hover:bg-primary-light hover:text-primary-dark transition-colors"
+            >
+              🏠 このサイトについて
+            </button>
+          </li>
         </ul>
       </div>
       

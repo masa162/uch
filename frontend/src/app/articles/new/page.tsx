@@ -22,7 +22,6 @@ export default function NewArticlePage() {
   const router = useRouter()
   const { user, loading } = useAuth()
   const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
   const [content, setContent] = useState('')
   const [tags, setTags] = useState('')
   const [heroImageUrl, setHeroImageUrl] = useState('')
@@ -73,7 +72,7 @@ export default function NewArticlePage() {
     if (item.thumbnail_url) {
       return item.thumbnail_url
     }
-    return `${apiBase}/api/media/${item.id}/image`
+    return `${apiBase}/api/media/${item.id}`
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -83,7 +82,6 @@ export default function NewArticlePage() {
     try {
       const body = {
         title,
-        description: description || null,
         content,
         heroImageUrl: heroImageUrl || null,
         tags: tags
@@ -142,15 +140,6 @@ export default function NewArticlePage() {
           />
         </div>
 
-        <div>
-          <label className="block text-sm font-medium mb-2">説明（省略可）</label>
-          <input
-            className="input input-bordered w-full"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="短い説明文"
-          />
-        </div>
 
         <div>
           <label className="block text-sm font-medium mb-2">本文</label>
@@ -212,6 +201,9 @@ export default function NewArticlePage() {
                         src={getMediaThumbnailUrl(item)}
                         alt={item.original_filename}
                         className="w-16 h-16 object-cover rounded border"
+                        onError={(e) => {
+                          e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0zMiA0MEMyNi40NzcgNDAgMjIgMzUuNTIzIDIyIDMwQzIyIDI0LjQ3NyAyNi40NzcgMjAgMzIgMjBDMzcuNTIzIDIwIDQyIDI0LjQ3NyA0MiAzMEM0MiAzNS41MjMgMzcuNTIzIDQwIDMyIDQwWiIgZmlsbD0iIzlDQTNBRiIvPgo8L3N2Zz4K'
+                        }}
                       />
                       <button
                         type="button"
@@ -243,6 +235,9 @@ export default function NewArticlePage() {
                       src={getMediaThumbnailUrl(item)}
                       alt={item.original_filename}
                       className="w-full h-16 object-cover rounded"
+                      onError={(e) => {
+                        e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0zMiA0MEMyNi40NzcgNDAgMjIgMzUuNTIzIDIyIDMwQzIyIDI0LjQ3NyAyNi40NzcgMjAgMzIgMjBDMzcuNTIzIDIwIDQyIDI0LjQ3NyA0MiAzMEM0MiAzNS41MjMgMzcuNTIzIDQwIDMyIDQwWiIgZmlsbD0iIzlDQTNBRiIvPgo8L3N2Zz4K'
+                      }}
                     />
                     {selectedMediaIds.includes(item.id) && (
                       <div className="absolute top-1 right-1 w-4 h-4 bg-blue-500 text-white rounded-full text-xs flex items-center justify-center">
