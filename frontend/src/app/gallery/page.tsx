@@ -1,8 +1,6 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { FixedSizeGrid, FixedSizeList } from 'react-window'
-import InfiniteLoader from 'react-window-infinite-loader'
 import UploadWidget from '@/components/UploadWidget'
 import AuthenticatedLayout from '@/components/AuthenticatedLayout'
 import ImageViewer from '@/components/ImageViewer'
@@ -42,7 +40,7 @@ export default function GalleryPage() {
   const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.uchinokiroku.com'
   console.log('API Base URL:', apiBase)
   const PAGE_SIZE = 24
-  
+
   const resolveMediaUrl = (rawUrl: string | null) => {
     if (!rawUrl) return ''
     const trimmed = rawUrl.trim()
@@ -98,23 +96,6 @@ export default function GalleryPage() {
     dateTo: ''
   })
 
-  // 仮想化設定
-  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
-  const containerRef = useRef<HTMLDivElement>(null)
-
-  // レスポンシブグリッド設定
-  const getGridColumns = (width: number) => {
-    if (width < 768) return 2  // mobile
-    if (width < 1024) return 3  // tablet
-    return 4  // desktop
-  }
-
-  const columnCount = getGridColumns(containerSize.width)
-  const ITEM_SIZE = 200  // グリッドアイテムのサイズ（px）
-  const GAP = 12  // アイテム間のギャップ（px）
-  const columnWidth = (containerSize.width - GAP * (columnCount - 1)) / columnCount
-  const rowHeight = ITEM_SIZE
-
   console.log('GalleryPage initial state - items:', items.length, 'loading:', loading, 'hasMore:', hasMore, 'offset:', offset)
 
   const fetchMore = useCallback(async (overrideOffset?: number) => {
@@ -149,7 +130,7 @@ export default function GalleryPage() {
     console.log('✅ fetchMore proceeding with request')
     isFetching.current = true
     setLoading(true)
-    
+
     try {
       // フィルター条件をクエリパラメータに追加
       const params = new URLSearchParams({
@@ -272,7 +253,7 @@ export default function GalleryPage() {
 
   const handleBulkDownload = async () => {
     if (selectedItems.size === 0) return
-    
+
     for (const id of Array.from(selectedItems)) {
       const item = items.find(i => i.id.toString() === id)
       if (item) {
@@ -286,7 +267,7 @@ export default function GalleryPage() {
 
   const handleBulkDelete = async () => {
     if (selectedItems.size === 0) return
-    
+
     if (!confirm(`選択した${selectedItems.size}件のメディアを削除しますか？`)) return
 
     try {
@@ -296,7 +277,7 @@ export default function GalleryPage() {
           credentials: 'include'
         })
       }
-      
+
       // 削除されたアイテムをリストから除外
       setItems(prev => prev.filter(item => !selectedItems.has(item.id.toString())))
       setSelectedItems(new Set())
@@ -347,126 +328,19 @@ export default function GalleryPage() {
     void fetchMore(0)
   }
 
-  // 画面サイズ監視
-  useEffect(() => {
-    const updateSize = () => {
-      if (containerRef.current) {
-        const rect = containerRef.current.getBoundingClientRect()
-        setContainerSize({ width: rect.width, height: window.innerHeight - 400 })
+  // Intersection Observerを使った無限スクロール
+  const observerRef = useRef<IntersectionObserver>()
+  const lastElementRef = useCallback((node: HTMLDivElement | null) => {
+    if (loading) return
+    if (observerRef.current) observerRef.current.disconnect()
+    observerRef.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && hasMore && !isFetching.current) {
+        console.log('🔄 Intersection detected - triggering fetchMore')
+        void fetchMore()
       }
-    }
-
-    updateSize()
-    window.addEventListener('resize', updateSize)
-    return () => window.removeEventListener('resize', updateSize)
-  }, [])
-
-  // 仮想化グリッド用のアイテムレンダラー
-  const GridItem = ({ columnIndex, rowIndex, style }: { columnIndex: number, rowIndex: number, style: any }) => {
-    const itemIndex = rowIndex * columnCount + columnIndex
-    const item = items[itemIndex]
-
-    if (!item) return <div style={style} />
-
-    return (
-      <div style={{ ...style, padding: GAP / 2 }}>
-        <div className="relative group">
-          {editMode && (
-            <div className="absolute top-2 left-2 z-10">
-              <input
-                type="checkbox"
-                checked={selectedItems.has(item.id.toString())}
-                onChange={() => toggleSelection(item.id.toString())}
-                className="checkbox checkbox-primary"
-              />
-            </div>
-          )}
-          <div
-            onClick={() => handleImageClick(item, itemIndex)}
-            className="cursor-pointer"
-          >
-            <img
-              src={getThumbUrl(item)}
-              alt={item.original_filename}
-              className="w-full h-40 object-cover rounded-lg shadow group-hover:opacity-90 transition"
-              loading="lazy"
-              onError={(e) => {
-                console.error('Image load error for item:', item.id, item.original_filename, e);
-                e.currentTarget.src = `data:image/svg+xml;base64,${base64EncodeUtf8(`
-                  <svg width="300" height="200" xmlns="http://www.w3.org/2000/svg">
-                    <rect width="300" height="200" fill="#f0f0f0"/>
-                    <text x="150" y="105" text-anchor="middle" font-family="Arial" font-size="14" fill="#666">${isVideo(item) ? '動画' : item.original_filename}</text>
-                  </svg>
-                `)}`;
-              }}
-            />
-            {/* 動画には再生アイコンを重ねる */}
-            {item.mime_type?.startsWith('video/') && (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="bg-black/50 rounded-full p-3">
-                  <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-                </div>
-              </div>
-            )}
-            <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs p-2 rounded-b-lg opacity-0 group-hover:opacity-100 transition">
-              {item.original_filename}
-            </div>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  // 仮想化リスト用のアイテムレンダラー
-  const ListItem = ({ index, style }: { index: number, style: any }) => {
-    const item = items[index]
-
-    if (!item) return <div style={style} />
-
-    return (
-      <div style={style}>
-        <div
-          className={`flex items-center gap-4 p-3 rounded-lg border mx-2 ${
-            selectedItems.has(item.id.toString()) ? 'bg-primary/10 border-primary' : 'bg-base-100 border-base-300'
-          } ${editMode ? 'cursor-pointer hover:bg-base-200' : ''}`}
-          onClick={() => handleImageClick(item, index)}
-        >
-          {editMode && (
-            <input
-              type="checkbox"
-              checked={selectedItems.has(item.id.toString())}
-              onChange={() => toggleSelection(item.id.toString())}
-              className="checkbox checkbox-primary"
-            />
-          )}
-          <img
-            src={getThumbUrl(item)}
-            alt={item.original_filename}
-            className="w-16 h-16 object-cover rounded"
-            loading="lazy"
-            onError={(e) => {
-              console.error('Image load error for item:', item.id, item.original_filename, e);
-              e.currentTarget.src = `data:image/svg+xml;base64,${base64EncodeUtf8(`
-                <svg width="64" height="64" xmlns="http://www.w3.org/2000/svg">
-                  <rect width="64" height="64" fill="#f0f0f0"/>
-                  <text x="32" y="34" text-anchor="middle" font-family="Arial" font-size="8" fill="#666">${isVideo(item) ? '動画' : item.original_filename}</text>
-                </svg>
-              `)}`;
-            }}
-          />
-          <div className="flex-1 min-w-0">
-            <div className="font-medium truncate">{item.original_filename}</div>
-            <div className="text-sm text-base-content/60">
-              {formatFileSize(item.file_size)} • {formatDate(item.created_at)}
-            </div>
-          </div>
-          <div className="text-xs text-base-content/40">
-            {item.mime_type}
-          </div>
-        </div>
-      </div>
-    )
-  }
+    })
+    if (node) observerRef.current.observe(node)
+  }, [loading, hasMore, fetchMore])
 
   const hasInitialized = useRef(false)
 
@@ -482,19 +356,14 @@ export default function GalleryPage() {
         clearTimeout(refreshTimeoutRef.current)
         refreshTimeoutRef.current = null
       }
+      if (observerRef.current) {
+        observerRef.current.disconnect()
+      }
     }
   }, [])
 
-
   return (
     <AuthenticatedLayout>
-      {/* デバッグ情報バー */}
-      <div className="mb-4 p-3 bg-yellow-100 border border-yellow-300 rounded">
-        <div className="text-sm">
-          <strong>デバッグ情報:</strong> 表示中: {items.length}件 | hasMore: {hasMore.toString()} | offset: {offset} | API: {apiBase}
-        </div>
-      </div>
-
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold">📷 メディアギャラリー</h1>
         <div className="flex items-center gap-2">
@@ -670,66 +539,116 @@ export default function GalleryPage() {
       {items.length === 0 && !loading ? (
         <div className="text-center text-base-content/60 py-20">まだメディアがありません。右上から追加してください。</div>
       ) : (
-        <div ref={containerRef}>
-          {containerSize.width > 0 && (
-            <>
-              {/* 仮想化グリッド表示 */}
-              {viewMode === 'grid' && (
-                <InfiniteLoader
-                  isItemLoaded={(index) => index < items.length}
-                  itemCount={hasMore ? items.length + columnCount : items.length}
-                  loadMoreItems={loading ? () => {} : () => fetchMore()}
-                >
-                  {({ onItemsRendered, ref }) => (
-                    <FixedSizeGrid
-                      ref={ref}
-                      columnCount={columnCount}
-                      columnWidth={columnWidth}
-                      height={containerSize.height}
-                      rowCount={Math.ceil((hasMore ? items.length + columnCount : items.length) / columnCount)}
-                      rowHeight={rowHeight}
-                      width={containerSize.width}
-                      onItemsRendered={(gridData) => {
-                        const startIndex = gridData.visibleRowStartIndex * columnCount + gridData.visibleColumnStartIndex
-                        const stopIndex = gridData.visibleRowStopIndex * columnCount + gridData.visibleColumnStopIndex
-                        onItemsRendered({
-                          visibleStartIndex: startIndex,
-                          visibleStopIndex: stopIndex,
-                        })
+        <>
+          {/* グリッド表示 */}
+          {viewMode === 'grid' && (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {items.map((item, index) => (
+                <div key={item.id} className="relative group">
+                  {editMode && (
+                    <div className="absolute top-2 left-2 z-10">
+                      <input
+                        type="checkbox"
+                        checked={selectedItems.has(item.id.toString())}
+                        onChange={() => toggleSelection(item.id.toString())}
+                        className="checkbox checkbox-primary"
+                      />
+                    </div>
+                  )}
+                  <div
+                    onClick={() => handleImageClick(item, index)}
+                    className="cursor-pointer"
+                  >
+                    <img
+                      src={getThumbUrl(item)}
+                      alt={item.original_filename}
+                      className="w-full h-40 object-cover rounded-lg shadow group-hover:opacity-90 transition"
+                      loading="lazy"
+                      onError={(e) => {
+                        console.error('Image load error for item:', item.id, item.original_filename, e);
+                        e.currentTarget.src = `data:image/svg+xml;base64,${base64EncodeUtf8(`
+                          <svg width="300" height="200" xmlns="http://www.w3.org/2000/svg">
+                            <rect width="300" height="200" fill="#f0f0f0"/>
+                            <text x="150" y="105" text-anchor="middle" font-family="Arial" font-size="14" fill="#666">${isVideo(item) ? '動画' : item.original_filename}</text>
+                          </svg>
+                        `)}`;
                       }}
-                    >
-                      {GridItem}
-                    </FixedSizeGrid>
-                  )}
-                </InfiniteLoader>
-              )}
-
-              {/* 仮想化リスト表示 */}
-              {viewMode === 'list' && (
-                <InfiniteLoader
-                  isItemLoaded={(index) => index < items.length}
-                  itemCount={hasMore ? items.length + 1 : items.length}
-                  loadMoreItems={loading ? () => {} : () => fetchMore()}
-                >
-                  {({ onItemsRendered, ref }) => (
-                    <FixedSizeList
-                      ref={ref}
-                      height={containerSize.height}
-                      itemCount={hasMore ? items.length + 1 : items.length}
-                      itemSize={80}
-                      width={containerSize.width}
-                      onItemsRendered={onItemsRendered}
-                    >
-                      {ListItem}
-                    </FixedSizeList>
-                  )}
-                </InfiniteLoader>
-              )}
-            </>
+                    />
+                    {/* 動画には再生アイコンを重ねる */}
+                    {item.mime_type?.startsWith('video/') && (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="bg-black/50 rounded-full p-3">
+                          <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                        </div>
+                      </div>
+                    )}
+                    <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs p-2 rounded-b-lg opacity-0 group-hover:opacity-100 transition">
+                      {item.original_filename}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
-        </div>
-      )}
 
+          {/* リスト表示 */}
+          {viewMode === 'list' && (
+            <div className="space-y-2">
+              {items.map((item, index) => (
+                <div
+                  key={item.id}
+                  className={`flex items-center gap-4 p-3 rounded-lg border ${
+                    selectedItems.has(item.id.toString()) ? 'bg-primary/10 border-primary' : 'bg-base-100 border-base-300'
+                  } ${editMode ? 'cursor-pointer hover:bg-base-200' : ''}`}
+                  onClick={() => handleImageClick(item, index)}
+                >
+                  {editMode && (
+                    <input
+                      type="checkbox"
+                      checked={selectedItems.has(item.id.toString())}
+                      onChange={() => toggleSelection(item.id.toString())}
+                      className="checkbox checkbox-primary"
+                    />
+                  )}
+                  <img
+                    src={getThumbUrl(item)}
+                    alt={item.original_filename}
+                    className="w-16 h-16 object-cover rounded"
+                    loading="lazy"
+                    onError={(e) => {
+                      console.error('Image load error for item:', item.id, item.original_filename, e);
+                      e.currentTarget.src = `data:image/svg+xml;base64,${base64EncodeUtf8(`
+                        <svg width="64" height="64" xmlns="http://www.w3.org/2000/svg">
+                          <rect width="64" height="64" fill="#f0f0f0"/>
+                          <text x="32" y="34" text-anchor="middle" font-family="Arial" font-size="8" fill="#666">${isVideo(item) ? '動画' : item.original_filename}</text>
+                        </svg>
+                      `)}`;
+                    }}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium truncate">{item.original_filename}</div>
+                    <div className="text-sm text-base-content/60">
+                      {formatFileSize(item.file_size)} • {formatDate(item.created_at)}
+                    </div>
+                  </div>
+                  <div className="text-xs text-base-content/40">
+                    {item.mime_type}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* 無限スクロール用の監視要素 */}
+          {hasMore && (
+            <div ref={lastElementRef} className="py-8 text-center">
+              {loading && (
+                <div className="loading loading-spinner loading-lg"></div>
+              )}
+            </div>
+          )}
+        </>
+      )}
 
       {/* 読み込み完了メッセージ */}
       {!hasMore && items.length > 0 && (
