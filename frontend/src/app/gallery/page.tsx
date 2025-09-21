@@ -255,21 +255,39 @@ export default function GalleryPage() {
 
   useEffect(() => {
     const node = loader.current
-    if (!node) return
+    if (!node) {
+      console.log('🔍 IntersectionObserver: loader node not found')
+      return
+    }
 
+    console.log('🔍 IntersectionObserver: Setting up observer for loader element')
     const io = new IntersectionObserver((entries) => {
-      if (entries[0].isIntersecting) {
+      const entry = entries[0]
+      console.log('🔍 IntersectionObserver: Entry detected', {
+        isIntersecting: entry.isIntersecting,
+        intersectionRatio: entry.intersectionRatio,
+        boundingClientRect: entry.boundingClientRect,
+        hasMore,
+        loading,
+        itemsCount: items.length
+      })
+
+      if (entry.isIntersecting) {
+        console.log('🔍 IntersectionObserver: Triggering fetchMore()')
         void fetchMore()
       }
+    }, {
+      rootMargin: '20px'
     })
 
     io.observe(node)
 
     return () => {
+      console.log('🔍 IntersectionObserver: Cleaning up observer')
       io.unobserve(node)
       io.disconnect()
     }
-  }, [fetchMore])
+  }, [fetchMore, hasMore, loading, items.length])
 
   return (
     <AuthenticatedLayout>
@@ -459,8 +477,17 @@ export default function GalleryPage() {
         </>
       )}
 
-      <div ref={loader} className="py-8 text-center">
-        {loading ? <span className="loading loading-dots" /> : hasMore ? ' ' : 'これ以上ありません'}
+      <div ref={loader} className="py-8 text-center min-h-[100px] bg-base-100">
+        {loading ? (
+          <div>
+            <span className="loading loading-dots" />
+            <div className="text-sm text-gray-500 mt-2">読み込み中...</div>
+          </div>
+        ) : hasMore ? (
+          <div className="text-sm text-gray-500">スクロールして続きを読み込み</div>
+        ) : (
+          <div className="text-sm text-gray-500">これ以上ありません（総数: {items.length}件）</div>
+        )}
       </div>
 
       {/* 画像ビューアー */}
