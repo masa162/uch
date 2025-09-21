@@ -118,16 +118,22 @@ export default function GalleryPage() {
 
       const data = (await res.json()) as MediaItem[]
       console.log('Fetched media data:', data.length, 'items (targetOffset:', targetOffset, ')')
+      console.log('PAGE_SIZE:', PAGE_SIZE, 'hasMore will be:', data.length === PAGE_SIZE)
 
       if (isRefresh) {
         setItems(data)
         setOffset(data.length)
         setHasMore(data.length === PAGE_SIZE)
         setSelectedItems(new Set())
+        console.log('🔄 Refresh: items=', data.length, 'offset=', data.length, 'hasMore=', data.length === PAGE_SIZE)
       } else {
-        setItems(prev => [...prev, ...data])
+        setItems(prev => {
+          const newItems = [...prev, ...data]
+          console.log('📈 Append: total items=', newItems.length, 'new offset=', prev.length + data.length, 'hasMore=', data.length === PAGE_SIZE)
+          return newItems
+        })
         setOffset(prev => prev + data.length)
-        setHasMore(data.length > 0)
+        setHasMore(data.length === PAGE_SIZE)
       }
     } catch (e) {
       console.error('Error fetching media:', e)
