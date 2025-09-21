@@ -91,56 +91,102 @@ export default function GalleryPage() {
   console.log('GalleryPage initial state - items:', items.length, 'loading:', loading, 'hasMore:', hasMore, 'offset:', offset)
 
   const fetchMore = useCallback(async (overrideOffset?: number) => {
+    console.log('🚀 fetchMore called', {
+      overrideOffset,
+      currentOffset: offset,
+      hasMore,
+      isFetching: isFetching.current,
+      itemsLength: items.length
+    })
+
     if (isFetching.current) {
-      console.log('fetchMore early return - already fetching')
+      console.log('❌ fetchMore early return - already fetching')
       return
     }
 
     const isRefresh = typeof overrideOffset === 'number'
     const targetOffset = isRefresh ? overrideOffset : offset
 
+    console.log('🎯 fetchMore parameters', {
+      isRefresh,
+      targetOffset,
+      hasMore,
+      PAGE_SIZE
+    })
+
     if (!hasMore && !isRefresh) {
-      console.log('fetchMore early return - no more items')
+      console.log('❌ fetchMore early return - no more items', { hasMore, isRefresh })
       return
     }
 
+    console.log('✅ fetchMore proceeding with request')
     isFetching.current = true
     setLoading(true)
     
     try {
-      const res = await fetch(`${apiBase}/api/media?offset=${targetOffset}&limit=${PAGE_SIZE}`, { credentials: 'include' })
+      const apiUrl = `${apiBase}/api/media?offset=${targetOffset}&limit=${PAGE_SIZE}`
+      console.log('🌐 Making API request to:', apiUrl)
+
+      const res = await fetch(apiUrl, { credentials: 'include' })
+      console.log('📡 API response status:', res.status)
 
       if (!res.ok) {
         const errorText = await res.text()
-        console.error('Media API error response:', errorText)
+        console.error('❌ Media API error response:', {
+          status: res.status,
+          statusText: res.statusText,
+          errorText
+        })
         throw new Error(`HTTP ${res.status}: ${errorText}`)
       }
 
       const data = (await res.json()) as MediaItem[]
-      console.log('Fetched media data:', data.length, 'items (targetOffset:', targetOffset, ')')
-      console.log('PAGE_SIZE:', PAGE_SIZE, 'hasMore will be:', data.length === PAGE_SIZE)
+      console.log('✅ Fetched media data:', {
+        itemsReceived: data.length,
+        targetOffset,
+        PAGE_SIZE,
+        hasMoreWillBe: data.length === PAGE_SIZE
+      })
+      console.log('📊 Raw data sample:', data.slice(0, 2))
 
       if (isRefresh) {
         setItems(data)
         setOffset(data.length)
         setHasMore(data.length === PAGE_SIZE)
         setSelectedItems(new Set())
-        console.log('🔄 Refresh: items=', data.length, 'offset=', data.length, 'hasMore=', data.length === PAGE_SIZE)
+        console.log('🔄 Refresh complete:', {
+          newItemsCount: data.length,
+          newOffset: data.length,
+          newHasMore: data.length === PAGE_SIZE
+        })
       } else {
         setItems(prev => {
           const newItems = [...prev, ...data]
-          console.log('📈 Append: total items=', newItems.length, 'new offset=', prev.length + data.length, 'hasMore=', data.length === PAGE_SIZE)
+          console.log('📈 Append operation:', {
+            previousCount: prev.length,
+            appendedCount: data.length,
+            totalCount: newItems.length,
+            newOffset: prev.length + data.length,
+            newHasMore: data.length === PAGE_SIZE
+          })
           return newItems
         })
-        setOffset(prev => prev + data.length)
+        setOffset(prev => {
+          const newOffset = prev + data.length
+          console.log('📍 Offset updated:', { from: prev, to: newOffset })
+          return newOffset
+        })
         setHasMore(data.length === PAGE_SIZE)
+        console.log('🔄 HasMore updated to:', data.length === PAGE_SIZE)
       }
     } catch (e) {
-      console.error('Error fetching media:', e)
+      console.error('❌ Error fetching media:', e)
       setHasMore(false) // Stop fetching on error
+      console.log('🛑 HasMore set to false due to error')
     } finally {
       setLoading(false)
       isFetching.current = false
+      console.log('🏁 fetchMore completed - loading=false, isFetching=false')
     }
   }, [apiBase, offset, hasMore, PAGE_SIZE])
 
@@ -524,13 +570,28 @@ export default function GalleryPage() {
       {hasMore && !loading && (
         <div className="py-4 text-center">
           <button
-            onClick={() => {
-              console.log('🎯 Manual button trigger: calling fetchMore()')
-              void fetchMore()
+            onClick={(e) => {
+              e.preventDefault()
+              console.log('🎯 Manual button clicked!', {
+                currentState: {
+                  hasMore,
+                  loading,
+                  itemsCount: items.length,
+                  offset,
+                  isFetching: isFetching.current
+                }
+              })
+              try {
+                fetchMore()
+                console.log('🎯 fetchMore() called successfully from button')
+              } catch (error) {
+                console.error('🎯 Error calling fetchMore from button:', error)
+              }
             }}
             className="btn btn-outline btn-sm"
+            disabled={loading}
           >
-            手動で続きを読み込み (デバッグ用)
+            {loading ? '読み込み中...' : '手動で続きを読み込み (デバッグ用)'}
           </button>
         </div>
       )}
