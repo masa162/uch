@@ -88,6 +88,15 @@ export default function GalleryPage() {
   const loader = useRef<HTMLDivElement | null>(null)
   const isFetching = useRef(false) // Ref to prevent concurrent fetches
 
+  // フィルター状態
+  const [showFilters, setShowFilters] = useState(false)
+  const [filters, setFilters] = useState({
+    mimeType: '',
+    search: '',
+    dateFrom: '',
+    dateTo: ''
+  })
+
   console.log('GalleryPage initial state - items:', items.length, 'loading:', loading, 'hasMore:', hasMore, 'offset:', offset)
 
   const fetchMore = useCallback(async (overrideOffset?: number) => {
@@ -124,8 +133,19 @@ export default function GalleryPage() {
     setLoading(true)
     
     try {
-      const apiUrl = `${apiBase}/api/media?offset=${targetOffset}&limit=${PAGE_SIZE}`
-      console.log('🌐 Making API request to:', apiUrl)
+      // フィルター条件をクエリパラメータに追加
+      const params = new URLSearchParams({
+        offset: targetOffset.toString(),
+        limit: PAGE_SIZE.toString()
+      })
+
+      if (filters.mimeType) params.append('mimeType', filters.mimeType)
+      if (filters.search) params.append('search', filters.search)
+      if (filters.dateFrom) params.append('dateFrom', filters.dateFrom)
+      if (filters.dateTo) params.append('dateTo', filters.dateTo)
+
+      const apiUrl = `${apiBase}/api/media?${params.toString()}`
+      console.log('🌐 Making API request to:', apiUrl, 'with filters:', filters)
 
       const res = await fetch(apiUrl, { credentials: 'include' })
       console.log('📡 API response status:', res.status)
@@ -188,7 +208,7 @@ export default function GalleryPage() {
       isFetching.current = false
       console.log('🏁 fetchMore completed - loading=false, isFetching=false')
     }
-  }, [apiBase, offset, hasMore, PAGE_SIZE])
+  }, [apiBase, offset, hasMore, PAGE_SIZE, filters])
 
   const refreshTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const refreshGallery = useCallback(() => {
@@ -285,6 +305,28 @@ export default function GalleryPage() {
       hour: '2-digit',
       minute: '2-digit'
     })
+  }
+
+  // フィルター適用
+  const applyFilters = () => {
+    setOffset(0)
+    setItems([])
+    setHasMore(true)
+    void fetchMore(0)
+  }
+
+  // フィルターリセット
+  const resetFilters = () => {
+    setFilters({
+      mimeType: '',
+      search: '',
+      dateFrom: '',
+      dateTo: ''
+    })
+    setOffset(0)
+    setItems([])
+    setHasMore(true)
+    void fetchMore(0)
   }
 
   const hasInitialized = useRef(false)
@@ -410,6 +452,14 @@ export default function GalleryPage() {
           >
             {editMode ? '編集終了' : '編集'}
           </button>
+
+          {/* フィルター切り替え */}
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className={`btn btn-sm ${showFilters ? 'btn-primary' : 'btn-outline'}`}
+          >
+            🔍 フィルター
+          </button>
         </div>
 
         {/* 編集モード時の操作ボタン */}
@@ -443,6 +493,91 @@ export default function GalleryPage() {
           </div>
         )}
       </div>
+
+      {/* フィルターパネル */}
+      {showFilters && (
+        <div className="mb-4 p-4 bg-base-100 border border-base-300 rounded-lg">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* キーワード検索 */}
+            <div>
+              <label className="label">
+                <span className="label-text">キーワード</span>
+              </label>
+              <input
+                type="text"
+                placeholder="ファイル名で検索..."
+                value={filters.search}
+                onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
+                className="input input-bordered input-sm w-full"
+              />
+            </div>
+
+            {/* ファイルタイプ */}
+            <div>
+              <label className="label">
+                <span className="label-text">ファイルタイプ</span>
+              </label>
+              <select
+                value={filters.mimeType}
+                onChange={(e) => setFilters(prev => ({ ...prev, mimeType: e.target.value }))}
+                className="select select-bordered select-sm w-full"
+              >
+                <option value="">すべて</option>
+                <option value="image/">画像</option>
+                <option value="video/">動画</option>
+                <option value="audio/">音声</option>
+                <option value="application/">文書</option>
+              </select>
+            </div>
+
+            {/* 開始日 */}
+            <div>
+              <label className="label">
+                <span className="label-text">開始日</span>
+              </label>
+              <input
+                type="date"
+                value={filters.dateFrom}
+                onChange={(e) => setFilters(prev => ({ ...prev, dateFrom: e.target.value }))}
+                className="input input-bordered input-sm w-full"
+              />
+            </div>
+
+            {/* 終了日 */}
+            <div>
+              <label className="label">
+                <span className="label-text">終了日</span>
+              </label>
+              <input
+                type="date"
+                value={filters.dateTo}
+                onChange={(e) => setFilters(prev => ({ ...prev, dateTo: e.target.value }))}
+                className="input input-bordered input-sm w-full"
+              />
+            </div>
+          </div>
+
+          <div className="flex gap-2 mt-4">
+            <button onClick={applyFilters} className="btn btn-primary btn-sm">
+              適用
+            </button>
+            <button onClick={resetFilters} className="btn btn-outline btn-sm">
+              リセット
+            </button>
+          </div>
+
+          {/* 現在のフィルター状態表示 */}
+          {(filters.search || filters.mimeType || filters.dateFrom || filters.dateTo) && (
+            <div className="mt-3 p-2 bg-base-200 rounded text-sm">
+              <strong>適用中のフィルター:</strong>
+              {filters.search && <span className="ml-2 badge badge-outline">検索: {filters.search}</span>}
+              {filters.mimeType && <span className="ml-2 badge badge-outline">タイプ: {filters.mimeType}</span>}
+              {filters.dateFrom && <span className="ml-2 badge badge-outline">開始: {filters.dateFrom}</span>}
+              {filters.dateTo && <span className="ml-2 badge badge-outline">終了: {filters.dateTo}</span>}
+            </div>
+          )}
+        </div>
+      )}
 
       {items.length === 0 && !loading ? (
         <div className="text-center text-base-content/60 py-20">まだメディアがありません。右上から追加してください。</div>

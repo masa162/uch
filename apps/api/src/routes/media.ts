@@ -84,10 +84,50 @@ export async function getMedia(req: Request, env: Env) {
     const offset = parseInt(url.searchParams.get('offset') || '0');
     const limit = parseInt(url.searchParams.get('limit') || '24');
 
+    // フィルター条件を取得
+    const mimeTypeFilter = url.searchParams.get('mimeType');
+    const searchKeyword = url.searchParams.get('search');
+    const dateFrom = url.searchParams.get('dateFrom');
+    const dateTo = url.searchParams.get('dateTo');
+
+    // 動的SQLクエリとパラメータを構築
+    let whereConditions = ['user_id = ?'];
+    let queryParams: any[] = [session.sub];
+
+    // MIMEタイプフィルター
+    if (mimeTypeFilter) {
+      whereConditions.push('mime_type LIKE ?');
+      queryParams.push(`${mimeTypeFilter}%`);
+    }
+
+    // キーワード検索（ファイル名）
+    if (searchKeyword) {
+      whereConditions.push('original_filename LIKE ?');
+      queryParams.push(`%${searchKeyword}%`);
+    }
+
+    // 日付範囲フィルター
+    if (dateFrom) {
+      whereConditions.push('created_at >= ?');
+      queryParams.push(dateFrom);
+    }
+    if (dateTo) {
+      whereConditions.push('created_at <= ?');
+      queryParams.push(dateTo + ' 23:59:59'); // 日付の終わりまで含める
+    }
+
+    // LIMIT とOFFSETを追加
+    queryParams.push(limit, offset);
+
+    const whereClause = whereConditions.join(' AND ');
+
     // メディア一覧を取得
-    console.log('getMedia: Querying media for user_id:', session.sub, 'offset:', offset, 'limit:', limit);
+    console.log('getMedia: Querying media for user_id:', session.sub, 'with filters:', {
+      offset, limit, mimeTypeFilter, searchKeyword, dateFrom, dateTo
+    });
+
     const media = await queryAll(env, `
-      SELECT 
+      SELECT
         id,
         filename,
         original_filename,
@@ -99,11 +139,11 @@ export async function getMedia(req: Request, env: Env) {
         height,
         duration,
         created_at
-      FROM media 
-      WHERE user_id = ?
+      FROM media
+      WHERE ${whereClause}
       ORDER BY created_at DESC
       LIMIT ? OFFSET ?
-    `, [session.sub, limit, offset]);
+    `, queryParams);
 
     console.log('getMedia: Found', media.length, 'media items');
     console.log('getMedia: Media items:', media);
