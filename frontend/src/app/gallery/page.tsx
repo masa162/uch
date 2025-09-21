@@ -260,23 +260,40 @@ export default function GalleryPage() {
       return
     }
 
-    console.log('🔍 IntersectionObserver: Setting up observer for loader element')
+    console.log('🔍 IntersectionObserver: Setting up observer for loader element', {
+      hasMore,
+      itemsCount: items.length,
+      isFetching: isFetching.current
+    })
+
     const io = new IntersectionObserver((entries) => {
       const entry = entries[0]
+      const rect = entry.boundingClientRect
+      const isVisible = rect.top < window.innerHeight && rect.bottom > 0
+
       console.log('🔍 IntersectionObserver: Entry detected', {
         isIntersecting: entry.isIntersecting,
         intersectionRatio: entry.intersectionRatio,
-        boundingClientRect: entry.boundingClientRect
+        isElementVisible: isVisible,
+        elementTop: rect.top,
+        elementBottom: rect.bottom,
+        windowHeight: window.innerHeight,
+        currentHasMore: hasMore,
+        currentIsFetching: isFetching.current,
+        currentItems: items.length
       })
 
       if (entry.isIntersecting && !isFetching.current) {
-        console.log('🔍 IntersectionObserver: Triggering fetchMore()')
+        console.log('🔍 IntersectionObserver: ✅ Triggering fetchMore()')
         void fetchMore()
       } else if (entry.isIntersecting && isFetching.current) {
-        console.log('🔍 IntersectionObserver: Skipped - already fetching')
+        console.log('🔍 IntersectionObserver: ⏳ Skipped - already fetching')
+      } else if (!entry.isIntersecting) {
+        console.log('🔍 IntersectionObserver: 👁️ Element not intersecting')
       }
     }, {
-      rootMargin: '20px'
+      rootMargin: '100px',
+      threshold: 0.1
     })
 
     io.observe(node)
@@ -478,15 +495,43 @@ export default function GalleryPage() {
 
       {/* 無限スクロール用ローダー - hasMoreがtrueの場合のみ表示 */}
       {hasMore && (
-        <div ref={loader} className="py-8 text-center min-h-[100px] bg-base-100">
+        <div
+          ref={loader}
+          className="py-8 text-center min-h-[100px] bg-red-50 border-2 border-red-200"
+          onClick={() => {
+            console.log('🎯 Manual trigger: Loader clicked, calling fetchMore()')
+            void fetchMore()
+          }}
+          style={{ cursor: 'pointer' }}
+        >
           {loading ? (
             <div>
               <span className="loading loading-dots" />
               <div className="text-sm text-gray-500 mt-2">読み込み中...</div>
             </div>
           ) : (
-            <div className="text-sm text-gray-500">スクロールして続きを読み込み</div>
+            <div>
+              <div className="text-sm text-gray-500">スクロールして続きを読み込み</div>
+              <div className="text-xs text-gray-400 mt-1">
+                [デバッグ] クリックで手動読み込み | 現在: {items.length}件 | hasMore: {hasMore.toString()}
+              </div>
+            </div>
           )}
+        </div>
+      )}
+
+      {/* デバッグ用手動トリガーボタン */}
+      {hasMore && !loading && (
+        <div className="py-4 text-center">
+          <button
+            onClick={() => {
+              console.log('🎯 Manual button trigger: calling fetchMore()')
+              void fetchMore()
+            }}
+            className="btn btn-outline btn-sm"
+          >
+            手動で続きを読み込み (デバッグ用)
+          </button>
         </div>
       )}
 
