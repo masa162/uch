@@ -2,6 +2,60 @@ import { queryAll, execute } from "../lib/db";
 import { readSessionCookie } from "../lib/session";
 import type { Env } from "../index";
 
+// デバッグ用: 認証なしでメディア総数を取得
+export async function getMediaDebugInfo(req: Request, env: Env) {
+  try {
+    console.log('=== DEBUG: getMediaDebugInfo called ===');
+
+    // 総数を取得
+    const totalCount = await queryAll(env, `
+      SELECT COUNT(*) as count FROM media
+    `, []);
+
+    // 最新20件のサンプルを取得
+    const sampleMedia = await queryAll(env, `
+      SELECT
+        id,
+        original_filename,
+        mime_type,
+        file_size,
+        created_at
+      FROM media
+      ORDER BY created_at DESC
+      LIMIT 20
+    `, []);
+
+    const debugInfo = {
+      totalMediaCount: totalCount[0]?.count || 0,
+      sampleMediaCount: sampleMedia.length,
+      sampleMedia: sampleMedia.map(m => ({
+        id: m.id,
+        filename: m.original_filename,
+        created_at: m.created_at
+      }))
+    };
+
+    console.log('DEBUG: Media debug info:', debugInfo);
+
+    return new Response(JSON.stringify(debugInfo), {
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*"
+      },
+    });
+
+  } catch (error: any) {
+    console.error('DEBUG: Error in getMediaDebugInfo:', error);
+    return new Response(JSON.stringify({
+      error: "Debug info取得に失敗しました",
+      details: error.message
+    }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+}
+
 // メディア一覧取得
 export async function getMedia(req: Request, env: Env) {
   try {

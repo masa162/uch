@@ -155,6 +155,11 @@ const routes: Record<string, (req: Request, env: Env) => Promise<Response> | Res
     const response = await mod.getMedia(req, env);
     return addCorsHeaders(response);
   },
+  "GET /api/media-debug": async (req, env) => {
+    const mod = await import("./routes/media");
+    const response = await mod.getMediaDebugInfo(req, env);
+    return addCorsHeaders(response);
+  },
   "GET /auth/google/start": (req, env) => googleStart(req, env),
   "GET /auth/google/callback": (req, env) => handleGoogleAuthCallback(req, env),
   "GET /auth/line/start": (req, env) => handleLineAuthStart(req, env),

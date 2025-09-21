@@ -568,7 +568,7 @@ export default function GalleryPage() {
 
       {/* デバッグ用手動トリガーボタン */}
       {hasMore && !loading && (
-        <div className="py-4 text-center">
+        <div className="py-4 text-center space-y-2">
           <button
             onClick={(e) => {
               e.preventDefault()
@@ -592,6 +592,29 @@ export default function GalleryPage() {
             disabled={loading}
           >
             {loading ? '読み込み中...' : '手動で続きを読み込み (デバッグ用)'}
+          </button>
+
+          <button
+            onClick={() => {
+              console.log('🔑 認証状態チェック:', {
+                cookies: document.cookie,
+                userAgent: navigator.userAgent,
+                apiBase,
+                currentUrl: window.location.href
+              })
+
+              // 認証エンドポイントを直接テスト
+              fetch(`${apiBase}/auth/me`, { credentials: 'include' })
+                .then(res => {
+                  console.log('🔑 認証チェック結果:', res.status)
+                  return res.text()
+                })
+                .then(data => console.log('🔑 認証レスポンス:', data))
+                .catch(err => console.error('🔑 認証エラー:', err))
+            }}
+            className="btn btn-info btn-sm"
+          >
+            認証状態チェック
           </button>
         </div>
       )}
