@@ -1,6 +1,8 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { FixedSizeGrid, FixedSizeList } from 'react-window'
+import InfiniteLoader from 'react-window-infinite-loader'
 import UploadWidget from '@/components/UploadWidget'
 import AuthenticatedLayout from '@/components/AuthenticatedLayout'
 import ImageViewer from '@/components/ImageViewer'
@@ -85,7 +87,6 @@ export default function GalleryPage() {
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set())
   const [viewerImage, setViewerImage] = useState<MediaItem | null>(null)
   const [viewerIndex, setViewerIndex] = useState(0)
-  const loader = useRef<HTMLDivElement | null>(null)
   const isFetching = useRef(false) // Ref to prevent concurrent fetches
 
   // フィルター状態
@@ -96,6 +97,23 @@ export default function GalleryPage() {
     dateFrom: '',
     dateTo: ''
   })
+
+  // 仮想化設定
+  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  // レスポンシブグリッド設定
+  const getGridColumns = (width: number) => {
+    if (width < 768) return 2  // mobile
+    if (width < 1024) return 3  // tablet
+    return 4  // desktop
+  }
+
+  const columnCount = getGridColumns(containerSize.width)
+  const ITEM_SIZE = 200  // グリッドアイテムのサイズ（px）
+  const GAP = 12  // アイテム間のギャップ（px）
+  const columnWidth = (containerSize.width - GAP * (columnCount - 1)) / columnCount
+  const rowHeight = ITEM_SIZE
 
   console.log('GalleryPage initial state - items:', items.length, 'loading:', loading, 'hasMore:', hasMore, 'offset:', offset)
 
@@ -329,6 +347,127 @@ export default function GalleryPage() {
     void fetchMore(0)
   }
 
+  // 画面サイズ監視
+  useEffect(() => {
+    const updateSize = () => {
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect()
+        setContainerSize({ width: rect.width, height: window.innerHeight - 400 })
+      }
+    }
+
+    updateSize()
+    window.addEventListener('resize', updateSize)
+    return () => window.removeEventListener('resize', updateSize)
+  }, [])
+
+  // 仮想化グリッド用のアイテムレンダラー
+  const GridItem = ({ columnIndex, rowIndex, style }: { columnIndex: number, rowIndex: number, style: any }) => {
+    const itemIndex = rowIndex * columnCount + columnIndex
+    const item = items[itemIndex]
+
+    if (!item) return <div style={style} />
+
+    return (
+      <div style={{ ...style, padding: GAP / 2 }}>
+        <div className="relative group">
+          {editMode && (
+            <div className="absolute top-2 left-2 z-10">
+              <input
+                type="checkbox"
+                checked={selectedItems.has(item.id.toString())}
+                onChange={() => toggleSelection(item.id.toString())}
+                className="checkbox checkbox-primary"
+              />
+            </div>
+          )}
+          <div
+            onClick={() => handleImageClick(item, itemIndex)}
+            className="cursor-pointer"
+          >
+            <img
+              src={getThumbUrl(item)}
+              alt={item.original_filename}
+              className="w-full h-40 object-cover rounded-lg shadow group-hover:opacity-90 transition"
+              loading="lazy"
+              onError={(e) => {
+                console.error('Image load error for item:', item.id, item.original_filename, e);
+                e.currentTarget.src = `data:image/svg+xml;base64,${base64EncodeUtf8(`
+                  <svg width="300" height="200" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="300" height="200" fill="#f0f0f0"/>
+                    <text x="150" y="105" text-anchor="middle" font-family="Arial" font-size="14" fill="#666">${isVideo(item) ? '動画' : item.original_filename}</text>
+                  </svg>
+                `)}`;
+              }}
+            />
+            {/* 動画には再生アイコンを重ねる */}
+            {item.mime_type?.startsWith('video/') && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="bg-black/50 rounded-full p-3">
+                  <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                </div>
+              </div>
+            )}
+            <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs p-2 rounded-b-lg opacity-0 group-hover:opacity-100 transition">
+              {item.original_filename}
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // 仮想化リスト用のアイテムレンダラー
+  const ListItem = ({ index, style }: { index: number, style: any }) => {
+    const item = items[index]
+
+    if (!item) return <div style={style} />
+
+    return (
+      <div style={style}>
+        <div
+          className={`flex items-center gap-4 p-3 rounded-lg border mx-2 ${
+            selectedItems.has(item.id.toString()) ? 'bg-primary/10 border-primary' : 'bg-base-100 border-base-300'
+          } ${editMode ? 'cursor-pointer hover:bg-base-200' : ''}`}
+          onClick={() => handleImageClick(item, index)}
+        >
+          {editMode && (
+            <input
+              type="checkbox"
+              checked={selectedItems.has(item.id.toString())}
+              onChange={() => toggleSelection(item.id.toString())}
+              className="checkbox checkbox-primary"
+            />
+          )}
+          <img
+            src={getThumbUrl(item)}
+            alt={item.original_filename}
+            className="w-16 h-16 object-cover rounded"
+            loading="lazy"
+            onError={(e) => {
+              console.error('Image load error for item:', item.id, item.original_filename, e);
+              e.currentTarget.src = `data:image/svg+xml;base64,${base64EncodeUtf8(`
+                <svg width="64" height="64" xmlns="http://www.w3.org/2000/svg">
+                  <rect width="64" height="64" fill="#f0f0f0"/>
+                  <text x="32" y="34" text-anchor="middle" font-family="Arial" font-size="8" fill="#666">${isVideo(item) ? '動画' : item.original_filename}</text>
+                </svg>
+              `)}`;
+            }}
+          />
+          <div className="flex-1 min-w-0">
+            <div className="font-medium truncate">{item.original_filename}</div>
+            <div className="text-sm text-base-content/60">
+              {formatFileSize(item.file_size)} • {formatDate(item.created_at)}
+            </div>
+          </div>
+          <div className="text-xs text-base-content/40">
+            {item.mime_type}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   const hasInitialized = useRef(false)
 
   useEffect(() => {
@@ -346,57 +485,6 @@ export default function GalleryPage() {
     }
   }, [])
 
-  useEffect(() => {
-    const node = loader.current
-    if (!node) {
-      console.log('🔍 IntersectionObserver: loader node not found')
-      return
-    }
-
-    console.log('🔍 IntersectionObserver: Setting up observer for loader element', {
-      hasMore,
-      itemsCount: items.length,
-      isFetching: isFetching.current
-    })
-
-    const io = new IntersectionObserver((entries) => {
-      const entry = entries[0]
-      const rect = entry.boundingClientRect
-      const isVisible = rect.top < window.innerHeight && rect.bottom > 0
-
-      console.log('🔍 IntersectionObserver: Entry detected', {
-        isIntersecting: entry.isIntersecting,
-        intersectionRatio: entry.intersectionRatio,
-        isElementVisible: isVisible,
-        elementTop: rect.top,
-        elementBottom: rect.bottom,
-        windowHeight: window.innerHeight,
-        currentHasMore: hasMore,
-        currentIsFetching: isFetching.current,
-        currentItems: items.length
-      })
-
-      if (entry.isIntersecting && !isFetching.current) {
-        console.log('🔍 IntersectionObserver: ✅ Triggering fetchMore()')
-        void fetchMore()
-      } else if (entry.isIntersecting && isFetching.current) {
-        console.log('🔍 IntersectionObserver: ⏳ Skipped - already fetching')
-      } else if (!entry.isIntersecting) {
-        console.log('🔍 IntersectionObserver: 👁️ Element not intersecting')
-      }
-    }, {
-      rootMargin: '100px',
-      threshold: 0.1
-    })
-
-    io.observe(node)
-
-    return () => {
-      console.log('🔍 IntersectionObserver: Cleaning up observer')
-      io.unobserve(node)
-      io.disconnect()
-    }
-  }, [fetchMore])
 
   return (
     <AuthenticatedLayout>
@@ -582,242 +670,66 @@ export default function GalleryPage() {
       {items.length === 0 && !loading ? (
         <div className="text-center text-base-content/60 py-20">まだメディアがありません。右上から追加してください。</div>
       ) : (
-        <>
-          {/* グリッド表示 */}
-          {viewMode === 'grid' && (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-              {items.map((item, index) => (
-                <div key={item.id} className="relative group">
-                  {editMode && (
-                    <div className="absolute top-2 left-2 z-10">
-                      <input
-                        type="checkbox"
-                        checked={selectedItems.has(item.id.toString())}
-                        onChange={() => toggleSelection(item.id.toString())}
-                        className="checkbox checkbox-primary"
-                      />
-                    </div>
-                  )}
-                  <div
-                    onClick={() => handleImageClick(item, index)}
-                    className="cursor-pointer"
-                  >
-                    <img
-                      src={getThumbUrl(item)}
-                      alt={item.original_filename}
-                      className="w-full h-40 object-cover rounded-lg shadow group-hover:opacity-90 transition"
-                      loading="lazy"
-                      onError={(e) => {
-                        console.error('Image load error for item:', item.id, item.original_filename, e);
-                        // エラー時はプレースホルダー画像を表示（UTF-8対応）
-                        e.currentTarget.src = `data:image/svg+xml;base64,${base64EncodeUtf8(`
-                          <svg width="300" height="200" xmlns="http://www.w3.org/2000/svg">
-                            <rect width="300" height="200" fill="#f0f0f0"/>
-                            <text x="150" y="105" text-anchor="middle" font-family="Arial" font-size="14" fill="#666">${isVideo(item) ? '動画' : item.original_filename}</text>
-                          </svg>
-                        `)}`;
-                      }}
-                    />
-                    {/* 動画には再生アイコンを重ねる */}
-                    {item.mime_type?.startsWith('video/') && (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="bg-black/50 rounded-full p-3">
-                          <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-                        </div>
-                      </div>
-                    )}
-                    <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs p-2 rounded-b-lg opacity-0 group-hover:opacity-100 transition">
-                      {item.original_filename}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* リスト表示 */}
-          {viewMode === 'list' && (
-            <div className="space-y-2">
-              {items.map((item, index) => (
-                <div
-                  key={item.id}
-                  className={`flex items-center gap-4 p-3 rounded-lg border ${
-                    selectedItems.has(item.id.toString()) ? 'bg-primary/10 border-primary' : 'bg-base-100 border-base-300'
-                  } ${editMode ? 'cursor-pointer hover:bg-base-200' : ''}`}
-                  onClick={() => handleImageClick(item, index)}
+        <div ref={containerRef}>
+          {containerSize.width > 0 && (
+            <>
+              {/* 仮想化グリッド表示 */}
+              {viewMode === 'grid' && (
+                <InfiniteLoader
+                  isItemLoaded={(index) => index < items.length}
+                  itemCount={hasMore ? items.length + columnCount : items.length}
+                  loadMoreItems={loading ? () => {} : () => fetchMore()}
                 >
-                  {editMode && (
-                    <input
-                      type="checkbox"
-                      checked={selectedItems.has(item.id.toString())}
-                      onChange={() => toggleSelection(item.id.toString())}
-                      className="checkbox checkbox-primary"
-                    />
+                  {({ onItemsRendered, ref }) => (
+                    <FixedSizeGrid
+                      ref={ref}
+                      columnCount={columnCount}
+                      columnWidth={columnWidth}
+                      height={containerSize.height}
+                      rowCount={Math.ceil((hasMore ? items.length + columnCount : items.length) / columnCount)}
+                      rowHeight={rowHeight}
+                      width={containerSize.width}
+                      onItemsRendered={(gridData) => {
+                        const startIndex = gridData.visibleRowStartIndex * columnCount + gridData.visibleColumnStartIndex
+                        const stopIndex = gridData.visibleRowStopIndex * columnCount + gridData.visibleColumnStopIndex
+                        onItemsRendered({
+                          visibleStartIndex: startIndex,
+                          visibleStopIndex: stopIndex,
+                        })
+                      }}
+                    >
+                      {GridItem}
+                    </FixedSizeGrid>
                   )}
-                  <img
-                    src={getThumbUrl(item)}
-                    alt={item.original_filename}
-                    className="w-16 h-16 object-cover rounded"
-                    loading="lazy"
-                    onError={(e) => {
-                      console.error('Image load error for item:', item.id, item.original_filename, e);
-                      // エラー時はプレースホルダー画像を表示（UTF-8対応）
-                      e.currentTarget.src = `data:image/svg+xml;base64,${base64EncodeUtf8(`
-                        <svg width="64" height="64" xmlns="http://www.w3.org/2000/svg">
-                          <rect width="64" height="64" fill="#f0f0f0"/>
-                          <text x="32" y="34" text-anchor="middle" font-family="Arial" font-size="8" fill="#666">${isVideo(item) ? '動画' : item.original_filename}</text>
-                        </svg>
-                      `)}`;
-                    }}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium truncate">{item.original_filename}</div>
-                    <div className="text-sm text-base-content/60">
-                      {formatFileSize(item.file_size)} • {formatDate(item.created_at)}
-                    </div>
-                  </div>
-                  <div className="text-xs text-base-content/40">
-                    {item.mime_type}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </>
-      )}
+                </InfiniteLoader>
+              )}
 
-      {/* 無限スクロール用ローダー - hasMoreがtrueの場合のみ表示 */}
-      {hasMore && (
-        <div
-          ref={loader}
-          className="py-8 text-center min-h-[100px] bg-red-50 border-2 border-red-200"
-          onClick={() => {
-            console.log('🎯 Manual trigger: Loader clicked, calling fetchMore()')
-            void fetchMore()
-          }}
-          style={{ cursor: 'pointer' }}
-        >
-          {loading ? (
-            <div>
-              <span className="loading loading-dots" />
-              <div className="text-sm text-gray-500 mt-2">読み込み中...</div>
-            </div>
-          ) : (
-            <div>
-              <div className="text-sm text-gray-500">スクロールして続きを読み込み</div>
-              <div className="text-xs text-gray-400 mt-1">
-                [デバッグ] クリックで手動読み込み | 現在: {items.length}件 | hasMore: {hasMore.toString()}
-              </div>
-            </div>
+              {/* 仮想化リスト表示 */}
+              {viewMode === 'list' && (
+                <InfiniteLoader
+                  isItemLoaded={(index) => index < items.length}
+                  itemCount={hasMore ? items.length + 1 : items.length}
+                  loadMoreItems={loading ? () => {} : () => fetchMore()}
+                >
+                  {({ onItemsRendered, ref }) => (
+                    <FixedSizeList
+                      ref={ref}
+                      height={containerSize.height}
+                      itemCount={hasMore ? items.length + 1 : items.length}
+                      itemSize={80}
+                      width={containerSize.width}
+                      onItemsRendered={onItemsRendered}
+                    >
+                      {ListItem}
+                    </FixedSizeList>
+                  )}
+                </InfiniteLoader>
+              )}
+            </>
           )}
         </div>
       )}
 
-      {/* デバッグ用手動トリガーボタン */}
-      {hasMore && !loading && (
-        <div className="py-4 text-center space-y-2">
-          <div className="alert alert-info">
-            <span>デバッグモード: ボタンクリック時にコンソールログを確認してください</span>
-          </div>
-
-          <button
-            onClick={(e) => {
-              e.preventDefault()
-              alert('🎯 手動読み込みボタンがクリックされました！コンソールを確認してください。')
-              console.clear()
-              console.log('='.repeat(50))
-              console.log('🎯 MANUAL BUTTON CLICKED!')
-              console.log('='.repeat(50))
-              console.log('🎯 Manual button clicked!', {
-                currentState: {
-                  hasMore,
-                  loading,
-                  itemsCount: items.length,
-                  offset,
-                  isFetching: isFetching.current,
-                  apiBase
-                }
-              })
-              try {
-                fetchMore()
-                console.log('🎯 fetchMore() called successfully from button')
-              } catch (error) {
-                console.error('🎯 Error calling fetchMore from button:', error)
-                alert('エラー: ' + error)
-              }
-            }}
-            className="btn btn-warning btn-sm"
-            disabled={loading}
-          >
-            {loading ? '読み込み中...' : '🔥 手動で続きを読み込み (ログ確認)'}
-          </button>
-
-          <button
-            onClick={() => {
-              alert('🔑 認証チェック開始！コンソールを確認してください。')
-              console.clear()
-              console.log('='.repeat(50))
-              console.log('🔑 AUTHENTICATION CHECK!')
-              console.log('='.repeat(50))
-              console.log('🔑 認証状態チェック:', {
-                cookies: document.cookie,
-                userAgent: navigator.userAgent,
-                apiBase,
-                currentUrl: window.location.href,
-                timestamp: new Date().toISOString()
-              })
-
-              // 認証エンドポイントを直接テスト
-              fetch(`${apiBase}/auth/me`, { credentials: 'include' })
-                .then(res => {
-                  console.log('🔑 認証チェック結果:', res.status, res.statusText)
-                  return res.text()
-                })
-                .then(data => {
-                  console.log('🔑 認証レスポンス:', data)
-                  alert('認証チェック完了: ' + data)
-                })
-                .catch(err => {
-                  console.error('🔑 認証エラー:', err)
-                  alert('認証エラー: ' + err.message)
-                })
-            }}
-            className="btn btn-info btn-sm"
-          >
-            🔍 認証状態チェック
-          </button>
-
-          <button
-            onClick={async () => {
-              alert('📡 直接APIテスト開始！')
-              console.clear()
-              console.log('='.repeat(50))
-              console.log('📡 DIRECT API TEST!')
-              console.log('='.repeat(50))
-
-              const apiUrl = `${apiBase}/api/media?offset=${offset}&limit=${PAGE_SIZE}`
-              console.log('📡 Testing API URL:', apiUrl)
-
-              try {
-                const response = await fetch(apiUrl, { credentials: 'include' })
-                console.log('📡 Response status:', response.status)
-                console.log('📡 Response headers:', Object.fromEntries(response.headers.entries()))
-
-                const text = await response.text()
-                console.log('📡 Response text:', text)
-
-                alert(`API結果: ${response.status} - ${text.substring(0, 100)}...`)
-              } catch (error) {
-                console.error('📡 API Error:', error)
-                alert('API エラー: ' + error)
-              }
-            }}
-            className="btn btn-error btn-sm"
-          >
-            🚨 直接APIテスト
-          </button>
-        </div>
-      )}
 
       {/* 読み込み完了メッセージ */}
       {!hasMore && items.length > 0 && (
