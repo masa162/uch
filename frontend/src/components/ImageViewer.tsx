@@ -126,29 +126,33 @@ export default function ImageViewer({ image, images, currentIndex, onClose, onNa
         ✕
       </button>
 
-      {/* 前の画像ボタン */}
+      {/* 前の画像エリア（画面左半分） */}
       {currentIndex > 0 && (
         <button
           onClick={() => onNavigate(currentIndex - 1)}
-          className="absolute left-4 top-1/2 transform -translate-y-1/2 text-white text-4xl hover:text-gray-300 z-10"
+          className="absolute left-0 top-0 w-1/2 h-full flex items-center justify-start pl-4 active:bg-black active:bg-opacity-30 md:hover:bg-black md:hover:bg-opacity-20 transition-colors z-10"
         >
-          ‹
+          <div className="text-white text-4xl opacity-70 active:opacity-100 md:hover:opacity-100 transition-opacity">
+            ‹
+          </div>
         </button>
       )}
 
-      {/* 次の画像ボタン */}
+      {/* 次の画像エリア（画面右半分） */}
       {currentIndex < images.length - 1 && (
         <button
           onClick={() => onNavigate(currentIndex + 1)}
-          className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white text-4xl hover:text-gray-300 z-10"
+          className="absolute right-0 top-0 w-1/2 h-full flex items-center justify-end pr-4 active:bg-black active:bg-opacity-30 md:hover:bg-black md:hover:bg-opacity-20 transition-colors z-10"
         >
-          ›
+          <div className="text-white text-4xl opacity-70 active:opacity-100 md:hover:opacity-100 transition-opacity">
+            ›
+          </div>
         </button>
       )}
 
       {/* 表示エリア */}
-      <div 
-        className="max-w-[90vw] max-h-[90vh] flex items-center justify-center"
+      <div
+        className="max-w-[90vw] max-h-[90vh] flex items-center justify-center relative z-20"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
