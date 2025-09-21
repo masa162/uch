@@ -353,6 +353,13 @@ export default function GalleryPage() {
 
   return (
     <AuthenticatedLayout>
+      {/* デバッグ情報バー */}
+      <div className="mb-4 p-3 bg-yellow-100 border border-yellow-300 rounded">
+        <div className="text-sm">
+          <strong>デバッグ情報:</strong> 表示中: {items.length}件 | hasMore: {hasMore.toString()} | offset: {offset} | API: {apiBase}
+        </div>
+      </div>
+
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold">📷 メディアギャラリー</h1>
         <div className="flex items-center gap-2">
@@ -569,16 +576,26 @@ export default function GalleryPage() {
       {/* デバッグ用手動トリガーボタン */}
       {hasMore && !loading && (
         <div className="py-4 text-center space-y-2">
+          <div className="alert alert-info">
+            <span>デバッグモード: ボタンクリック時にコンソールログを確認してください</span>
+          </div>
+
           <button
             onClick={(e) => {
               e.preventDefault()
+              alert('🎯 手動読み込みボタンがクリックされました！コンソールを確認してください。')
+              console.clear()
+              console.log('='.repeat(50))
+              console.log('🎯 MANUAL BUTTON CLICKED!')
+              console.log('='.repeat(50))
               console.log('🎯 Manual button clicked!', {
                 currentState: {
                   hasMore,
                   loading,
                   itemsCount: items.length,
                   offset,
-                  isFetching: isFetching.current
+                  isFetching: isFetching.current,
+                  apiBase
                 }
               })
               try {
@@ -586,35 +603,78 @@ export default function GalleryPage() {
                 console.log('🎯 fetchMore() called successfully from button')
               } catch (error) {
                 console.error('🎯 Error calling fetchMore from button:', error)
+                alert('エラー: ' + error)
               }
             }}
-            className="btn btn-outline btn-sm"
+            className="btn btn-warning btn-sm"
             disabled={loading}
           >
-            {loading ? '読み込み中...' : '手動で続きを読み込み (デバッグ用)'}
+            {loading ? '読み込み中...' : '🔥 手動で続きを読み込み (ログ確認)'}
           </button>
 
           <button
             onClick={() => {
+              alert('🔑 認証チェック開始！コンソールを確認してください。')
+              console.clear()
+              console.log('='.repeat(50))
+              console.log('🔑 AUTHENTICATION CHECK!')
+              console.log('='.repeat(50))
               console.log('🔑 認証状態チェック:', {
                 cookies: document.cookie,
                 userAgent: navigator.userAgent,
                 apiBase,
-                currentUrl: window.location.href
+                currentUrl: window.location.href,
+                timestamp: new Date().toISOString()
               })
 
               // 認証エンドポイントを直接テスト
               fetch(`${apiBase}/auth/me`, { credentials: 'include' })
                 .then(res => {
-                  console.log('🔑 認証チェック結果:', res.status)
+                  console.log('🔑 認証チェック結果:', res.status, res.statusText)
                   return res.text()
                 })
-                .then(data => console.log('🔑 認証レスポンス:', data))
-                .catch(err => console.error('🔑 認証エラー:', err))
+                .then(data => {
+                  console.log('🔑 認証レスポンス:', data)
+                  alert('認証チェック完了: ' + data)
+                })
+                .catch(err => {
+                  console.error('🔑 認証エラー:', err)
+                  alert('認証エラー: ' + err.message)
+                })
             }}
             className="btn btn-info btn-sm"
           >
-            認証状態チェック
+            🔍 認証状態チェック
+          </button>
+
+          <button
+            onClick={async () => {
+              alert('📡 直接APIテスト開始！')
+              console.clear()
+              console.log('='.repeat(50))
+              console.log('📡 DIRECT API TEST!')
+              console.log('='.repeat(50))
+
+              const apiUrl = `${apiBase}/api/media?offset=${offset}&limit=${PAGE_SIZE}`
+              console.log('📡 Testing API URL:', apiUrl)
+
+              try {
+                const response = await fetch(apiUrl, { credentials: 'include' })
+                console.log('📡 Response status:', response.status)
+                console.log('📡 Response headers:', Object.fromEntries(response.headers.entries()))
+
+                const text = await response.text()
+                console.log('📡 Response text:', text)
+
+                alert(`API結果: ${response.status} - ${text.substring(0, 100)}...`)
+              } catch (error) {
+                console.error('📡 API Error:', error)
+                alert('API エラー: ' + error)
+              }
+            }}
+            className="btn btn-error btn-sm"
+          >
+            🚨 直接APIテスト
           </button>
         </div>
       )}
