@@ -142,7 +142,7 @@ export default function GalleryPage() {
       setLoading(false)
       isFetching.current = false
     }
-  }, [apiBase, offset, hasMore])
+  }, [apiBase, offset, hasMore, PAGE_SIZE])
 
   const refreshTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const refreshGallery = useCallback(() => {
@@ -266,15 +266,14 @@ export default function GalleryPage() {
       console.log('🔍 IntersectionObserver: Entry detected', {
         isIntersecting: entry.isIntersecting,
         intersectionRatio: entry.intersectionRatio,
-        boundingClientRect: entry.boundingClientRect,
-        hasMore,
-        loading,
-        itemsCount: items.length
+        boundingClientRect: entry.boundingClientRect
       })
 
-      if (entry.isIntersecting) {
+      if (entry.isIntersecting && !isFetching.current) {
         console.log('🔍 IntersectionObserver: Triggering fetchMore()')
         void fetchMore()
+      } else if (entry.isIntersecting && isFetching.current) {
+        console.log('🔍 IntersectionObserver: Skipped - already fetching')
       }
     }, {
       rootMargin: '20px'
@@ -287,7 +286,7 @@ export default function GalleryPage() {
       io.unobserve(node)
       io.disconnect()
     }
-  }, [fetchMore, hasMore, loading, items.length])
+  }, [fetchMore])
 
   return (
     <AuthenticatedLayout>
@@ -477,18 +476,26 @@ export default function GalleryPage() {
         </>
       )}
 
-      <div ref={loader} className="py-8 text-center min-h-[100px] bg-base-100">
-        {loading ? (
-          <div>
-            <span className="loading loading-dots" />
-            <div className="text-sm text-gray-500 mt-2">読み込み中...</div>
-          </div>
-        ) : hasMore ? (
-          <div className="text-sm text-gray-500">スクロールして続きを読み込み</div>
-        ) : (
+      {/* 無限スクロール用ローダー - hasMoreがtrueの場合のみ表示 */}
+      {hasMore && (
+        <div ref={loader} className="py-8 text-center min-h-[100px] bg-base-100">
+          {loading ? (
+            <div>
+              <span className="loading loading-dots" />
+              <div className="text-sm text-gray-500 mt-2">読み込み中...</div>
+            </div>
+          ) : (
+            <div className="text-sm text-gray-500">スクロールして続きを読み込み</div>
+          )}
+        </div>
+      )}
+
+      {/* 読み込み完了メッセージ */}
+      {!hasMore && items.length > 0 && (
+        <div className="py-8 text-center">
           <div className="text-sm text-gray-500">これ以上ありません（総数: {items.length}件）</div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* 画像ビューアー */}
       <ImageViewer
