@@ -287,9 +287,14 @@ export default function GalleryPage() {
     })
   }
 
+  const hasInitialized = useRef(false)
+
   useEffect(() => {
-    console.log('Gallery page initial load - refreshing gallery')
-    refreshGallery()
+    if (!hasInitialized.current) {
+      console.log('Gallery page initial load - refreshing gallery')
+      hasInitialized.current = true
+      refreshGallery()
+    }
 
     return () => {
       if (refreshTimeoutRef.current) {
@@ -297,7 +302,7 @@ export default function GalleryPage() {
         refreshTimeoutRef.current = null
       }
     }
-  }, [refreshGallery])
+  }, [])
 
   useEffect(() => {
     const node = loader.current
