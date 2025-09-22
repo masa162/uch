@@ -169,9 +169,6 @@ export default function ImageViewer({ image, images, currentIndex, onClose, onNa
 
   const isVideo = image.mime_type?.startsWith('video/')
   const streamUid = isVideo ? image.filename : '' // Cloudflare Stream UID comes from filename
-  const mobileNavWidth = isVideo ? 'w-24' : 'w-1/2'
-  const mobileNavPadding = isVideo ? 'px-2' : 'px-4'
-  const mobileNavVertical = isVideo ? 'top-12 bottom-24' : 'top-0 bottom-0'
 
   return (
     <div 
@@ -194,36 +191,56 @@ export default function ImageViewer({ image, images, currentIndex, onClose, onNa
 
       {/* 前の画像エリア（最適化済み） */}
       {currentIndex > 0 && (
-        <button
-          type="button"
-          onClick={() => onNavigate(currentIndex - 1)}
-          className={`absolute left-0 ${mobileNavVertical} ${mobileNavWidth} flex items-center justify-start ${mobileNavPadding} md:left-4 md:top-1/2 md:bottom-auto md:w-20 md:h-32 md:px-0 md:justify-center md:rounded-lg md:-translate-y-1/2 md:transform focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 transition-colors z-30 active:bg-white/10 md:hover:bg-white/10`}
-          aria-label="Previous media"
-        >
-          <span
-            className={`flex h-12 w-12 items-center justify-center text-white text-3xl md:text-4xl ${isVideo ? 'bg-black/60 md:bg-black/40 rounded-full backdrop-blur-sm' : ''}`}
-            aria-hidden="true"
+        isVideo ? (
+          <button
+            type="button"
+            onClick={() => onNavigate(currentIndex - 1)}
+            className="absolute left-3 top-1/2 -translate-y-1/2 h-12 w-12 flex items-center justify-center rounded-full bg-black/60 text-white text-2xl backdrop-blur focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 z-30 md:left-6 md:text-3xl md:h-14 md:w-14"
+            aria-label="Previous media"
           >
-            ‹
-          </span>
-        </button>
+            <span aria-hidden="true">
+              <
+            </span>
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => onNavigate(currentIndex - 1)}
+            className="absolute left-0 top-0 bottom-0 w-1/2 flex items-center justify-start px-4 md:left-4 md:top-1/2 md:bottom-auto md:w-20 md:h-32 md:px-0 md:justify-center md:rounded-lg md:-translate-y-1/2 md:transform focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 transition-colors z-30 active:bg-white/10 md:hover:bg-white/10"
+            aria-label="Previous media"
+          >
+            <span className="text-white text-3xl md:text-4xl opacity-70 active:opacity-100 md:hover:opacity-100 transition-opacity" aria-hidden="true">
+              <
+            </span>
+          </button>
+        )
       )}
 
       {/* 次の画像エリア（最適化済み） */}
       {currentIndex < images.length - 1 && (
-        <button
-          type="button"
-          onClick={() => onNavigate(currentIndex + 1)}
-          className={`absolute right-0 ${mobileNavVertical} ${mobileNavWidth} flex items-center justify-end ${mobileNavPadding} md:right-4 md:top-1/2 md:bottom-auto md:w-20 md:h-32 md:px-0 md:justify-center md:rounded-lg md:-translate-y-1/2 md:transform focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 transition-colors z-30 active:bg-white/10 md:hover:bg-white/10`}
-          aria-label="Next media"
-        >
-          <span
-            className={`flex h-12 w-12 items-center justify-center text-white text-3xl md:text-4xl ${isVideo ? 'bg-black/60 md:bg-black/40 rounded-full backdrop-blur-sm' : ''}`}
-            aria-hidden="true"
+        isVideo ? (
+          <button
+            type="button"
+            onClick={() => onNavigate(currentIndex + 1)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 h-12 w-12 flex items-center justify-center rounded-full bg-black/60 text-white text-2xl backdrop-blur focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 z-30 md:right-6 md:text-3xl md:h-14 md:w-14"
+            aria-label="Next media"
           >
-            ›
-          </span>
-        </button>
+            <span aria-hidden="true">
+              >
+            </span>
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => onNavigate(currentIndex + 1)}
+            className="absolute right-0 top-0 bottom-0 w-1/2 flex items-center justify-end px-4 md:right-4 md:top-1/2 md:bottom-auto md:w-20 md:h-32 md:px-0 md:justify-center md:rounded-lg md:-translate-y-1/2 md:transform focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 transition-colors z-30 active:bg-white/10 md:hover:bg-white/10"
+            aria-label="Next media"
+          >
+            <span className="text-white text-3xl md:text-4xl opacity-70 active:opacity-100 md:hover:opacity-100 transition-opacity" aria-hidden="true">
+              >
+            </span>
+          </button>
+        )
       )}
 
       {isVideo && (
