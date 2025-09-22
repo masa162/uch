@@ -26,10 +26,17 @@ type ImageViewerProps = {
 }
 
 export default function ImageViewer({ image, images, currentIndex, onClose, onNavigate, resolveMediaUrl }: ImageViewerProps) {
-  const [touchStart, setTouchStart] = useState<number | null>(null)
-  const [touchEnd, setTouchEnd] = useState<number | null>(null)
   const [currentSrc, setCurrentSrc] = useState<string>('')
   const [errorCount, setErrorCount] = useState(0)
+  const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null)
+
+  // 強化されたスワイプ状態管理
+  const [swipeState, setSwipeState] = useState({
+    startX: 0,
+    startY: 0,
+    startTime: 0,
+    isTracking: false
+  })
 
   useEffect(() => {
     if (image) {
@@ -78,28 +85,77 @@ export default function ImageViewer({ image, images, currentIndex, onClose, onNa
     // All fallbacks have failed
   }
 
+  // 強化されたスワイプハンドラー
   const handleTouchStart = (e: React.TouchEvent) => {
-    setTouchEnd(null)
-    setTouchStart(e.targetTouches[0].clientX)
+    const touch = e.targetTouches[0]
+    setSwipeState({
+      startX: touch.clientX,
+      startY: touch.clientY,
+      startTime: Date.now(),
+      isTracking: true
+    })
+    setSwipeDirection(null)
   }
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    setTouchEnd(e.targetTouches[0].clientX)
+    if (!swipeState.isTracking) return
+
+    const touch = e.targetTouches[0]
+    const deltaX = touch.clientX - swipeState.startX
+    const deltaY = touch.clientY - swipeState.startY
+
+    // 水平方向のスワイプのみ処理（縦スワイプを無効化）
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 20) {
+      setSwipeDirection(deltaX > 0 ? 'right' : 'left')
+
+      // 縦スクロールを防止
+      e.preventDefault()
+    }
   }
 
-  const handleTouchEnd = () => {
-    if (!touchStart || !touchEnd) return
-    
-    const distance = touchStart - touchEnd
-    const isLeftSwipe = distance > 50
-    const isRightSwipe = distance < -50
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!swipeState.isTracking) return
 
-    if (isLeftSwipe && currentIndex < images.length - 1) {
-      onNavigate(currentIndex + 1)
+    const touch = e.changedTouches[0]
+    const deltaX = touch.clientX - swipeState.startX
+    const deltaY = touch.clientY - swipeState.startY
+    const deltaTime = Date.now() - swipeState.startTime
+
+    // スワイプ判定条件（強化版）
+    const isValidSwipe =
+      Math.abs(deltaX) > 30 &&                    // 最小距離30px
+      Math.abs(deltaX) > Math.abs(deltaY) * 1.5 && // 水平方向優先
+      deltaTime < 300 &&                          // 300ms以内
+      Math.abs(deltaX) / deltaTime > 0.1          // 最小速度
+
+    if (isValidSwipe) {
+      if (deltaX > 0 && currentIndex > 0) {
+        // 右スワイプ：前の画像
+        onNavigate(currentIndex - 1)
+        // ハプティックフィードバック
+        if (navigator.vibrate) {
+          navigator.vibrate(50)
+        }
+      } else if (deltaX < 0 && currentIndex < images.length - 1) {
+        // 左スワイプ：次の画像
+        onNavigate(currentIndex + 1)
+        // ハプティックフィードバック
+        if (navigator.vibrate) {
+          navigator.vibrate(50)
+        }
+      }
     }
-    if (isRightSwipe && currentIndex > 0) {
-      onNavigate(currentIndex - 1)
-    }
+
+    // スワイプ状態をリセット
+    setSwipeState({
+      startX: 0,
+      startY: 0,
+      startTime: 0,
+      isTracking: false
+    })
+
+    // フィードバック表示をクリア（少し遅らせて）
+    setTimeout(() => setSwipeDirection(null), 200)
   }
 
   const handleImageClick = (e: React.MouseEvent) => {
@@ -118,33 +174,36 @@ export default function ImageViewer({ image, images, currentIndex, onClose, onNa
       className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center"
       onClick={handleImageClick}
     >
+      {/* 閉じるボタン保護エリア */}
+      <div className="absolute top-0 right-0 w-20 h-20 z-20" />
+
       {/* 閉じるボタン */}
       <button
         onClick={onClose}
-        className="absolute top-4 right-4 text-white text-2xl hover:text-gray-300 z-10"
+        className="absolute top-4 right-4 w-12 h-12 flex items-center justify-center text-white text-2xl hover:text-gray-300 hover:bg-black hover:bg-opacity-30 rounded-full transition-all z-30"
       >
         ✕
       </button>
 
-      {/* 前の画像エリア（画面左半分） */}
+      {/* 前の画像エリア（最適化済み） */}
       {currentIndex > 0 && (
         <button
           onClick={() => onNavigate(currentIndex - 1)}
-          className="absolute left-0 top-0 w-1/2 h-full flex items-center justify-start pl-4 active:bg-black active:bg-opacity-30 md:hover:bg-black md:hover:bg-opacity-20 transition-colors z-10"
+          className="absolute left-4 top-1/2 transform -translate-y-1/2 w-16 h-24 md:w-20 md:h-32 flex items-center justify-center active:bg-black active:bg-opacity-30 md:hover:bg-black md:hover:bg-opacity-20 rounded-lg transition-colors z-10"
         >
-          <div className="text-white text-4xl opacity-70 active:opacity-100 md:hover:opacity-100 transition-opacity">
+          <div className="text-white text-3xl md:text-4xl opacity-70 active:opacity-100 md:hover:opacity-100 transition-opacity">
             ‹
           </div>
         </button>
       )}
 
-      {/* 次の画像エリア（画面右半分） */}
+      {/* 次の画像エリア（最適化済み） */}
       {currentIndex < images.length - 1 && (
         <button
           onClick={() => onNavigate(currentIndex + 1)}
-          className="absolute right-0 top-0 w-1/2 h-full flex items-center justify-end pr-4 active:bg-black active:bg-opacity-30 md:hover:bg-black md:hover:bg-opacity-20 transition-colors z-10"
+          className="absolute right-4 top-1/2 transform -translate-y-1/2 w-16 h-24 md:w-20 md:h-32 flex items-center justify-center active:bg-black active:bg-opacity-30 md:hover:bg-black md:hover:bg-opacity-20 rounded-lg transition-colors z-10"
         >
-          <div className="text-white text-4xl opacity-70 active:opacity-100 md:hover:opacity-100 transition-opacity">
+          <div className="text-white text-3xl md:text-4xl opacity-70 active:opacity-100 md:hover:opacity-100 transition-opacity">
             ›
           </div>
         </button>
