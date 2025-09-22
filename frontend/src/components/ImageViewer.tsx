@@ -171,6 +171,7 @@ export default function ImageViewer({ image, images, currentIndex, onClose, onNa
   const streamUid = isVideo ? image.filename : '' // Cloudflare Stream UID comes from filename
   const mobileNavWidth = isVideo ? 'w-24' : 'w-1/2'
   const mobileNavPadding = isVideo ? 'px-2' : 'px-4'
+  const mobileNavVertical = isVideo ? 'top-12 bottom-24' : 'top-0 bottom-0'
 
   return (
     <div 
@@ -196,7 +197,7 @@ export default function ImageViewer({ image, images, currentIndex, onClose, onNa
         <button
           type="button"
           onClick={() => onNavigate(currentIndex - 1)}
-          className={`absolute left-0 top-0 bottom-0 ${mobileNavWidth} flex items-center justify-start ${mobileNavPadding} md:left-4 md:top-1/2 md:bottom-auto md:w-20 md:h-32 md:px-0 md:justify-center md:rounded-lg md:-translate-y-1/2 md:transform focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 transition-colors z-30 active:bg-white/10 md:hover:bg-white/10`}
+          className={`absolute left-0 ${mobileNavVertical} ${mobileNavWidth} flex items-center justify-start ${mobileNavPadding} md:left-4 md:top-1/2 md:bottom-auto md:w-20 md:h-32 md:px-0 md:justify-center md:rounded-lg md:-translate-y-1/2 md:transform focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 transition-colors z-30 active:bg-white/10 md:hover:bg-white/10`}
           aria-label="Previous media"
         >
           <span
@@ -213,7 +214,7 @@ export default function ImageViewer({ image, images, currentIndex, onClose, onNa
         <button
           type="button"
           onClick={() => onNavigate(currentIndex + 1)}
-          className={`absolute right-0 top-0 bottom-0 ${mobileNavWidth} flex items-center justify-end ${mobileNavPadding} md:right-4 md:top-1/2 md:bottom-auto md:w-20 md:h-32 md:px-0 md:justify-center md:rounded-lg md:-translate-y-1/2 md:transform focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 transition-colors z-30 active:bg-white/10 md:hover:bg-white/10`}
+          className={`absolute right-0 ${mobileNavVertical} ${mobileNavWidth} flex items-center justify-end ${mobileNavPadding} md:right-4 md:top-1/2 md:bottom-auto md:w-20 md:h-32 md:px-0 md:justify-center md:rounded-lg md:-translate-y-1/2 md:transform focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 transition-colors z-30 active:bg-white/10 md:hover:bg-white/10`}
           aria-label="Next media"
         >
           <span
