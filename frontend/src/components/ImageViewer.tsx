@@ -168,7 +168,9 @@ export default function ImageViewer({ image, images, currentIndex, onClose, onNa
   if (!image) return null
 
   const isVideo = image.mime_type?.startsWith('video/')
-  const streamUid = isVideo ? image.filename : '' // registerVideo で filename に uid を保存
+  const streamUid = isVideo ? image.filename : '' // Cloudflare Stream UID comes from filename
+  const mobileNavWidth = isVideo ? 'w-24' : 'w-1/2'
+  const mobileNavPadding = isVideo ? 'px-2' : 'px-4'
 
   return (
     <div 
@@ -194,7 +196,7 @@ export default function ImageViewer({ image, images, currentIndex, onClose, onNa
         <button
           type="button"
           onClick={() => onNavigate(currentIndex - 1)}
-          className="absolute left-0 top-0 bottom-0 w-1/2 flex items-center justify-start px-4 md:left-4 md:top-1/2 md:bottom-auto md:w-20 md:h-32 md:px-0 md:justify-center md:rounded-lg md:-translate-y-1/2 md:transform focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 transition-colors z-30 active:bg-white/10 md:hover:bg-white/10"
+          className={`absolute left-0 top-0 bottom-0 ${mobileNavWidth} flex items-center justify-start ${mobileNavPadding} md:left-4 md:top-1/2 md:bottom-auto md:w-20 md:h-32 md:px-0 md:justify-center md:rounded-lg md:-translate-y-1/2 md:transform focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 transition-colors z-30 active:bg-white/10 md:hover:bg-white/10`}
           aria-label="Previous media"
         >
           <span
@@ -211,7 +213,7 @@ export default function ImageViewer({ image, images, currentIndex, onClose, onNa
         <button
           type="button"
           onClick={() => onNavigate(currentIndex + 1)}
-          className="absolute right-0 top-0 bottom-0 w-1/2 flex items-center justify-end px-4 md:right-4 md:top-1/2 md:bottom-auto md:w-20 md:h-32 md:px-0 md:justify-center md:rounded-lg md:-translate-y-1/2 md:transform focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 transition-colors z-30 active:bg-white/10 md:hover:bg-white/10"
+          className={`absolute right-0 top-0 bottom-0 ${mobileNavWidth} flex items-center justify-end ${mobileNavPadding} md:right-4 md:top-1/2 md:bottom-auto md:w-20 md:h-32 md:px-0 md:justify-center md:rounded-lg md:-translate-y-1/2 md:transform focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 transition-colors z-30 active:bg-white/10 md:hover:bg-white/10`}
           aria-label="Next media"
         >
           <span
