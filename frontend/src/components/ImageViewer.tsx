@@ -199,7 +199,7 @@ export default function ImageViewer({ image, images, currentIndex, onClose, onNa
             aria-label="Previous media"
           >
             <span aria-hidden="true">
-              <
+              {'<'}
             </span>
           </button>
         ) : (
@@ -210,7 +210,7 @@ export default function ImageViewer({ image, images, currentIndex, onClose, onNa
             aria-label="Previous media"
           >
             <span className="text-white text-3xl md:text-4xl opacity-70 active:opacity-100 md:hover:opacity-100 transition-opacity" aria-hidden="true">
-              <
+              {'<'}
             </span>
           </button>
         )
@@ -226,7 +226,7 @@ export default function ImageViewer({ image, images, currentIndex, onClose, onNa
             aria-label="Next media"
           >
             <span aria-hidden="true">
-              >
+              {'>'}
             </span>
           </button>
         ) : (
@@ -237,7 +237,7 @@ export default function ImageViewer({ image, images, currentIndex, onClose, onNa
             aria-label="Next media"
           >
             <span className="text-white text-3xl md:text-4xl opacity-70 active:opacity-100 md:hover:opacity-100 transition-opacity" aria-hidden="true">
-              >
+              {'>'}
             </span>
           </button>
         )
