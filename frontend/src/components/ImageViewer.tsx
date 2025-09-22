@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import type { MouseEvent, TouchEvent } from 'react'
 
 type MediaItem = {
   id: number
@@ -86,7 +87,7 @@ export default function ImageViewer({ image, images, currentIndex, onClose, onNa
   }
 
   // 強化されたスワイプハンドラー
-  const handleTouchStart = (e: React.TouchEvent) => {
+  const handleTouchStart = (e: TouchEvent<HTMLDivElement>) => {
     const touch = e.targetTouches[0]
     setSwipeState({
       startX: touch.clientX,
@@ -97,7 +98,7 @@ export default function ImageViewer({ image, images, currentIndex, onClose, onNa
     setSwipeDirection(null)
   }
 
-  const handleTouchMove = (e: React.TouchEvent) => {
+  const handleTouchMove = (e: TouchEvent<HTMLDivElement>) => {
     if (!swipeState.isTracking) return
 
     const touch = e.targetTouches[0]
@@ -113,7 +114,7 @@ export default function ImageViewer({ image, images, currentIndex, onClose, onNa
     }
   }
 
-  const handleTouchEnd = (e: React.TouchEvent) => {
+  const handleTouchEnd = (e: TouchEvent<HTMLDivElement>) => {
     if (!swipeState.isTracking) return
 
     const touch = e.changedTouches[0]
@@ -158,7 +159,7 @@ export default function ImageViewer({ image, images, currentIndex, onClose, onNa
     setTimeout(() => setSwipeDirection(null), 200)
   }
 
-  const handleImageClick = (e: React.MouseEvent) => {
+  const handleImageClick = (e: MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget) {
       onClose()
     }
@@ -173,14 +174,17 @@ export default function ImageViewer({ image, images, currentIndex, onClose, onNa
     <div 
       className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center"
       onClick={handleImageClick}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
     >
       {/* 閉じるボタン保護エリア */}
-      <div className="absolute top-0 right-0 w-20 h-20 z-20" />
+      <div className="absolute top-0 right-0 w-20 h-20 z-40" />
 
       {/* 閉じるボタン */}
       <button
         onClick={onClose}
-        className="absolute top-4 right-4 w-12 h-12 flex items-center justify-center text-white text-2xl hover:text-gray-300 hover:bg-black hover:bg-opacity-30 rounded-full transition-all z-30"
+        className="absolute top-4 right-4 w-12 h-12 flex items-center justify-center text-white text-2xl hover:text-gray-300 hover:bg-black hover:bg-opacity-30 rounded-full transition-all z-40"
       >
         ✕
       </button>
@@ -188,33 +192,46 @@ export default function ImageViewer({ image, images, currentIndex, onClose, onNa
       {/* 前の画像エリア（最適化済み） */}
       {currentIndex > 0 && (
         <button
+          type="button"
           onClick={() => onNavigate(currentIndex - 1)}
-          className="absolute left-4 top-1/2 transform -translate-y-1/2 w-16 h-24 md:w-20 md:h-32 flex items-center justify-center active:bg-black active:bg-opacity-30 md:hover:bg-black md:hover:bg-opacity-20 rounded-lg transition-colors z-10"
+          className="absolute left-0 top-0 bottom-0 w-1/2 flex items-center justify-start px-4 md:left-4 md:top-1/2 md:bottom-auto md:w-20 md:h-32 md:px-0 md:justify-center md:rounded-lg md:-translate-y-1/2 md:transform focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 transition-colors z-30 active:bg-white/10 md:hover:bg-white/10"
+          aria-label="Previous media"
         >
-          <div className="text-white text-3xl md:text-4xl opacity-70 active:opacity-100 md:hover:opacity-100 transition-opacity">
+          <span
+            className={`flex h-12 w-12 items-center justify-center text-white text-3xl md:text-4xl ${isVideo ? 'bg-black/60 md:bg-black/40 rounded-full backdrop-blur-sm' : ''}`}
+            aria-hidden="true"
+          >
             ‹
-          </div>
+          </span>
         </button>
       )}
 
       {/* 次の画像エリア（最適化済み） */}
       {currentIndex < images.length - 1 && (
         <button
+          type="button"
           onClick={() => onNavigate(currentIndex + 1)}
-          className="absolute right-4 top-1/2 transform -translate-y-1/2 w-16 h-24 md:w-20 md:h-32 flex items-center justify-center active:bg-black active:bg-opacity-30 md:hover:bg-black md:hover:bg-opacity-20 rounded-lg transition-colors z-10"
+          className="absolute right-0 top-0 bottom-0 w-1/2 flex items-center justify-end px-4 md:right-4 md:top-1/2 md:bottom-auto md:w-20 md:h-32 md:px-0 md:justify-center md:rounded-lg md:-translate-y-1/2 md:transform focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 transition-colors z-30 active:bg-white/10 md:hover:bg-white/10"
+          aria-label="Next media"
         >
-          <div className="text-white text-3xl md:text-4xl opacity-70 active:opacity-100 md:hover:opacity-100 transition-opacity">
+          <span
+            className={`flex h-12 w-12 items-center justify-center text-white text-3xl md:text-4xl ${isVideo ? 'bg-black/60 md:bg-black/40 rounded-full backdrop-blur-sm' : ''}`}
+            aria-hidden="true"
+          >
             ›
-          </div>
+          </span>
         </button>
+      )}
+
+      {isVideo && (
+        <div className="absolute top-16 left-4 md:top-20 md:left-8 bg-black/60 text-white text-xs md:text-sm px-3 py-1 rounded backdrop-blur-sm z-30">
+          Video {currentIndex + 1}/{images.length}
+        </div>
       )}
 
       {/* 表示エリア */}
       <div
         className="max-w-[90vw] max-h-[90vh] flex items-center justify-center relative z-20"
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
       >
         {isVideo ? (
           // Cloudflare Stream 埋め込み（uid から iframe）

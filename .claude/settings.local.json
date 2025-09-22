@@ -15,7 +15,18 @@
       "Read(//Users/nakayamamasayuki/Documents/GitHub/uch-docs/仕様書/**)",
       "Bash(npm run build:*)",
       "Bash(npm uninstall:*)",
-      "Bash(npx next:*)"
+      "Bash(npx next:*)",
+      "Bash(claude doctor)",
+      "Read(//mnt/d/**)",
+      "Bash(git config:*)",
+      "Bash(ssh-keygen:*)",
+      "Read(//home/masayuki/.ssh/**)",
+      "Bash(ssh:*)",
+      "Bash(git remote set-url:*)",
+      "Bash(cat:*)",
+      "Bash(chmod:*)",
+      "Bash(ssh-add:*)",
+      "Bash(grep:*)"
     ],
     "deny": [],
     "ask": []
