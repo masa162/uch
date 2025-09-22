@@ -362,7 +362,7 @@ export default function GalleryPage() {
     <AuthenticatedLayout>
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold">📷 メディアギャラリー</h1>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 md:flex-nowrap">
           <UploadWidget onUploaded={() => {
             console.log('onUploaded callback triggered, refreshing gallery...')
             refreshGallery()
@@ -371,8 +371,8 @@ export default function GalleryPage() {
       </div>
 
       {/* コントロールバー */}
-      <div className="flex items-center justify-between mb-4 p-3 bg-base-200 rounded-lg">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-4 p-3 bg-base-200 rounded-lg">
+        <div className="flex flex-wrap items-center gap-2 md:flex-nowrap">
           {/* 表示方法切り替え */}
           <div className="flex items-center gap-1 bg-base-100 rounded-lg p-1">
             <button
@@ -417,7 +417,7 @@ export default function GalleryPage() {
 
         {/* 編集モード時の操作ボタン */}
         {editMode && (
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 md:justify-end mt-1 md:mt-0">
             <span className="text-sm text-base-content/60">
               {selectedItems.size}件選択中
             </span>
@@ -428,7 +428,7 @@ export default function GalleryPage() {
               {selectedItems.size === items.length ? '全解除' : '全選択'}
             </button>
             {selectedItems.size > 0 && (
-              <>
+              <div className="flex items-center gap-2">
                 <button
                   onClick={handleBulkDownload}
                   className="btn btn-sm btn-outline"
@@ -441,7 +441,7 @@ export default function GalleryPage() {
                 >
                   削除
                 </button>
-              </>
+              </div>
             )}
           </div>
         )}
