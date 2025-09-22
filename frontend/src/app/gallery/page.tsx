@@ -4,6 +4,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import UploadWidget from '@/components/UploadWidget'
 import AuthenticatedLayout from '@/components/AuthenticatedLayout'
 import ImageViewer from '@/components/ImageViewer'
+import VirtualGrid from '@/components/gallery/VirtualGrid'
+import VirtualList from '@/components/gallery/VirtualList'
 
 type MediaItem = {
   id: number
@@ -328,19 +330,13 @@ export default function GalleryPage() {
     void fetchMore(0)
   }
 
-  // Intersection Observerを使った無限スクロール
+  // 仮想化コンポーネント内で無限スクロールが実装されているため、
+  // この従来のIntersection Observerは無効化
   const observerRef = useRef<IntersectionObserver>()
   const lastElementRef = useCallback((node: HTMLDivElement | null) => {
-    if (loading) return
-    if (observerRef.current) observerRef.current.disconnect()
-    observerRef.current = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting && hasMore && !isFetching.current) {
-        console.log('🔄 Intersection detected - triggering fetchMore')
-        void fetchMore()
-      }
-    })
-    if (node) observerRef.current.observe(node)
-  }, [loading, hasMore, fetchMore])
+    // 仮想化使用時は何もしない（VirtualGrid/VirtualListで処理）
+    return
+  }, [])
 
   const hasInitialized = useRef(false)
 
@@ -540,113 +536,49 @@ export default function GalleryPage() {
         <div className="text-center text-base-content/60 py-20">まだメディアがありません。右上から追加してください。</div>
       ) : (
         <>
-          {/* グリッド表示 */}
+          {/* グリッド表示 - 仮想化 */}
           {viewMode === 'grid' && (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {items.map((item, index) => (
-                <div key={item.id} className="relative group">
-                  {editMode && (
-                    <div className="absolute top-2 left-2 z-10">
-                      <input
-                        type="checkbox"
-                        checked={selectedItems.has(item.id.toString())}
-                        onChange={() => toggleSelection(item.id.toString())}
-                        className="checkbox checkbox-primary"
-                      />
-                    </div>
-                  )}
-                  <div
-                    onClick={() => handleImageClick(item, index)}
-                    className="cursor-pointer"
-                  >
-                    <img
-                      src={getThumbUrl(item)}
-                      alt={item.original_filename}
-                      className="w-full h-40 object-cover rounded-lg shadow group-hover:opacity-90 transition"
-                      loading="lazy"
-                      onError={(e) => {
-                        console.error('Image load error for item:', item.id, item.original_filename, e);
-                        e.currentTarget.src = `data:image/svg+xml;base64,${base64EncodeUtf8(`
-                          <svg width="300" height="200" xmlns="http://www.w3.org/2000/svg">
-                            <rect width="300" height="200" fill="#f0f0f0"/>
-                            <text x="150" y="105" text-anchor="middle" font-family="Arial" font-size="14" fill="#666">${isVideo(item) ? '動画' : item.original_filename}</text>
-                          </svg>
-                        `)}`;
-                      }}
-                    />
-                    {/* 動画には再生アイコンを重ねる */}
-                    {item.mime_type?.startsWith('video/') && (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="bg-black/50 rounded-full p-3">
-                          <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-                        </div>
-                      </div>
-                    )}
-                    <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs p-2 rounded-b-lg opacity-0 group-hover:opacity-100 transition">
-                      {item.original_filename}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <VirtualGrid
+              items={items}
+              onItemClick={handleImageClick}
+              onSelectionChange={setSelectedItems}
+              selectedItems={selectedItems}
+              editMode={editMode}
+              getThumbUrl={getThumbUrl}
+              isVideo={isVideo}
+              onLoadMore={hasMore ? () => fetchMore() : undefined}
+              hasMore={hasMore}
+              loading={loading}
+            />
           )}
 
-          {/* リスト表示 */}
+          {/* リスト表示 - 仮想化 */}
           {viewMode === 'list' && (
-            <div className="space-y-2">
-              {items.map((item, index) => (
-                <div
-                  key={item.id}
-                  className={`flex items-center gap-4 p-3 rounded-lg border ${
-                    selectedItems.has(item.id.toString()) ? 'bg-primary/10 border-primary' : 'bg-base-100 border-base-300'
-                  } ${editMode ? 'cursor-pointer hover:bg-base-200' : ''}`}
-                  onClick={() => handleImageClick(item, index)}
-                >
-                  {editMode && (
-                    <input
-                      type="checkbox"
-                      checked={selectedItems.has(item.id.toString())}
-                      onChange={() => toggleSelection(item.id.toString())}
-                      className="checkbox checkbox-primary"
-                    />
-                  )}
-                  <img
-                    src={getThumbUrl(item)}
-                    alt={item.original_filename}
-                    className="w-16 h-16 object-cover rounded"
-                    loading="lazy"
-                    onError={(e) => {
-                      console.error('Image load error for item:', item.id, item.original_filename, e);
-                      e.currentTarget.src = `data:image/svg+xml;base64,${base64EncodeUtf8(`
-                        <svg width="64" height="64" xmlns="http://www.w3.org/2000/svg">
-                          <rect width="64" height="64" fill="#f0f0f0"/>
-                          <text x="32" y="34" text-anchor="middle" font-family="Arial" font-size="8" fill="#666">${isVideo(item) ? '動画' : item.original_filename}</text>
-                        </svg>
-                      `)}`;
-                    }}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium truncate">{item.original_filename}</div>
-                    <div className="text-sm text-base-content/60">
-                      {formatFileSize(item.file_size)} • {formatDate(item.created_at)}
-                    </div>
-                  </div>
-                  <div className="text-xs text-base-content/40">
-                    {item.mime_type}
-                  </div>
-                </div>
-              ))}
-            </div>
+            <VirtualList
+              items={items}
+              onItemClick={handleImageClick}
+              onSelectionChange={setSelectedItems}
+              selectedItems={selectedItems}
+              editMode={editMode}
+              getThumbUrl={getThumbUrl}
+              isVideo={isVideo}
+              formatFileSize={formatFileSize}
+              formatDate={formatDate}
+              onLoadMore={hasMore ? () => fetchMore() : undefined}
+              hasMore={hasMore}
+              loading={loading}
+            />
           )}
 
-          {/* 無限スクロール用の監視要素 */}
-          {hasMore && (
+          {/* 仮想化コンポーネント内で無限スクロールが実装されているため、
+              この監視要素は無効化（コメントアウト） */}
+          {/* {hasMore && (
             <div ref={lastElementRef} className="py-8 text-center">
               {loading && (
                 <div className="loading loading-spinner loading-lg"></div>
               )}
             </div>
-          )}
+          )} */}
         </>
       )}
 
