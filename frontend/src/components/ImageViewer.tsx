@@ -41,7 +41,7 @@ export default function ImageViewer({
   const [activeIndex, setActiveIndex] = useState(currentIndex)
   const [viewport, setViewport] = useState({ width: 0, height: 0 })
   const containerRef = useRef<HTMLDivElement | null>(null)
-  const slideTrackRef = useRef<HTMLDivElement | null>(null)
+  const trackRef = useRef<HTMLDivElement | null>(null)
   const activeMediaRef = useRef<HTMLImageElement | null>(null)
   const zoomStateRef = useRef({ scale: 1, offsetX: 0, offsetY: 0 })
 
@@ -81,15 +81,15 @@ export default function ImageViewer({
   useEffect(() => setActiveIndex(currentIndex), [currentIndex])
 
   useLayoutEffect(() => {
-    if (!slideTrackRef.current) return
+    if (!trackRef.current) return
     const update = () => {
-      const rect = slideTrackRef.current?.getBoundingClientRect()
+      const rect = trackRef.current?.getBoundingClientRect()
       if (!rect) return
       setViewport({ width: rect.width, height: rect.height })
     }
     update()
     const observer = new ResizeObserver(update)
-    observer.observe(slideTrackRef.current)
+    observer.observe(trackRef.current)
     return () => observer.disconnect()
   }, [])
 
@@ -123,47 +123,53 @@ export default function ImageViewer({
     }
   }, [activeIndex, images])
 
-  useGesture(
+  const bind = useGesture(
     {
-      onDrag: ({ active, movement: [mx, my], velocity: [vx], memo, first }) => {
-        if (!viewport.width) return memo
+      onDrag: ({ active, first, movement: [mx, my], velocity: [vx], memo }) => {
+        const width = viewport.width || (typeof window !== 'undefined' ? window.innerWidth : 1)
+        const height = viewport.height || (typeof window !== 'undefined' ? window.innerHeight : 1)
+        if (!width) return memo
+
         const zoomed = zoomStateRef.current.scale > 1.02 && !isActiveVideoRef.current
         if (zoomed) {
-          if (first) {
-            memo = {
-              startX: zoomStateRef.current.offsetX,
-              startY: zoomStateRef.current.offsetY
-            }
-          }
+          const startMemo = first
+            ? { startX: zoomStateRef.current.offsetX, startY: zoomStateRef.current.offsetY }
+            : (memo as { startX: number; startY: number } | undefined) ?? {
+                startX: zoomStateRef.current.offsetX,
+                startY: zoomStateRef.current.offsetY
+              }
+
           const currentScale = zoomStateRef.current.scale
-          const limitX = ((viewport.width * (currentScale - 1)) / 2) + 40
-          const limitY = ((viewport.height * (currentScale - 1)) / 2) + 40
-          const nextX = clamp(memo.startX + mx, -limitX, limitX)
-          const nextY = clamp(memo.startY + my, -limitY, limitY)
+          const limitX = ((width * (currentScale - 1)) / 2) + 40
+          const limitY = ((height * (currentScale - 1)) / 2) + 40
+          const nextX = clamp(startMemo.startX + mx, -limitX, limitX)
+          const nextY = clamp(startMemo.startY + my, -limitY, limitY)
+
           zoomStateRef.current.offsetX = nextX
           zoomStateRef.current.offsetY = nextY
           zoomApi.start({ offsetX: nextX, offsetY: nextY, immediate: true })
-          return memo
+          return startMemo
         }
 
-        const baseline = -activeIndex * viewport.width
+        const baseline = -activeIndex * width
         if (active) {
           trackApi.start({ x: baseline + mx, immediate: true })
         } else {
-          const threshold = viewport.width * 0.18
+          const threshold = width * 0.18
           const shouldAdvance = Math.abs(mx) > threshold || Math.abs(vx) > 0.5
           let nextIndex = activeIndex
           if (shouldAdvance && mx !== 0) {
             nextIndex = clamp(activeIndex - Math.sign(mx), 0, images.length - 1)
           }
           navigateTo(nextIndex)
-          trackApi.start({ x: -nextIndex * viewport.width, immediate: false, config: { tension: 220, friction: 30 } })
+          trackApi.start({ x: -nextIndex * width, immediate: false, config: { tension: 220, friction: 30 } })
         }
         return memo
       },
       onPinch: ({ first, offset: [scaleOffset], origin, event }) => {
         if (isActiveVideoRef.current) return
         event.preventDefault()
+
         const clamped = clamp(scaleOffset, 1, 4)
         if (first && activeMediaRef.current) {
           const rect = activeMediaRef.current.getBoundingClientRect()
@@ -173,9 +179,11 @@ export default function ImageViewer({
           zoomStateRef.current.offsetY = oy
           zoomApi.start({ offsetX: ox, offsetY: oy, immediate: true })
         }
+
         zoomStateRef.current.scale = clamped
         setIsZoomed(clamped > 1.02)
         zoomApi.start({ scale: clamped, immediate: true })
+
         if (clamped <= 1.01) {
           resetZoom()
         }
@@ -186,9 +194,8 @@ export default function ImageViewer({
       }
     },
     {
-      target: containerRef,
-      drag: { filterTaps: true },
-      pinch: { scaleBounds: { min: 1, max: 4 }, rubberband: true, from: () => [zoomStateRef.current.scale, 0] }
+      drag: { filterTaps: true, axis: 'lock' },
+      pinch: { scaleBounds: { min: 1, max: 4 }, rubberband: true }
     }
   )
 
@@ -227,7 +234,9 @@ export default function ImageViewer({
   return (
     <div
       ref={containerRef}
-      className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center touch-none"
+      {...bind()}
+      className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center"
+      style={{ touchAction: 'none' }}
       onClick={handleBackdropClick}
     >
       <button
@@ -239,9 +248,8 @@ export default function ImageViewer({
       </button>
 
       <animated.div
-        ref={slideTrackRef}
+        ref={trackRef}
         className="relative h-full w-full max-h-[90vh] max-w-[90vw] overflow-hidden"
-        style={{ touchAction: isZoomed ? 'none' : 'pan-y' }}
       >
         <animated.div
           className="flex h-full"
@@ -321,7 +329,3 @@ export default function ImageViewer({
     </div>
   )
 }
-
-
-
-
