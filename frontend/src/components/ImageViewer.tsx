@@ -1,7 +1,9 @@
-'use client'
+﻿'use client'
 
-import { useEffect, useState } from 'react'
-import type { MouseEvent, TouchEvent } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import type { MouseEvent } from 'react'
+import { animated, to, useSpring } from '@react-spring/web'
+import { useGesture } from '@use-gesture/react'
 
 type MediaItem = {
   id: number
@@ -26,271 +28,291 @@ type ImageViewerProps = {
   resolveMediaUrl: (url: string | null) => string
 }
 
-export default function ImageViewer({ image, images, currentIndex, onClose, onNavigate, resolveMediaUrl }: ImageViewerProps) {
-  const [currentSrc, setCurrentSrc] = useState<string>('')
-  const [errorCount, setErrorCount] = useState(0)
-  const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null)
+const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max)
 
-  // 強化されたスワイプ状態管理
-  const [swipeState, setSwipeState] = useState({
-    startX: 0,
-    startY: 0,
-    startTime: 0,
-    isTracking: false
+export default function ImageViewer({
+  image,
+  images,
+  currentIndex,
+  onClose,
+  onNavigate,
+  resolveMediaUrl
+}: ImageViewerProps) {
+  const [activeIndex, setActiveIndex] = useState(currentIndex)
+  const [viewport, setViewport] = useState({ width: 0, height: 0 })
+  const containerRef = useRef<HTMLDivElement | null>(null)
+  const slideTrackRef = useRef<HTMLDivElement | null>(null)
+  const activeMediaRef = useRef<HTMLImageElement | null>(null)
+  const zoomStateRef = useRef({ scale: 1, offsetX: 0, offsetY: 0 })
+
+  const [{ x }, trackApi] = useSpring(() => ({ x: 0 }))
+  const [{ scale, offsetX, offsetY }, zoomApi] = useSpring(() => ({ scale: 1, offsetX: 0, offsetY: 0 }))
+  const [isZoomed, setIsZoomed] = useState(false)
+  const [imageErrorCounts, setImageErrorCounts] = useState<Record<number, number>>({})
+  const isActiveVideoRef = useRef(false)
+
+  const resetZoom = () => {
+    zoomStateRef.current = { scale: 1, offsetX: 0, offsetY: 0 }
+    setIsZoomed(false)
+    zoomApi.start({ scale: 1, offsetX: 0, offsetY: 0 })
+  }
+
+  const navigateTo = (index: number) => {
+    const next = clamp(index, 0, images.length - 1)
+    setActiveIndex(next)
+    if (next !== currentIndex) {
+      onNavigate(next)
+    }
+    resetZoom()
+  }
+
+  const toggleZoom = () => {
+    if (isActiveVideoRef.current) return
+    const shouldZoom = !isZoomed
+    if (shouldZoom) {
+      zoomStateRef.current.scale = 2
+      setIsZoomed(true)
+      zoomApi.start({ scale: 2, offsetX: 0, offsetY: 0, config: { tension: 260, friction: 30 } })
+    } else {
+      resetZoom()
+    }
+  }
+
+  useEffect(() => setActiveIndex(currentIndex), [currentIndex])
+
+  useLayoutEffect(() => {
+    if (!slideTrackRef.current) return
+    const update = () => {
+      const rect = slideTrackRef.current?.getBoundingClientRect()
+      if (!rect) return
+      setViewport({ width: rect.width, height: rect.height })
+    }
+    update()
+    const observer = new ResizeObserver(update)
+    observer.observe(slideTrackRef.current)
+    return () => observer.disconnect()
+  }, [])
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose()
+      }
+      if (event.key === 'ArrowLeft') {
+        navigateTo(activeIndex - 1)
+      }
+      if (event.key === 'ArrowRight') {
+        navigateTo(activeIndex + 1)
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
   })
 
   useEffect(() => {
-    if (image) {
-      // When the image prop changes, reset the source to the primary URL and clear errors
-      setCurrentSrc(resolveMediaUrl(image.file_url))
-      setErrorCount(0)
-    }
-  }, [image, resolveMediaUrl])
+    if (!viewport.width) return
+    trackApi.start({ x: -activeIndex * viewport.width, immediate: true })
+  }, [activeIndex, viewport.width, trackApi])
 
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose()
-      } else if (e.key === 'ArrowLeft') {
-        onNavigate(Math.max(0, currentIndex - 1))
-      } else if (e.key === 'ArrowRight') {
-        onNavigate(Math.min(images.length - 1, currentIndex + 1))
-      }
+    const active = images[activeIndex]
+    const isVideo = Boolean(active?.mime_type?.startsWith('video/'))
+    isActiveVideoRef.current = isVideo
+    if (isVideo) {
+      resetZoom()
     }
+  }, [activeIndex, images])
 
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [currentIndex, images.length, onClose, onNavigate])
-
-  const handleImageError = () => {
-    if (!image) return
-
-    const nextErrorCount = errorCount + 1
-    setErrorCount(nextErrorCount)
-
-    // Try fallbacks in order
-    if (nextErrorCount === 1) {
-      // 1. Try thumbnail_url
-      const thumbnailUrl = resolveMediaUrl(image.thumbnail_url)
-      if (thumbnailUrl) {
-        setCurrentSrc(thumbnailUrl)
-        return
-      }
-    }
-    
-    if (nextErrorCount <= 2) {
-      // 2. Try direct API endpoint (if thumbnail was null or also failed)
-      setCurrentSrc(resolveMediaUrl(`/api/media/${image.id}/image`))
-      return
-    }
-    // All fallbacks have failed
-  }
-
-  // 強化されたスワイプハンドラー
-  const handleTouchStart = (e: TouchEvent<HTMLDivElement>) => {
-    const touch = e.targetTouches[0]
-    setSwipeState({
-      startX: touch.clientX,
-      startY: touch.clientY,
-      startTime: Date.now(),
-      isTracking: true
-    })
-    setSwipeDirection(null)
-  }
-
-  const handleTouchMove = (e: TouchEvent<HTMLDivElement>) => {
-    if (!swipeState.isTracking) return
-
-    const touch = e.targetTouches[0]
-    const deltaX = touch.clientX - swipeState.startX
-    const deltaY = touch.clientY - swipeState.startY
-
-    // 水平方向のスワイプのみ処理（縦スワイプを無効化）
-    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 20) {
-      setSwipeDirection(deltaX > 0 ? 'right' : 'left')
-
-      // 縦スクロールを防止
-      e.preventDefault()
-    }
-  }
-
-  const handleTouchEnd = (e: TouchEvent<HTMLDivElement>) => {
-    if (!swipeState.isTracking) return
-
-    const touch = e.changedTouches[0]
-    const deltaX = touch.clientX - swipeState.startX
-    const deltaY = touch.clientY - swipeState.startY
-    const deltaTime = Date.now() - swipeState.startTime
-
-    // スワイプ判定条件（強化版）
-    const isValidSwipe =
-      Math.abs(deltaX) > 30 &&                    // 最小距離30px
-      Math.abs(deltaX) > Math.abs(deltaY) * 1.5 && // 水平方向優先
-      deltaTime < 300 &&                          // 300ms以内
-      Math.abs(deltaX) / deltaTime > 0.1          // 最小速度
-
-    if (isValidSwipe) {
-      if (deltaX > 0 && currentIndex > 0) {
-        // 右スワイプ：前の画像
-        onNavigate(currentIndex - 1)
-        // ハプティックフィードバック
-        if (navigator.vibrate) {
-          navigator.vibrate(50)
+  useGesture(
+    {
+      onDrag: ({ active, movement: [mx, my], velocity: [vx], memo, first }) => {
+        if (!viewport.width) return memo
+        const zoomed = zoomStateRef.current.scale > 1.02 && !isActiveVideoRef.current
+        if (zoomed) {
+          if (first) {
+            memo = {
+              startX: zoomStateRef.current.offsetX,
+              startY: zoomStateRef.current.offsetY
+            }
+          }
+          const currentScale = zoomStateRef.current.scale
+          const limitX = ((viewport.width * (currentScale - 1)) / 2) + 40
+          const limitY = ((viewport.height * (currentScale - 1)) / 2) + 40
+          const nextX = clamp(memo.startX + mx, -limitX, limitX)
+          const nextY = clamp(memo.startY + my, -limitY, limitY)
+          zoomStateRef.current.offsetX = nextX
+          zoomStateRef.current.offsetY = nextY
+          zoomApi.start({ offsetX: nextX, offsetY: nextY, immediate: true })
+          return memo
         }
-      } else if (deltaX < 0 && currentIndex < images.length - 1) {
-        // 左スワイプ：次の画像
-        onNavigate(currentIndex + 1)
-        // ハプティックフィードバック
-        if (navigator.vibrate) {
-          navigator.vibrate(50)
+
+        const baseline = -activeIndex * viewport.width
+        if (active) {
+          trackApi.start({ x: baseline + mx, immediate: true })
+        } else {
+          const threshold = viewport.width * 0.18
+          const shouldAdvance = Math.abs(mx) > threshold || Math.abs(vx) > 0.5
+          let nextIndex = activeIndex
+          if (shouldAdvance && mx !== 0) {
+            nextIndex = clamp(activeIndex - Math.sign(mx), 0, images.length - 1)
+          }
+          navigateTo(nextIndex)
+          trackApi.start({ x: -nextIndex * viewport.width, immediate: false, config: { tension: 220, friction: 30 } })
         }
+        return memo
+      },
+      onPinch: ({ first, offset: [scaleOffset], origin, event }) => {
+        if (isActiveVideoRef.current) return
+        event.preventDefault()
+        const clamped = clamp(scaleOffset, 1, 4)
+        if (first && activeMediaRef.current) {
+          const rect = activeMediaRef.current.getBoundingClientRect()
+          const ox = origin[0] - (rect.left + rect.width / 2)
+          const oy = origin[1] - (rect.top + rect.height / 2)
+          zoomStateRef.current.offsetX = ox
+          zoomStateRef.current.offsetY = oy
+          zoomApi.start({ offsetX: ox, offsetY: oy, immediate: true })
+        }
+        zoomStateRef.current.scale = clamped
+        setIsZoomed(clamped > 1.02)
+        zoomApi.start({ scale: clamped, immediate: true })
+        if (clamped <= 1.01) {
+          resetZoom()
+        }
+      },
+      onDoubleClick: ({ event }) => {
+        event.preventDefault()
+        toggleZoom()
       }
+    },
+    {
+      target: containerRef,
+      drag: { filterTaps: true },
+      pinch: { scaleBounds: { min: 1, max: 4 }, rubberband: true, from: () => [zoomStateRef.current.scale, 0] }
     }
+  )
 
-    // スワイプ状態をリセット
-    setSwipeState({
-      startX: 0,
-      startY: 0,
-      startTime: 0,
-      isTracking: false
-    })
-
-    // フィードバック表示をクリア（少し遅らせて）
-    setTimeout(() => setSwipeDirection(null), 200)
+  const getImageSrc = (item: MediaItem) => {
+    const attempts = imageErrorCounts[item.id] ?? 0
+    if (attempts === 0) return resolveMediaUrl(item.file_url)
+    if (attempts === 1 && item.thumbnail_url) return resolveMediaUrl(item.thumbnail_url)
+    return resolveMediaUrl(`/api/media/${item.id}/image`)
   }
 
-  const handleImageClick = (e: MouseEvent<HTMLDivElement>) => {
-    if (e.target === e.currentTarget) {
+  const handleImageError = (item: MediaItem) => {
+    setImageErrorCounts(prev => {
+      const current = prev[item.id] ?? 0
+      if (current >= 2) return prev
+      return { ...prev, [item.id]: current + 1 }
+    })
+  }
+
+  const handleBackdropClick = (event: MouseEvent<HTMLDivElement>) => {
+    if (event.target === event.currentTarget && !isZoomed) {
       onClose()
     }
   }
 
+  useEffect(() => {
+    if (!image) return
+    const src = getImageSrc(image)
+    const preload = new Image()
+    preload.src = src
+  }, [image])
+
   if (!image) return null
 
-  const isVideo = image.mime_type?.startsWith('video/')
-  const streamUid = isVideo ? image.filename : '' // Cloudflare Stream UID comes from filename
+  const slideWidth = viewport.width || (typeof window !== 'undefined' ? window.innerWidth : 1)
 
   return (
-    <div 
-      className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center"
-      onClick={handleImageClick}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
+    <div
+      ref={containerRef}
+      className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center touch-none"
+      onClick={handleBackdropClick}
     >
-      {/* 閉じるボタン保護エリア */}
-      <div className="absolute top-0 right-0 w-20 h-20 z-40" />
-
-      {/* 閉じるボタン */}
       <button
         onClick={onClose}
         className="absolute top-4 right-4 w-12 h-12 flex items-center justify-center text-white text-2xl hover:text-gray-300 hover:bg-black hover:bg-opacity-30 rounded-full transition-all z-40"
+        aria-label="Close viewer"
       >
-        ✕
+        ×
       </button>
 
-      {/* 前の画像エリア（最適化済み） */}
-      {currentIndex > 0 && (
-        isVideo ? (
-          <button
-            type="button"
-            onClick={() => onNavigate(currentIndex - 1)}
-            className="absolute left-3 top-1/2 -translate-y-1/2 h-12 w-12 flex items-center justify-center rounded-full bg-black/60 text-white text-2xl backdrop-blur focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 z-30 md:left-6 md:text-3xl md:h-14 md:w-14"
-            aria-label="Previous media"
-          >
-            <span aria-hidden="true">
-              {'<'}
-            </span>
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={() => onNavigate(currentIndex - 1)}
-            className="absolute left-0 top-0 bottom-0 w-1/2 flex items-center justify-start px-4 md:left-4 md:top-1/2 md:bottom-auto md:w-20 md:h-32 md:px-0 md:justify-center md:rounded-lg md:-translate-y-1/2 md:transform focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 transition-colors z-30 active:bg-white/10 md:hover:bg-white/10"
-            aria-label="Previous media"
-          >
-            <span className="text-white text-3xl md:text-4xl opacity-70 active:opacity-100 md:hover:opacity-100 transition-opacity" aria-hidden="true">
-              {'<'}
-            </span>
-          </button>
-        )
-      )}
-
-      {/* 次の画像エリア（最適化済み） */}
-      {currentIndex < images.length - 1 && (
-        isVideo ? (
-          <button
-            type="button"
-            onClick={() => onNavigate(currentIndex + 1)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 h-12 w-12 flex items-center justify-center rounded-full bg-black/60 text-white text-2xl backdrop-blur focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 z-30 md:right-6 md:text-3xl md:h-14 md:w-14"
-            aria-label="Next media"
-          >
-            <span aria-hidden="true">
-              {'>'}
-            </span>
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={() => onNavigate(currentIndex + 1)}
-            className="absolute right-0 top-0 bottom-0 w-1/2 flex items-center justify-end px-4 md:right-4 md:top-1/2 md:bottom-auto md:w-20 md:h-32 md:px-0 md:justify-center md:rounded-lg md:-translate-y-1/2 md:transform focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 transition-colors z-30 active:bg-white/10 md:hover:bg-white/10"
-            aria-label="Next media"
-          >
-            <span className="text-white text-3xl md:text-4xl opacity-70 active:opacity-100 md:hover:opacity-100 transition-opacity" aria-hidden="true">
-              {'>'}
-            </span>
-          </button>
-        )
-      )}
-
-      {isVideo && (
-        <div className="absolute top-16 left-4 md:top-20 md:left-8 bg-black/60 text-white text-xs md:text-sm px-3 py-1 rounded backdrop-blur-sm z-30">
-          Video {currentIndex + 1}/{images.length}
-        </div>
-      )}
-
-      {/* 表示エリア */}
-      <div
-        className="max-w-[90vw] max-h-[90vh] flex items-center justify-center relative z-20"
+      <animated.div
+        ref={slideTrackRef}
+        className="relative h-full w-full max-h-[90vh] max-w-[90vw] overflow-hidden"
+        style={{ touchAction: isZoomed ? 'none' : 'pan-y' }}
       >
-        {isVideo ? (
-          // Cloudflare Stream 埋め込み（uid から iframe）
-          <iframe
-            src={`https://iframe.videodelivery.net/${streamUid}`}
-            allow="accelerometer; autoplay; encrypted-media; picture-in-picture"
-            allowFullScreen
-            className="w-[90vw] h-[50vh] md:h-[70vh] rounded"
-          />
-        ) : (
-          <img
-            src={currentSrc}
-            alt={image.original_filename}
-            className="max-w-full max-h-full object-contain"
-            draggable={false}
-            onError={handleImageError}
-          />
-        )}
-      </div>
+        <animated.div
+          className="flex h-full"
+          style={{ transform: x.to(value => `translate3d(${value}px, 0, 0)`), height: '100%' }}
+        >
+          {images.map((item, index) => {
+            const isActive = index === activeIndex
+            const mediaIsVideo = item.mime_type?.startsWith('video/') ?? false
 
-      {/* 情報 */}
-      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white text-center">
+            return (
+              <div
+                key={item.id ?? index}
+                className="flex items-center justify-center"
+                style={{ width: slideWidth, height: '100%', flexShrink: 0, position: 'relative' }}
+              >
+                {mediaIsVideo ? (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <iframe
+                      src={`https://iframe.videodelivery.net/${item.filename}`}
+                      allow="accelerometer; autoplay; encrypted-media; picture-in-picture"
+                      allowFullScreen
+                      className="w-[90vw] h-[50vh] md:h-[70vh] rounded"
+                    />
+                  </div>
+                ) : (
+                  <animated.img
+                    ref={node => {
+                      if (isActive) {
+                        activeMediaRef.current = node
+                      } else if (activeMediaRef.current === node) {
+                        activeMediaRef.current = null
+                      }
+                    }}
+                    src={getImageSrc(item)}
+                    alt={item.original_filename}
+                    className="select-none object-contain"
+                    style={{
+                      maxWidth: '90vw',
+                      maxHeight: '90vh',
+                      touchAction: 'none',
+                      transform: isActive
+                        ? to([scale, offsetX, offsetY], (s, ox, oy) => `translate3d(${ox}px, ${oy}px, 0) scale(${s})`)
+                        : 'scale(1)'
+                    }}
+                    draggable={false}
+                    onError={() => handleImageError(item)}
+                  />
+                )}
+              </div>
+            )
+          })}
+        </animated.div>
+      </animated.div>
+
+      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white text-center select-none">
         <div className="text-sm opacity-80">
-          {currentIndex + 1} / {images.length}
+          {activeIndex + 1} / {images.length}
         </div>
         <div className="text-xs opacity-60 mt-1">
-          {image.original_filename}
+          {images[activeIndex]?.original_filename}
         </div>
       </div>
 
-      {/* ナビゲーションドット */}
       {images.length > 1 && (
-        <div className="absolute bottom-16 left-1/2 transform -translate-x-1/2 flex space-x-2">
+        <div className="absolute bottom-16 left-1/2 transform -translate-x-1/2 flex space-x-2 select-none">
           {images.map((_, index) => (
             <button
               key={index}
-              onClick={() => onNavigate(index)}
+              onClick={() => navigateTo(index)}
               className={`w-2 h-2 rounded-full ${
-                index === currentIndex ? 'bg-white' : 'bg-white opacity-50'
+                index === activeIndex ? 'bg-white' : 'bg-white opacity-50'
               }`}
             />
           ))}
@@ -299,3 +321,7 @@ export default function ImageViewer({ image, images, currentIndex, onClose, onNa
     </div>
   )
 }
+
+
+
+
