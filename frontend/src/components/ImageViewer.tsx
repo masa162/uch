@@ -51,15 +51,43 @@ export default function ImageViewer({
   const [imageErrorCounts, setImageErrorCounts] = useState<Record<number, number>>({})
   const isActiveVideoRef = useRef(false)
 
+  const getEffectiveWidth = () => {
+    if (viewport.width > 1) return viewport.width
+    if (trackRef.current) {
+      const rect = trackRef.current.getBoundingClientRect()
+      if (rect.width > 1) return rect.width
+    }
+    if (containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect()
+      if (rect.width > 1) return rect.width
+    }
+    return typeof window !== 'undefined' ? window.innerWidth : 1
+  }
+
+  const getEffectiveHeight = () => {
+    if (viewport.height > 1) return viewport.height
+    if (trackRef.current) {
+      const rect = trackRef.current.getBoundingClientRect()
+      if (rect.height > 1) return rect.height
+    }
+    if (containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect()
+      if (rect.height > 1) return rect.height
+    }
+    return typeof window !== 'undefined' ? window.innerHeight : 1
+  }
+
   const resetZoom = () => {
     zoomStateRef.current = { scale: 1, offsetX: 0, offsetY: 0 }
     setIsZoomed(false)
     zoomApi.start({ scale: 1, offsetX: 0, offsetY: 0 })
   }
 
-  const navigateTo = (index: number) => {
+  const navigateTo = (index: number, immediate = false) => {
     const next = clamp(index, 0, images.length - 1)
     setActiveIndex(next)
+    const width = getEffectiveWidth()
+    trackApi.start({ x: -next * width, immediate })
     if (next !== currentIndex) {
       onNavigate(next)
     }
@@ -99,10 +127,10 @@ export default function ImageViewer({
         onClose()
       }
       if (event.key === 'ArrowLeft') {
-        navigateTo(activeIndex - 1)
+        navigateTo(activeIndex - 1, true)
       }
       if (event.key === 'ArrowRight') {
-        navigateTo(activeIndex + 1)
+        navigateTo(activeIndex + 1, true)
       }
     }
     document.addEventListener('keydown', handleKeyDown)
@@ -110,8 +138,8 @@ export default function ImageViewer({
   })
 
   useEffect(() => {
-    if (!viewport.width) return
-    trackApi.start({ x: -activeIndex * viewport.width, immediate: true })
+    const width = getEffectiveWidth()
+    trackApi.start({ x: -activeIndex * width, immediate: true })
   }, [activeIndex, viewport.width, trackApi])
 
   useEffect(() => {
@@ -125,9 +153,11 @@ export default function ImageViewer({
 
   const bind = useGesture(
     {
-      onDrag: ({ active, first, movement: [mx, my], velocity: [vx], memo }) => {
-        const width = viewport.width || (typeof window !== 'undefined' ? window.innerWidth : 1)
-        const height = viewport.height || (typeof window !== 'undefined' ? window.innerHeight : 1)
+      onDrag: ({ active, first, event, movement: [mx, my], velocity: [vx], memo }) => {
+        event.preventDefault()
+        const width = getEffectiveWidth()
+        const height = getEffectiveHeight()
+
         if (!width) return memo
 
         const zoomed = zoomStateRef.current.scale > 1.02 && !isActiveVideoRef.current
@@ -161,8 +191,7 @@ export default function ImageViewer({
           if (shouldAdvance && mx !== 0) {
             nextIndex = clamp(activeIndex - Math.sign(mx), 0, images.length - 1)
           }
-          navigateTo(nextIndex)
-          trackApi.start({ x: -nextIndex * width, immediate: false, config: { tension: 220, friction: 30 } })
+          navigateTo(nextIndex, false)
         }
         return memo
       },
@@ -229,7 +258,10 @@ export default function ImageViewer({
 
   if (!image) return null
 
-  const slideWidth = viewport.width || (typeof window !== 'undefined' ? window.innerWidth : 1)
+  const slideWidth = getEffectiveWidth()
+
+  const showPrev = activeIndex > 0
+  const showNext = activeIndex < images.length - 1
 
   return (
     <div
@@ -246,6 +278,28 @@ export default function ImageViewer({
       >
         ×
       </button>
+
+      {showPrev && (
+        <button
+          type="button"
+          onClick={() => navigateTo(activeIndex - 1, true)}
+          className="absolute left-3 md:left-6 top-1/2 -translate-y-1/2 h-12 w-12 md:h-14 md:w-14 flex items-center justify-center rounded-full bg-black/60 text-white text-2xl md:text-3xl backdrop-blur focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 z-40"
+          aria-label="Previous media"
+        >
+          ‹
+        </button>
+      )}
+
+      {showNext && (
+        <button
+          type="button"
+          onClick={() => navigateTo(activeIndex + 1, true)}
+          className="absolute right-3 md:right-6 top-1/2 -translate-y-1/2 h-12 w-12 md:h-14 md:w-14 flex items-center justify-center rounded-full bg-black/60 text-white text-2xl md:text-3xl backdrop-blur focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 z-40"
+          aria-label="Next media"
+        >
+          ›
+        </button>
+      )}
 
       <animated.div
         ref={trackRef}
@@ -318,7 +372,7 @@ export default function ImageViewer({
           {images.map((_, index) => (
             <button
               key={index}
-              onClick={() => navigateTo(index)}
+              onClick={() => navigateTo(index, true)}
               className={`w-2 h-2 rounded-full ${
                 index === activeIndex ? 'bg-white' : 'bg-white opacity-50'
               }`}
