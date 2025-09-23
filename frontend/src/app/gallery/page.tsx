@@ -385,6 +385,27 @@ export default function GalleryPage() {
         </div>
       </div>
 
+      {/* Viewer Debug Info - Development Only */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="mb-2 p-2 bg-blue-50 border border-blue-200 rounded-lg text-sm">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="font-semibold">現在のViewer:</span>
+            <span className="px-2 py-1 bg-blue-100 rounded">
+              {useSwiperExperiment ? 'Swiper.js (Experimental)' :
+               useNewImageViewer ? 'SwipeNavigation (@use-gesture)' :
+               usePOCImageViewer || shouldUsePOCAsDefault ? 'POC (react-zoom-pan-pinch)' :
+               'Original'}
+            </span>
+            <span className="text-gray-600">|</span>
+            <span>試すには:</span>
+            <a href="?exp=swiper" className="px-2 py-1 bg-green-100 hover:bg-green-200 rounded transition-colors">?exp=swiper</a>
+            <a href="?swipe=true" className="px-2 py-1 bg-yellow-100 hover:bg-yellow-200 rounded transition-colors">?swipe=true</a>
+            <a href="?poc=true" className="px-2 py-1 bg-purple-100 hover:bg-purple-200 rounded transition-colors">?poc=true</a>
+            <a href="/gallery" className="px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded transition-colors">Default</a>
+          </div>
+        </div>
+      )}
+
       {/* コントロールバー */}
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-4 p-3 bg-base-200 rounded-lg">
         <div className="flex flex-wrap items-center gap-2 md:flex-nowrap">
