@@ -44,8 +44,9 @@ export default function ImageViewer({
   const trackRef = useRef<HTMLDivElement | null>(null)
   const activeMediaRef = useRef<HTMLImageElement | null>(null)
   const zoomStateRef = useRef({ scale: 1, offsetX: 0, offsetY: 0 })
+  const lastTapRef = useRef(0)
 
-  const [{ x }, trackApi] = useSpring(() => ({ x: 0 }))
+  const [{ x }, trackApi] = useSpring(() => ({ x: 0, config: { tension: 260, friction: 30 } }))
   const [{ scale, offsetX, offsetY }, zoomApi] = useSpring(() => ({ scale: 1, offsetX: 0, offsetY: 0 }))
   const [isZoomed, setIsZoomed] = useState(false)
   const [imageErrorCounts, setImageErrorCounts] = useState<Record<number, number>>({})
@@ -94,13 +95,43 @@ export default function ImageViewer({
     resetZoom()
   }
 
-  const toggleZoom = () => {
+  const applyZoom = (nextScale: number, origin?: { x: number; y: number }) => {
+    if (isActiveVideoRef.current) return
+
+    const width = getEffectiveWidth()
+    const height = getEffectiveHeight()
+    const clampedScale = clamp(nextScale, 1, 4)
+
+    let focusOffsetX = 0
+    let focusOffsetY = 0
+
+    if (origin && activeMediaRef.current) {
+      const rect = activeMediaRef.current.getBoundingClientRect()
+      const centerX = rect.left + rect.width / 2
+      const centerY = rect.top + rect.height / 2
+      focusOffsetX = origin.x - centerX
+      focusOffsetY = origin.y - centerY
+    }
+
+    const limitX = ((width * (clampedScale - 1)) / 2) + 40
+    const limitY = ((height * (clampedScale - 1)) / 2) + 40
+    const nextOffsetX = clamp(focusOffsetX * (clampedScale - 1), -limitX, limitX)
+    const nextOffsetY = clamp(focusOffsetY * (clampedScale - 1), -limitY, limitY)
+
+    zoomStateRef.current = { scale: clampedScale, offsetX: nextOffsetX, offsetY: nextOffsetY }
+    setIsZoomed(clampedScale > 1.02)
+    zoomApi.start({ scale: clampedScale, offsetX: nextOffsetX, offsetY: nextOffsetY, immediate: true })
+
+    if (clampedScale <= 1.01) {
+      resetZoom()
+    }
+  }
+
+  const toggleZoom = (event?: { clientX: number; clientY: number }) => {
     if (isActiveVideoRef.current) return
     const shouldZoom = !isZoomed
     if (shouldZoom) {
-      zoomStateRef.current.scale = 2
-      setIsZoomed(true)
-      zoomApi.start({ scale: 2, offsetX: 0, offsetY: 0, config: { tension: 260, friction: 30 } })
+      applyZoom(2, event ? { x: event.clientX, y: event.clientY } : undefined)
     } else {
       resetZoom()
     }
@@ -182,11 +213,11 @@ export default function ImageViewer({
         }
 
         const baseline = -activeIndex * width
-        if (active) {
-          trackApi.start({ x: baseline + mx, immediate: true })
-        } else {
+        trackApi.start({ x: baseline + mx, immediate: true })
+
+        if (!active) {
           const threshold = width * 0.18
-          const shouldAdvance = Math.abs(mx) > threshold || Math.abs(vx) > 0.5
+          const shouldAdvance = Math.abs(mx) > threshold || Math.abs(vx) > 0.35
           let nextIndex = activeIndex
           if (shouldAdvance && mx !== 0) {
             nextIndex = clamp(activeIndex - Math.sign(mx), 0, images.length - 1)
@@ -195,36 +226,35 @@ export default function ImageViewer({
         }
         return memo
       },
-      onPinch: ({ first, offset: [scaleOffset], origin, event }) => {
+      onPinch: ({ offset: [nextScale], origin, event }) => {
         if (isActiveVideoRef.current) return
         event.preventDefault()
-
-        const clamped = clamp(scaleOffset, 1, 4)
-        if (first && activeMediaRef.current) {
-          const rect = activeMediaRef.current.getBoundingClientRect()
-          const ox = origin[0] - (rect.left + rect.width / 2)
-          const oy = origin[1] - (rect.top + rect.height / 2)
-          zoomStateRef.current.offsetX = ox
-          zoomStateRef.current.offsetY = oy
-          zoomApi.start({ offsetX: ox, offsetY: oy, immediate: true })
-        }
-
-        zoomStateRef.current.scale = clamped
-        setIsZoomed(clamped > 1.02)
-        zoomApi.start({ scale: clamped, immediate: true })
-
-        if (clamped <= 1.01) {
-          resetZoom()
-        }
+        applyZoom(nextScale, { x: origin[0], y: origin[1] })
       },
-      onDoubleClick: ({ event }) => {
+      onWheel: ({ event, ctrlKey }) => {
+        if (!ctrlKey || isActiveVideoRef.current) return
         event.preventDefault()
-        toggleZoom()
+        const delta = (-event.deltaY / 800) || 0
+        const targetScale = zoomStateRef.current.scale + delta
+        applyZoom(targetScale, { x: event.clientX, y: event.clientY })
+      },
+      onClick: ({ event }) => {
+        if (isActiveVideoRef.current) return
+        const now = performance.now()
+        if (now - lastTapRef.current < 280) {
+          event.stopPropagation()
+          toggleZoom(event)
+        }
+        lastTapRef.current = now
       }
     },
     {
-      drag: { filterTaps: true, axis: 'lock' },
-      pinch: { scaleBounds: { min: 1, max: 4 }, rubberband: true }
+      drag: { filterTaps: true, axis: 'lock', threshold: 8, from: () => [x.get(), 0] },
+      pinch: {
+        scaleBounds: { min: 1, max: 4 },
+        rubberband: true,
+        from: () => [zoomStateRef.current.scale, 0]
+      }
     }
   )
 
@@ -260,9 +290,6 @@ export default function ImageViewer({
 
   const slideWidth = getEffectiveWidth()
 
-  const showPrev = activeIndex > 0
-  const showNext = activeIndex < images.length - 1
-
   return (
     <div
       ref={containerRef}
@@ -278,28 +305,6 @@ export default function ImageViewer({
       >
         ×
       </button>
-
-      {showPrev && (
-        <button
-          type="button"
-          onClick={() => navigateTo(activeIndex - 1, true)}
-          className="absolute left-3 md:left-6 top-1/2 -translate-y-1/2 h-12 w-12 md:h-14 md:w-14 flex items-center justify-center rounded-full bg-black/60 text-white text-2xl md:text-3xl backdrop-blur focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 z-40"
-          aria-label="Previous media"
-        >
-          ‹
-        </button>
-      )}
-
-      {showNext && (
-        <button
-          type="button"
-          onClick={() => navigateTo(activeIndex + 1, true)}
-          className="absolute right-3 md:right-6 top-1/2 -translate-y-1/2 h-12 w-12 md:h-14 md:w-14 flex items-center justify-center rounded-full bg-black/60 text-white text-2xl md:text-3xl backdrop-blur focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 z-40"
-          aria-label="Next media"
-        >
-          ›
-        </button>
-      )}
 
       <animated.div
         ref={trackRef}
@@ -366,20 +371,6 @@ export default function ImageViewer({
           {images[activeIndex]?.original_filename}
         </div>
       </div>
-
-      {images.length > 1 && (
-        <div className="absolute bottom-16 left-1/2 transform -translate-x-1/2 flex space-x-2 select-none">
-          {images.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => navigateTo(index, true)}
-              className={`w-2 h-2 rounded-full ${
-                index === activeIndex ? 'bg-white' : 'bg-white opacity-50'
-              }`}
-            />
-          ))}
-        </div>
-      )}
     </div>
   )
 }
