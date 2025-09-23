@@ -226,6 +226,7 @@ async function searchArticles(
   `;
 
   const params: any[] = [
+    `%${searchQuery.toLowerCase()}%`,
     `%${searchQuery.toLowerCase()}%`
   ];
 
