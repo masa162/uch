@@ -4,6 +4,12 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { register } from 'swiper/element/bundle'
 
+// Swiper styles for zoom functionality
+import 'swiper/css'
+import 'swiper/css/zoom'
+import 'swiper/css/navigation'
+import 'swiper/css/pagination'
+
 // Swiper Elementを登録
 register()
 
@@ -39,6 +45,7 @@ export default function SwiperImageViewer({
   resolveMediaUrl
 }: SwiperImageViewerProps) {
   const [debugLogs, setDebugLogs] = useState<string[]>([])
+  const [currentZoom, setCurrentZoom] = useState(1)
   const swiperRef = useRef<any>(null)
 
   const addDebugLog = useCallback((message: string) => {
@@ -78,13 +85,21 @@ export default function SwiperImageViewer({
   // Swiperの初期化完了時の処理
   const handleSwiperInit = useCallback((event: any) => {
     const swiper = event.detail[0]
-    addDebugLog(`Swiper initialized with ${images.length} slides`)
+    addDebugLog(`Swiper initialized with ${images.length} slides, zoom enabled`)
 
     // 現在のインデックスにスライドを設定
     if (currentIndex !== swiper.activeIndex) {
       swiper.slideTo(currentIndex, 0) // 0ms = アニメーションなし
     }
   }, [currentIndex, images.length, addDebugLog])
+
+  // ズーム変更時の処理
+  const handleZoomChange = useCallback((event: any) => {
+    const swiper = event.detail[0]
+    const scale = swiper.zoom.scale
+    setCurrentZoom(scale)
+    addDebugLog(`Zoom changed: ${scale.toFixed(2)}x`)
+  }, [addDebugLog])
 
   useEffect(() => {
     const swiperEl = swiperRef.current
@@ -93,15 +108,17 @@ export default function SwiperImageViewer({
       swiperEl.addEventListener('slidechange', handleSlideChange)
       swiperEl.addEventListener('swiperslidechange', handleSlideChange)
       swiperEl.addEventListener('swiperInit', handleSwiperInit)
+      swiperEl.addEventListener('zoomchange', handleZoomChange)
 
       return () => {
         // クリーンアップ
         swiperEl.removeEventListener('slidechange', handleSlideChange)
         swiperEl.removeEventListener('swiperslidechange', handleSlideChange)
         swiperEl.removeEventListener('swiperInit', handleSwiperInit)
+        swiperEl.removeEventListener('zoomchange', handleZoomChange)
       }
     }
-  }, [handleSlideChange, handleSwiperInit])
+  }, [handleSlideChange, handleSwiperInit, handleZoomChange])
 
   // currentIndexが変更された時にSwiperのスライドを更新
   useEffect(() => {
@@ -137,9 +154,12 @@ export default function SwiperImageViewer({
 
       {/* Debug Panel */}
       <div className="absolute top-4 left-4 bg-black/80 text-white text-xs p-2 rounded max-w-xs z-40">
-        <div className="font-bold mb-1">Swiper ImageViewer (LINE-style Continuous Scroll)</div>
+        <div className="font-bold mb-1">Swiper ImageViewer (LINE-style + Zoom)</div>
         <div className="text-xs opacity-80 mb-1">
-          Current: {currentIndex + 1}/{images.length}
+          Current: {currentIndex + 1}/{images.length} | Zoom: {currentZoom.toFixed(2)}x
+        </div>
+        <div className="text-xs opacity-60 mb-1">
+          📱 Pinch to zoom | 👆👆 Double-tap to toggle
         </div>
         {debugLogs.map((log, i) => (
           <div key={i} className="truncate text-xs opacity-70">{log}</div>
@@ -164,6 +184,10 @@ export default function SwiperImageViewer({
           touch-move-stop-propagation="true"
           simulate-touch="true"
           allow-touch-move="true"
+          zoom="true"
+          zoom-max-ratio="4"
+          zoom-min-ratio="1"
+          zoom-toggle="true"
           style={{
             width: '100%',
             height: '100%',
@@ -184,27 +208,29 @@ export default function SwiperImageViewer({
                     />
                   </div>
                 ) : (
-                  <img
-                    src={resolveMediaUrl(item.file_url)}
-                    alt={item.original_filename}
-                    className="select-none object-contain max-w-full max-h-full"
-                    style={{
-                      maxWidth: '90vw',
-                      maxHeight: '90vh',
-                      touchAction: 'none'
-                    }}
-                    draggable={false}
-                    onLoad={() => {
-                      if (index === currentIndex) {
-                        addDebugLog(`Image ${index + 1} loaded successfully`)
-                      }
-                    }}
-                    onError={() => {
-                      if (index === currentIndex) {
-                        addDebugLog(`Image ${index + 1} load error`)
-                      }
-                    }}
-                  />
+                  <div className="swiper-zoom-container">
+                    <img
+                      src={resolveMediaUrl(item.file_url)}
+                      alt={item.original_filename}
+                      className="select-none object-contain max-w-full max-h-full"
+                      style={{
+                        maxWidth: '90vw',
+                        maxHeight: '90vh',
+                        touchAction: 'manipulation'
+                      }}
+                      draggable={false}
+                      onLoad={() => {
+                        if (index === currentIndex) {
+                          addDebugLog(`Image ${index + 1} loaded successfully`)
+                        }
+                      }}
+                      onError={() => {
+                        if (index === currentIndex) {
+                          addDebugLog(`Image ${index + 1} load error`)
+                        }
+                      }}
+                    />
+                  </div>
                 )}
               </swiper-slide>
             )
