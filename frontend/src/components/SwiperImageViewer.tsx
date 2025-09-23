@@ -77,13 +77,16 @@ export default function SwiperImageViewer({
   onNavigate,
   resolveMediaUrl
 }: SwiperImageViewerProps) {
+  // Debug state - development only
   const [debugLogs, setDebugLogs] = useState<string[]>([])
-  const [currentZoom, setCurrentZoom] = useState(1)
+  const [currentZoom, setCurrentZoom] = useState(process.env.NODE_ENV === 'development' ? 1 : 0)
   const swiperRef = useRef<any>(null)
 
   const addDebugLog = useCallback((message: string) => {
-    console.log(`[SwiperImageViewer] ${message}`)
-    setDebugLogs(prev => [...prev.slice(-4), `${new Date().toLocaleTimeString()}: ${message}`])
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[SwiperImageViewer] ${message}`)
+      setDebugLogs(prev => [...prev.slice(-4), `${new Date().toLocaleTimeString()}: ${message}`])
+    }
   }, [])
 
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
@@ -141,7 +144,9 @@ export default function SwiperImageViewer({
 
   // ズーム変更時の処理
   const handleZoomChange = useCallback((swiper: any, scale: number) => {
-    setCurrentZoom(scale)
+    if (process.env.NODE_ENV === 'development') {
+      setCurrentZoom(scale)
+    }
     addDebugLog(`Zoom changed: ${scale.toFixed(2)}x`)
   }, [addDebugLog])
 
@@ -179,20 +184,22 @@ export default function SwiperImageViewer({
         ×
       </motion.button>
 
-      {/* Debug Panel */}
-      <div className="absolute top-4 left-4 bg-black/80 text-white text-xs p-2 rounded max-w-xs z-40">
-        <div className="font-bold mb-1">Swiper ImageViewer (LINE-style + Zoom)</div>
-        <div className="text-xs opacity-80 mb-1">
-          Current: {currentIndex + 1}/{images.length} | Zoom: {currentZoom.toFixed(2)}x
+      {/* Debug Panel - Development Only */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="absolute top-4 left-4 bg-black/80 text-white text-xs p-2 rounded max-w-xs z-40">
+          <div className="font-bold mb-1">Swiper ImageViewer (LINE-style + Zoom)</div>
+          <div className="text-xs opacity-80 mb-1">
+            Current: {currentIndex + 1}/{images.length} | Zoom: {currentZoom.toFixed(2)}x
+          </div>
+          <div className="text-xs opacity-60 mb-1">
+            📱 Pinch to zoom | 👆👆 Double-tap to toggle
+            {isCurrentVideoMedia && ' | 🎬 Video nav buttons'}
+          </div>
+          {debugLogs.map((log, i) => (
+            <div key={i} className="truncate text-xs opacity-70">{log}</div>
+          ))}
         </div>
-        <div className="text-xs opacity-60 mb-1">
-          📱 Pinch to zoom | 👆👆 Double-tap to toggle
-          {isCurrentVideoMedia && ' | 🎬 Video nav buttons'}
-        </div>
-        {debugLogs.map((log, i) => (
-          <div key={i} className="truncate text-xs opacity-70">{log}</div>
-        ))}
-      </div>
+      )}
 
       {/* Swiper Container */}
       <div className="relative h-full w-full max-h-[90vh] max-w-[90vw] overflow-hidden">
