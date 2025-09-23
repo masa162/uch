@@ -1,7 +1,7 @@
 ﻿'use client'
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import type { MouseEvent, PointerEvent } from 'react'
+import type { MouseEvent, TouchEvent } from 'react'
 import { animated, to, useSpring } from '@react-spring/web'
 import { useGesture } from '@use-gesture/react'
 
@@ -182,7 +182,7 @@ export default function ImageViewer({
     }
   }, [activeIndex, images])
 
-  const bind = useGesture(
+  useGesture(
     {
       onDrag: ({ active, first, event, movement: [mx, my], velocity: [vx], memo }) => {
         event.preventDefault()
@@ -237,28 +237,22 @@ export default function ImageViewer({
         const delta = (-event.deltaY / 800) || 0
         const targetScale = zoomStateRef.current.scale + delta
         applyZoom(targetScale, { x: event.clientX, y: event.clientY })
-      },
-      onClick: ({ event }) => {
-        if (isActiveVideoRef.current) return
-        const pointerType = (event as unknown as PointerEvent).pointerType as string | undefined
-        if (pointerType === 'touch') {
-          return
-        }
-        const now = performance.now()
-        if (now - lastTapRef.current < 280) {
-          event.stopPropagation()
-          toggleZoom(event)
-        }
-        lastTapRef.current = now
       }
     },
     {
-      drag: { filterTaps: true, axis: 'lock', threshold: 8, from: () => [x.get(), 0] },
+      target: containerRef,
+      drag: {
+        filterTaps: true,
+        axis: 'lock',
+        threshold: 8,
+        from: () => [x.get(), 0]
+      },
       pinch: {
         scaleBounds: { min: 1, max: 4 },
         rubberband: true,
         from: () => [zoomStateRef.current.scale, 0]
       },
+      wheel: { axis: 'y' },
       eventOptions: { passive: false }
     }
   )
@@ -284,6 +278,18 @@ export default function ImageViewer({
     }
   }
 
+  const handleTouchEnd = (event: TouchEvent<HTMLDivElement>) => {
+    if (isActiveVideoRef.current) return
+    const now = performance.now()
+    if (event.changedTouches.length === 1) {
+      const touch = event.changedTouches[0]
+      if (now - lastTapRef.current < 280) {
+        toggleZoom({ clientX: touch.clientX, clientY: touch.clientY })
+      }
+    }
+    lastTapRef.current = now
+  }
+
   useEffect(() => {
     if (!image) return
     const src = getImageSrc(image)
@@ -300,19 +306,14 @@ export default function ImageViewer({
   return (
     <div
       ref={containerRef}
-      {...bind()}
       className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center"
       style={{ touchAction: 'none' }}
       onClick={handleBackdropClick}
-      onPointerDown={(event: PointerEvent<HTMLDivElement>) => {
-        if (event.pointerType !== 'touch' || isActiveVideoRef.current) return
-        const now = event.timeStamp
-        if (now - lastTapRef.current < 280) {
-          event.preventDefault()
-          toggleZoom({ clientX: event.clientX, clientY: event.clientY })
-        }
-        lastTapRef.current = now
+      onDoubleClick={(event) => {
+        if (isActiveVideoRef.current) return
+        toggleZoom({ clientX: event.clientX, clientY: event.clientY })
       }}
+      onTouchEnd={handleTouchEnd}
     >
       <button
         onClick={onClose}
