@@ -399,9 +399,9 @@ export default function Sidebar({ onNavigate }: SidebarProps = {}) {
         )}
       </div>
 
-      {/* メディアギャラリー */}
+      {/* メディア */}
       <div className="space-y-2">
-        <h3 className="font-bold text-primary-dark">📷 メディアギャラリー</h3>
+        <h3 className="font-bold text-primary-dark">🌼 メディア</h3>
         <button
           onClick={() => handleNavigation('/gallery')}
           className="w-full flex items-center text-left hover:bg-primary-light hover:text-primary-dark transition-colors px-2 py-1 rounded"
@@ -410,16 +410,16 @@ export default function Sidebar({ onNavigate }: SidebarProps = {}) {
         </button>
       </div>
 
-      {/* 発見とメモ */}
+      {/* メモ */}
       <div className="space-y-2">
-        <h3 className="font-bold text-primary-dark">🔍 発見とメモ</h3>
+        <h3 className="font-bold text-primary-dark">🔍 メモ</h3>
         <ul className="menu">
           <li>
             <button
               onClick={() => handleNavigation('/about')}
               className="w-full flex items-center text-left hover:bg-primary-light hover:text-primary-dark transition-colors"
             >
-              🏠 このサイトについて
+              📝 このサイトについて
             </button>
           </li>
         </ul>
