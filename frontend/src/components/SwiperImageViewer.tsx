@@ -2,16 +2,14 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { motion } from 'framer-motion'
-import { register } from 'swiper/element/bundle'
+import { Swiper, SwiperSlide } from 'swiper/react'
+import { Zoom, Keyboard } from 'swiper/modules'
 
 // Swiper styles for zoom functionality
 import 'swiper/css'
 import 'swiper/css/zoom'
 import 'swiper/css/navigation'
 import 'swiper/css/pagination'
-
-// Swiper Elementを登録
-register()
 
 type MediaItem = {
   id: number
@@ -75,17 +73,16 @@ export default function SwiperImageViewer({
   }, [currentIndex, images.length, addDebugLog])
 
   // Swiperのスライド変更時の処理
-  const handleSlideChange = useCallback((event: any) => {
-    const swiper = event.detail[0]
+  const handleSlideChange = useCallback((swiper: any) => {
     const newIndex = swiper.activeIndex
     addDebugLog(`Slide changed to index: ${newIndex}`)
     onNavigate(newIndex)
   }, [onNavigate, addDebugLog])
 
   // Swiperの初期化完了時の処理
-  const handleSwiperInit = useCallback((event: any) => {
-    const swiper = event.detail[0]
+  const handleSwiperInit = useCallback((swiper: any) => {
     addDebugLog(`Swiper initialized with ${images.length} slides, zoom enabled`)
+    swiperRef.current = swiper
 
     // 現在のインデックスにスライドを設定
     if (currentIndex !== swiper.activeIndex) {
@@ -94,36 +91,15 @@ export default function SwiperImageViewer({
   }, [currentIndex, images.length, addDebugLog])
 
   // ズーム変更時の処理
-  const handleZoomChange = useCallback((event: any) => {
-    const swiper = event.detail[0]
-    const scale = swiper.zoom.scale
+  const handleZoomChange = useCallback((swiper: any, scale: number) => {
     setCurrentZoom(scale)
     addDebugLog(`Zoom changed: ${scale.toFixed(2)}x`)
   }, [addDebugLog])
 
-  useEffect(() => {
-    const swiperEl = swiperRef.current
-    if (swiperEl) {
-      // イベントリスナーを追加
-      swiperEl.addEventListener('slidechange', handleSlideChange)
-      swiperEl.addEventListener('swiperslidechange', handleSlideChange)
-      swiperEl.addEventListener('swiperInit', handleSwiperInit)
-      swiperEl.addEventListener('zoomchange', handleZoomChange)
-
-      return () => {
-        // クリーンアップ
-        swiperEl.removeEventListener('slidechange', handleSlideChange)
-        swiperEl.removeEventListener('swiperslidechange', handleSlideChange)
-        swiperEl.removeEventListener('swiperInit', handleSwiperInit)
-        swiperEl.removeEventListener('zoomchange', handleZoomChange)
-      }
-    }
-  }, [handleSlideChange, handleSwiperInit, handleZoomChange])
-
   // currentIndexが変更された時にSwiperのスライドを更新
   useEffect(() => {
-    if (swiperRef.current?.swiper) {
-      const swiper = swiperRef.current.swiper
+    if (swiperRef.current) {
+      const swiper = swiperRef.current
       if (swiper.activeIndex !== currentIndex) {
         swiper.slideTo(currentIndex, 300) // 300ms アニメーション
         addDebugLog(`External navigation to index: ${currentIndex}`)
@@ -168,36 +144,42 @@ export default function SwiperImageViewer({
 
       {/* Swiper Container */}
       <div className="relative h-full w-full max-h-[90vh] max-w-[90vw] overflow-hidden">
-        <swiper-container
-          ref={swiperRef}
-          slides-per-view="1"
-          space-between="0"
-          speed="300"
-          loop="false"
-          keyboard="true"
-          mousewheel="false"
-          touch-ratio="1"
-          resistance="true"
-          resistance-ratio="0.85"
-          threshold="5"
-          touch-start-prevent-default="false"
-          touch-move-stop-propagation="true"
-          simulate-touch="true"
-          allow-touch-move="true"
-          zoom="true"
-          zoom-max-ratio="4"
-          zoom-min-ratio="1"
-          zoom-toggle="true"
+        <Swiper
+          modules={[Zoom, Keyboard]}
+          slidesPerView={1}
+          spaceBetween={0}
+          speed={300}
+          loop={false}
+          keyboard={{
+            enabled: true,
+          }}
+          mousewheel={false}
+          touchRatio={1}
+          resistance={true}
+          resistanceRatio={0.85}
+          threshold={5}
+          preventInteractionOnTransition={false}
+          simulateTouch={true}
+          allowTouchMove={true}
+          zoom={{
+            maxRatio: 4,
+            minRatio: 1,
+            toggle: true,
+          }}
           style={{
             width: '100%',
             height: '100%',
           }}
+          onSwiper={handleSwiperInit}
+          onSlideChange={handleSlideChange}
+          onZoomChange={handleZoomChange}
+          initialSlide={currentIndex}
         >
           {images.map((item, index) => {
             const isVideo = item.mime_type?.startsWith('video/') ?? false
 
             return (
-              <swiper-slide key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <SwiperSlide key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 {isVideo ? (
                   <div className="w-full h-full flex items-center justify-center">
                     <iframe
@@ -232,10 +214,10 @@ export default function SwiperImageViewer({
                     />
                   </div>
                 )}
-              </swiper-slide>
+              </SwiperSlide>
             )
           })}
-        </swiper-container>
+        </Swiper>
       </div>
 
       {/* Image Info */}
