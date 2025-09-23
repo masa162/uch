@@ -118,6 +118,22 @@ const routes: Record<string, (req: Request, env: Env) => Promise<Response> | Res
     return addCorsHeaders(response);
   }, // エイリアス
   "GET /api/articles/search": (req, env) => handleMemories(req, env), // 検索用エイリアス（qパラメータ対応）
+  "OPTIONS /api/search": (req, env) => {
+    return new Response(null, {
+      status: 200,
+      headers: {
+        "Access-Control-Allow-Origin": "http://localhost:3001",
+        "Access-Control-Allow-Methods": "GET, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
+        "Access-Control-Allow-Credentials": "true"
+      }
+    });
+  },
+  "GET /api/search": async (req, env) => {
+    const mod = await import("./routes/search");
+    const response = await mod.handleUnifiedSearch(req, env);
+    return addCorsHeaders(response);
+  },
   "POST /api/articles": async (req, env) => {
     const mod = await import("./routes/articles");
     const response = await mod.createArticle(req, env);

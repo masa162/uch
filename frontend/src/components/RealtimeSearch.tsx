@@ -3,19 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useDebouncedSearch, useSearchResults } from '@/hooks/useDebouncedSearch'
-
-interface SearchResult {
-  id: string
-  title: string
-  slug: string
-  content: string
-  tags: string[]
-  createdAt: string
-  author: {
-    name: string | null
-    email: string
-  }
-}
+import { UnifiedSearchResult } from '@/types/search'
 
 interface RealtimeSearchProps {
   placeholder?: string
@@ -83,8 +71,8 @@ const RealtimeSearch = ({ placeholder = "記事を検索...", className = "", on
     }
   }
 
-  const handleResultSelect = (result: SearchResult) => {
-    router.push(`/articles/${result.slug}`)
+  const handleResultSelect = (result: UnifiedSearchResult) => {
+    router.push(result.url)
     setQuery('')
     setIsOpen(false)
     clearResults()
@@ -110,26 +98,39 @@ const RealtimeSearch = ({ placeholder = "記事を検索...", className = "", on
   return (
     <div ref={searchRef} className={`relative ${className}`}>
       <form onSubmit={(e) => { e.preventDefault(); handleSearchSubmit() }}>
-        <div className="relative">
-          <input
-            ref={inputRef}
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder={placeholder}
-            className="input input-bordered w-full pl-10"
-          />
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <svg className="h-4 w-4 text-base-content/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-          </div>
-          {isLoading && (
-            <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-              <div className="loading loading-spinner loading-sm"></div>
+        <div className="relative flex">
+          <div className="relative flex-1">
+            <input
+              ref={inputRef}
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder={placeholder}
+              className="input input-bordered w-full pl-10 pr-3"
+            />
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg className="h-4 w-4 text-base-content/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
             </div>
-          )}
+          </div>
+          <button
+            type="submit"
+            disabled={!query.trim() || isLoading}
+            className="btn btn-primary ml-2 min-w-[80px]"
+          >
+            {isLoading ? (
+              <div className="loading loading-spinner loading-sm"></div>
+            ) : (
+              <>
+                <svg className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                検索
+              </>
+            )}
+          </button>
         </div>
       </form>
 
@@ -142,7 +143,7 @@ const RealtimeSearch = ({ placeholder = "記事を検索...", className = "", on
             </div>
           ) : error ? (
             <div className="p-3 text-center text-error">
-              {error}
+              {typeof error === 'string' ? error : error.message}
             </div>
           ) : results.length === 0 ? (
             <div className="p-3 text-center text-base-content/70">
@@ -170,14 +171,24 @@ const RealtimeSearch = ({ placeholder = "記事を検索...", className = "", on
                     className="font-medium text-base-content text-sm mb-1"
                     dangerouslySetInnerHTML={{ __html: highlightText(result.title, query) }}
                   />
-                  <p 
+                  <p
                     className="text-xs text-base-content/70 line-clamp-2"
-                    dangerouslySetInnerHTML={{ __html: highlightText(result.content, query) }}
+                    dangerouslySetInnerHTML={{
+                      __html: highlightText(
+                        result.type === 'article'
+                          ? (result as any).content || (result as any).description || ''
+                          : (result as any).fileName || result.title,
+                        query
+                      )
+                    }}
                   />
                   <div className="flex items-center justify-between mt-1">
                     <div className="flex items-center space-x-2">
                       <span className="text-xs text-base-content/50">
-                        by {result.author.name || 'システム'}
+                        {result.type === 'article' ? '📄' : result.type === 'image' ? '🖼️' : result.type === 'video' ? '🎥' : '📋'}
+                      </span>
+                      <span className="text-xs text-base-content/50">
+                        by {result.author.displayName || result.author.name || 'システム'}
                       </span>
                       <span className="text-xs text-base-content/50">
                         {new Date(result.createdAt).toLocaleDateString('ja-JP')}
