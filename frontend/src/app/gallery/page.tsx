@@ -46,8 +46,16 @@ export default function GalleryPage() {
   const PAGE_SIZE = 24
 
   // Feature Flags for testing different ImageViewer versions
+  // ?poc=true - Force POC version (react-zoom-pan-pinch based)
+  // ?swipe=true - Use experimental swipe version (@use-gesture based)
+  // ?exp=swiper - Future Swiper.js experiment
   const usePOCImageViewer = typeof window !== 'undefined' && window.location.search.includes('poc=true')
   const useNewImageViewer = typeof window !== 'undefined' && window.location.search.includes('swipe=true')
+  const useSwiperExperiment = typeof window !== 'undefined' && window.location.search.includes('exp=swiper')
+
+  // POC版をデフォルト体験に昇格（2025-09-23）
+  // デフォルトは POC版（react-zoom-pan-pinch）を使用
+  const shouldUsePOCAsDefault = !usePOCImageViewer && !useNewImageViewer && !useSwiperExperiment
 
   const resolveMediaUrl = (rawUrl: string | null) => {
     if (!rawUrl) return ''
@@ -605,7 +613,7 @@ export default function GalleryPage() {
           onNavigate={setViewerIndex}
           resolveMediaUrl={resolveMediaUrl}
         />
-      ) : usePOCImageViewer ? (
+      ) : usePOCImageViewer || shouldUsePOCAsDefault ? (
         <POCImageViewer
           image={viewerImage && items.length > viewerIndex ? items[viewerIndex] : null}
           images={items}
