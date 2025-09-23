@@ -51,7 +51,11 @@ export default function ImageViewer({
   const [isZoomed, setIsZoomed] = useState(false)
   const [imageErrorCounts, setImageErrorCounts] = useState<Record<number, number>>({})
   const isActiveVideoRef = useRef(false)
-  const DEBUG_GESTURES = typeof window !== 'undefined' && Boolean((window as any).NEXT_PUBLIC_GALLERY_DEBUG)
+  const DEBUG_GESTURES =
+    (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_GALLERY_DEBUG === 'true') ||
+    (typeof window !== 'undefined' &&
+      (((window as any).NEXT_PUBLIC_GALLERY_DEBUG as unknown) === true ||
+        (window as any).NEXT_PUBLIC_GALLERY_DEBUG === 'true'))
 
   const getEffectiveWidth = () => {
     if (viewport.width > 1) return viewport.width
