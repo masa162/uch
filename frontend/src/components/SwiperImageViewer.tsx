@@ -34,6 +34,41 @@ type SwiperImageViewerProps = {
   resolveMediaUrl: (url: string | null) => string
 }
 
+const VideoNavigationControls = ({ onPrev, onNext, canPrev, canNext }: {
+  onPrev: () => void
+  onNext: () => void
+  canPrev: boolean
+  canNext: boolean
+}) => {
+  return (
+    <>
+      {canPrev && (
+        <motion.button
+          onClick={onPrev}
+          className="absolute left-3 md:left-6 top-1/2 -translate-y-1/2 h-12 w-12 md:h-14 md:w-14 flex items-center justify-center rounded-full bg-black/60 text-white text-2xl md:text-3xl backdrop-blur focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 z-50"
+          aria-label="Previous media"
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          ‹
+        </motion.button>
+      )}
+
+      {canNext && (
+        <motion.button
+          onClick={onNext}
+          className="absolute right-3 md:right-6 top-1/2 -translate-y-1/2 h-12 w-12 md:h-14 md:w-14 flex items-center justify-center rounded-full bg-black/60 text-white text-2xl md:text-3xl backdrop-blur focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 z-50"
+          aria-label="Next media"
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          ›
+        </motion.button>
+      )}
+    </>
+  )
+}
+
 export default function SwiperImageViewer({
   image,
   images,
@@ -56,12 +91,26 @@ export default function SwiperImageViewer({
       onClose()
     }
     if (event.key === 'ArrowLeft') {
-      swiperRef.current?.swiper?.slidePrev()
+      swiperRef.current?.slidePrev()
     }
     if (event.key === 'ArrowRight') {
-      swiperRef.current?.swiper?.slideNext()
+      swiperRef.current?.slideNext()
     }
   }, [onClose])
+
+  const handlePrevious = useCallback(() => {
+    if (currentIndex > 0) {
+      addDebugLog(`Navigate to previous: ${currentIndex - 1}`)
+      swiperRef.current?.slidePrev()
+    }
+  }, [currentIndex, addDebugLog])
+
+  const handleNext = useCallback(() => {
+    if (currentIndex < images.length - 1) {
+      addDebugLog(`Navigate to next: ${currentIndex + 1}`)
+      swiperRef.current?.slideNext()
+    }
+  }, [currentIndex, images.length, addDebugLog])
 
   useEffect(() => {
     document.addEventListener('keydown', handleKeyDown)
@@ -109,6 +158,8 @@ export default function SwiperImageViewer({
 
   if (!image) return null
 
+  const isCurrentVideoMedia = image.mime_type?.startsWith('video/') ?? false
+
   return (
     <motion.div
       className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center"
@@ -136,6 +187,7 @@ export default function SwiperImageViewer({
         </div>
         <div className="text-xs opacity-60 mb-1">
           📱 Pinch to zoom | 👆👆 Double-tap to toggle
+          {isCurrentVideoMedia && ' | 🎬 Video nav buttons'}
         </div>
         {debugLogs.map((log, i) => (
           <div key={i} className="truncate text-xs opacity-70">{log}</div>
@@ -218,6 +270,16 @@ export default function SwiperImageViewer({
             )
           })}
         </Swiper>
+
+        {/* Video Navigation Controls - 動画表示時のみ */}
+        {isCurrentVideoMedia && (
+          <VideoNavigationControls
+            onPrev={handlePrevious}
+            onNext={handleNext}
+            canPrev={currentIndex > 0}
+            canNext={currentIndex < images.length - 1}
+          />
+        )}
       </div>
 
       {/* Image Info */}
