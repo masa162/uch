@@ -6,6 +6,7 @@ import AuthenticatedLayout from '@/components/AuthenticatedLayout'
 import ImageViewer from '@/components/ImageViewer'
 import POCImageViewer from '@/components/POC_NewImageViewer'
 import NewImageViewer from '@/components/NewImageViewer'
+import SwiperImageViewer from '@/components/SwiperImageViewer'
 import VirtualGrid from '@/components/gallery/VirtualGrid'
 import VirtualList from '@/components/gallery/VirtualList'
 
@@ -604,7 +605,16 @@ export default function GalleryPage() {
       )}
 
       {/* 画像ビューアー */}
-      {useNewImageViewer ? (
+      {useSwiperExperiment ? (
+        <SwiperImageViewer
+          image={viewerImage && items.length > viewerIndex ? items[viewerIndex] : null}
+          images={items}
+          currentIndex={viewerIndex}
+          onClose={() => setViewerImage(null)}
+          onNavigate={setViewerIndex}
+          resolveMediaUrl={resolveMediaUrl}
+        />
+      ) : useNewImageViewer ? (
         <NewImageViewer
           image={viewerImage && items.length > viewerIndex ? items[viewerIndex] : null}
           images={items}
