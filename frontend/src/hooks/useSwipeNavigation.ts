@@ -3,16 +3,16 @@
 import { useState, useCallback, useMemo, useRef } from 'react'
 import { useGesture } from '@use-gesture/react'
 
-// スワイプ設定
+// スワイプ設定（モバイル最適化）
 export const SWIPE_CONFIG = {
-  // 方向判定
-  horizontalThreshold: 2,      // velocityX/velocityY > 2でX方向判定
+  // 方向判定（より敏感に）
+  horizontalThreshold: 1.5,    // velocityX/velocityY > 1.5でX方向判定
 
-  // 距離判定
-  distanceThreshold: 0.25,     // 画面幅の25%移動で遷移
+  // 距離判定（より少ない距離で遷移）
+  distanceThreshold: 0.15,     // 画面幅の15%移動で遷移
 
-  // 速度判定
-  velocityThreshold: 0.3,      // 最小フリック速度
+  // 速度判定（より低速でも反応）
+  velocityThreshold: 0.2,      // 最小フリック速度
 
   // 境界判定
   boundaryDetectionMargin: 0.9 // 境界90%位置でスワイプ有効
@@ -128,7 +128,7 @@ export const useSwipeNavigation = ({
     }, 300)
   }, [currentIndex, totalImages, onNavigate, onSwipeComplete, addDebugLog])
 
-  // ジェスチャーハンドラー
+  // ジェスチャーハンドラー（安定性重視）
   const gestureHandlers = useGesture({
     onDrag: ({
       movement: [mx, my],
@@ -137,7 +137,8 @@ export const useSwipeNavigation = ({
       cancel,
       direction: [dirX],
       active,
-      first
+      first,
+      event
     }) => {
       // 遷移中は無効
       if (isTransitioning) {
@@ -145,7 +146,28 @@ export const useSwipeNavigation = ({
         return
       }
 
-      // 1. ジェスチャー優先判定
+      // 1. 早期方向判定（より厳密に）
+      const absVx = Math.abs(vx)
+      const absVy = Math.abs(vy)
+      const absMx = Math.abs(mx)
+      const absMy = Math.abs(my)
+
+      // 最初のフレームでの方向判定を強化
+      if (first || absMx < 5) {
+        // 初期判定は距離ベース
+        if (absMy > absMx * 0.5) {
+          // 縦方向が強い場合は早期リターン
+          return
+        }
+      } else {
+        // 進行中は速度ベース
+        const isHorizontalSwipe = absVx > absVy * SWIPE_CONFIG.horizontalThreshold
+        if (!isHorizontalSwipe) {
+          return
+        }
+      }
+
+      // 2. ジェスチャー優先判定
       const priority = getGesturePriority(
         gestureState.scale,
         { x: gestureState.positionX, y: gestureState.positionY },
@@ -159,12 +181,8 @@ export const useSwipeNavigation = ({
         return
       }
 
-      // 2. スワイプ方向判定
-      const isHorizontalSwipe = Math.abs(vx) > Math.abs(vy) * SWIPE_CONFIG.horizontalThreshold
-
-      if (!isHorizontalSwipe && !first) {
-        return
-      }
+      // ブラウザのデフォルト動作を防止
+      event.preventDefault?.()
 
       // 3. スワイプ開始処理
       if (first) {
@@ -181,16 +199,16 @@ export const useSwipeNavigation = ({
       setSwipeDirection(direction)
       onSwipeProgress?.(Math.abs(progress), direction)
 
-      addDebugLog(`Swipe progress: ${(progress * 100).toFixed(1)}% (${direction})`)
+      addDebugLog(`Swipe progress: ${(progress * 100).toFixed(1)}% (${direction}) vel=${absVx.toFixed(2)}`)
 
-      // 5. スワイプ完了判定
+      // 5. スワイプ完了判定（より敏感に）
       if (last) {
         const swipeDistance = Math.abs(progress)
         const shouldTransition =
           swipeDistance > SWIPE_CONFIG.distanceThreshold ||
-          Math.abs(vx) > SWIPE_CONFIG.velocityThreshold
+          absVx > SWIPE_CONFIG.velocityThreshold
 
-        addDebugLog(`Swipe end: distance=${(swipeDistance * 100).toFixed(1)}% velocity=${Math.abs(vx).toFixed(2)} shouldTransition=${shouldTransition}`)
+        addDebugLog(`Swipe end: distance=${(swipeDistance * 100).toFixed(1)}% velocity=${absVx.toFixed(2)} shouldTransition=${shouldTransition}`)
 
         if (shouldTransition) {
           triggerImageTransition(direction, vx)
@@ -204,10 +222,9 @@ export const useSwipeNavigation = ({
     }
   }, {
     drag: {
-      axis: 'lock',
-      threshold: 10,
+      threshold: 5,        // 閾値を下げて敏感に
       filterTaps: true,
-      preventDefault: false // 条件付きで制御
+      preventDefault: true // より積極的に制御
     }
   })
 

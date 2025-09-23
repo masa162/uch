@@ -206,13 +206,15 @@ export default function NewImageViewer({
         ))}
       </div>
 
-      {/* Navigation Controls - ボタンは保持（フォールバック用） */}
-      <NavigationControls
-        onPrev={handlePrevious}
-        onNext={handleNext}
-        canPrev={currentIndex > 0}
-        canNext={currentIndex < images.length - 1}
-      />
+      {/* Navigation Controls - スワイプ専用化のため一時的に非表示 */}
+      {false && (
+        <NavigationControls
+          onPrev={handlePrevious}
+          onNext={handleNext}
+          canPrev={currentIndex > 0}
+          canNext={currentIndex < images.length - 1}
+        />
+      )}
 
       {/* Swipe Progress Indicator */}
       <AnimatePresence>
@@ -302,12 +304,13 @@ export default function NewImageViewer({
                 onLoad={() => addDebugLog('Image loaded successfully')}
                 onError={() => addDebugLog('Image load error')}
                 animate={{
-                  x: swipeProgress * (typeof window !== 'undefined' ? window.innerWidth : 0)
+                  x: isTransitioning ? 0 : swipeProgress * (typeof window !== 'undefined' ? window.innerWidth : 0)
                 }}
                 transition={{
-                  type: "spring",
-                  stiffness: 300,
-                  damping: 30
+                  type: isTransitioning ? "spring" : "tween",
+                  stiffness: 400,
+                  damping: 35,
+                  duration: isTransitioning ? 0.3 : 0
                 }}
               />
             </TransformComponent>
