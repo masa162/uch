@@ -1,7 +1,7 @@
 ﻿'use client'
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import type { MouseEvent } from 'react'
+import type { MouseEvent, PointerEvent } from 'react'
 import { animated, to, useSpring } from '@react-spring/web'
 import { useGesture } from '@use-gesture/react'
 
@@ -240,6 +240,10 @@ export default function ImageViewer({
       },
       onClick: ({ event }) => {
         if (isActiveVideoRef.current) return
+        const pointerType = (event as unknown as PointerEvent).pointerType as string | undefined
+        if (pointerType === 'touch') {
+          return
+        }
         const now = performance.now()
         if (now - lastTapRef.current < 280) {
           event.stopPropagation()
@@ -254,7 +258,8 @@ export default function ImageViewer({
         scaleBounds: { min: 1, max: 4 },
         rubberband: true,
         from: () => [zoomStateRef.current.scale, 0]
-      }
+      },
+      eventOptions: { passive: false }
     }
   )
 
@@ -289,6 +294,8 @@ export default function ImageViewer({
   if (!image) return null
 
   const slideWidth = getEffectiveWidth()
+  const activeMedia = images[activeIndex]
+  const activeIsVideo = Boolean(activeMedia?.mime_type?.startsWith('video/'))
 
   return (
     <div
@@ -297,6 +304,15 @@ export default function ImageViewer({
       className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center"
       style={{ touchAction: 'none' }}
       onClick={handleBackdropClick}
+      onPointerDown={(event: PointerEvent<HTMLDivElement>) => {
+        if (event.pointerType !== 'touch' || isActiveVideoRef.current) return
+        const now = event.timeStamp
+        if (now - lastTapRef.current < 280) {
+          event.preventDefault()
+          toggleZoom({ clientX: event.clientX, clientY: event.clientY })
+        }
+        lastTapRef.current = now
+      }}
     >
       <button
         onClick={onClose}
@@ -305,6 +321,28 @@ export default function ImageViewer({
       >
         ×
       </button>
+
+      {activeIsVideo && activeIndex > 0 && (
+        <button
+          type="button"
+          onClick={() => navigateTo(activeIndex - 1, true)}
+          className="absolute left-3 md:left-6 top-1/2 -translate-y-1/2 h-12 w-12 md:h-14 md:w-14 flex items-center justify-center rounded-full bg-black/60 text-white text-2xl md:text-3xl backdrop-blur focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 z-40"
+          aria-label="Previous media"
+        >
+          ‹
+        </button>
+      )}
+
+      {activeIsVideo && activeIndex < images.length - 1 && (
+        <button
+          type="button"
+          onClick={() => navigateTo(activeIndex + 1, true)}
+          className="absolute right-3 md:right-6 top-1/2 -translate-y-1/2 h-12 w-12 md:h-14 md:w-14 flex items-center justify-center rounded-full bg-black/60 text-white text-2xl md:text-3xl backdrop-blur focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 z-40"
+          aria-label="Next media"
+        >
+          ›
+        </button>
+      )}
 
       <animated.div
         ref={trackRef}
