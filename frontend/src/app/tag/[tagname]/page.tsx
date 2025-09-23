@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import AuthenticatedLayout from '@/components/AuthenticatedLayout'
 import ArticleCard from '@/components/ArticleCard'
 import Pagination from '@/components/Pagination'
 
@@ -70,121 +71,125 @@ export default function TagPage() {
     }
   }, [tagName, page])
 
+  let content
+
   if (isLoading) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-center items-center min-h-64">
-          <div className="loading loading-spinner loading-lg"></div>
-        </div>
+    content = (
+      <div className="flex justify-center items-center min-h-64">
+        <div className="loading loading-spinner loading-lg"></div>
       </div>
     )
-  }
-
-  if (error) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="alert alert-error">
-          <svg className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <span>エラー: {error}</span>
-        </div>
+  } else if (error) {
+    content = (
+      <div className="alert alert-error">
+        <svg className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span>エラー: {error}</span>
       </div>
+    )
+  } else {
+    content = (
+      <>
+        {/* パンくずナビゲーション */}
+        <div className="breadcrumbs text-sm mb-6">
+          <ul>
+            <li><Link href="/" className="text-primary hover:text-primary-focus">ホーム</Link></li>
+            <li><Link href="/tag" className="text-primary hover:text-primary-focus">タグ一覧</Link></li>
+            <li className="text-base-content opacity-70">タグ: {tagName}</li>
+          </ul>
+        </div>
+
+        {/* ヘッダー */}
+        <div className="mb-8">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="badge badge-primary badge-lg px-4 py-3">
+              🏷️ {tagName}
+            </div>
+            {tagInfo && (
+              <span className="text-base-content/70">
+                {tagInfo.count}件の記事
+              </span>
+            )}
+          </div>
+
+          <div className="divider"></div>
+        </div>
+
+        {/* 記事一覧 */}
+        {articles.length === 0 ? (
+          <div className="text-center py-16">
+            <div className="text-6xl mb-4">📝</div>
+            <h3 className="text-xl font-medium mb-2">タグ「{tagName}」の記事が見つかりません</h3>
+            <p className="text-base-content/70 mb-6">
+              このタグに関連する記事はまだ投稿されていません。
+            </p>
+            <div className="space-x-4">
+              <Link href="/" className="btn btn-primary">
+                ホームに戻る
+              </Link>
+              <Link href="/tag" className="btn btn-outline">
+                他のタグを探す
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="grid gap-6 md:gap-8">
+              {articles.map((article) => (
+                <ArticleCard
+                  key={article.id}
+                  article={article}
+                  className="border border-base-300 rounded-lg p-6 hover:shadow-lg transition-shadow"
+                />
+              ))}
+            </div>
+
+            {/* ページネーション */}
+            {pagination && pagination.total > pagination.limit && (
+              <div className="mt-12 flex justify-center">
+                <Pagination
+                  currentPage={pagination.page}
+                  totalPages={Math.ceil(pagination.total / pagination.limit)}
+                  onPageChange={(newPage) => {
+                    const url = new URL(window.location.href)
+                    url.searchParams.set('page', newPage.toString())
+                    window.history.pushState({}, '', url.toString())
+                    window.location.reload()
+                  }}
+                />
+              </div>
+            )}
+          </>
+        )}
+
+        {/* 関連タグ提案 (将来の機能として準備) */}
+        <div className="mt-16 p-6 bg-base-200 rounded-lg">
+          <h3 className="text-lg font-medium mb-4">💡 関連するタグを探す</h3>
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href="/tag"
+              className="btn btn-sm btn-outline"
+            >
+              すべてのタグを見る
+            </Link>
+            <Link
+              href={`/search?q=${encodeURIComponent(tagName)}`}
+              className="btn btn-sm btn-ghost"
+            >
+              「{tagName}」で詳細検索
+            </Link>
+          </div>
+        </div>
+      </>
     )
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* パンくずナビゲーション */}
-      <div className="breadcrumbs text-sm mb-6">
-        <ul>
-          <li><Link href="/" className="text-primary hover:text-primary-focus">ホーム</Link></li>
-          <li><Link href="/search" className="text-primary hover:text-primary-focus">検索</Link></li>
-          <li className="text-base-content opacity-70">タグ: {tagName}</li>
-        </ul>
+    <AuthenticatedLayout>
+      <div className="space-y-6">
+        {content}
       </div>
-
-      {/* ヘッダー */}
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="badge badge-primary badge-lg px-4 py-3">
-            🏷️ {tagName}
-          </div>
-          {tagInfo && (
-            <span className="text-base-content/70">
-              {tagInfo.count}件の記事
-            </span>
-          )}
-        </div>
-
-        <div className="divider"></div>
-      </div>
-
-      {/* 記事一覧 */}
-      {articles.length === 0 ? (
-        <div className="text-center py-16">
-          <div className="text-6xl mb-4">📝</div>
-          <h3 className="text-xl font-medium mb-2">タグ「{tagName}」の記事が見つかりません</h3>
-          <p className="text-base-content/70 mb-6">
-            このタグに関連する記事はまだ投稿されていません。
-          </p>
-          <div className="space-x-4">
-            <Link href="/" className="btn btn-primary">
-              ホームに戻る
-            </Link>
-            <Link href="/search" className="btn btn-outline">
-              他のタグを探す
-            </Link>
-          </div>
-        </div>
-      ) : (
-        <>
-          <div className="grid gap-6 md:gap-8">
-            {articles.map((article) => (
-              <ArticleCard
-                key={article.id}
-                article={article}
-                className="border border-base-300 rounded-lg p-6 hover:shadow-lg transition-shadow"
-              />
-            ))}
-          </div>
-
-          {/* ページネーション */}
-          {pagination && pagination.total > pagination.limit && (
-            <div className="mt-12 flex justify-center">
-              <Pagination
-                currentPage={pagination.page}
-                totalPages={Math.ceil(pagination.total / pagination.limit)}
-                onPageChange={(newPage) => {
-                  const url = new URL(window.location.href)
-                  url.searchParams.set('page', newPage.toString())
-                  window.history.pushState({}, '', url.toString())
-                  window.location.reload()
-                }}
-              />
-            </div>
-          )}
-        </>
-      )}
-
-      {/* 関連タグ提案 (将来の機能として準備) */}
-      <div className="mt-16 p-6 bg-base-200 rounded-lg">
-        <h3 className="text-lg font-medium mb-4">💡 関連するタグを探す</h3>
-        <div className="flex flex-wrap gap-2">
-          <Link
-            href="/search"
-            className="btn btn-sm btn-outline"
-          >
-            すべてのタグを見る
-          </Link>
-          <Link
-            href={`/search?q=${encodeURIComponent(tagName)}`}
-            className="btn btn-sm btn-ghost"
-          >
-            「{tagName}」で詳細検索
-          </Link>
-        </div>
-      </div>
-    </div>
+    </AuthenticatedLayout>
   )
 }
