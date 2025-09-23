@@ -226,7 +226,6 @@ async function searchArticles(
   `;
 
   const params: any[] = [
-    `%${searchQuery.toLowerCase()}%`,
     `%${searchQuery.toLowerCase()}%`
   ];
 
@@ -319,11 +318,10 @@ async function searchMedia(
       u.email as user_email
     FROM media m
     LEFT JOIN users u ON m.user_id = u.id
-    WHERE (LOWER(m.original_filename) LIKE ? OR LOWER(m.description) LIKE ?)
+    WHERE LOWER(m.original_filename) LIKE ?
   `;
 
   const params: any[] = [
-    `%${searchQuery.toLowerCase()}%`,
     `%${searchQuery.toLowerCase()}%`
   ];
 
@@ -396,7 +394,6 @@ async function searchMedia(
         email: media.user_email || null
       },
       metadata: {
-        description: media.description,
         fileSize: media.file_size,
         mimeType: media.mime_type
       }
@@ -441,24 +438,24 @@ async function getContentTypeCounts(env: Env, searchQuery: string): Promise<{ ty
     const mediaCount = await queryAll(env, `
       SELECT COUNT(*) as count
       FROM media m
-      WHERE (LOWER(m.original_filename) LIKE ? OR LOWER(m.description) LIKE ?)
-    `, [`%${searchQuery.toLowerCase()}%`, `%${searchQuery.toLowerCase()}%`]);
+      WHERE LOWER(m.original_filename) LIKE ?
+    `, [`%${searchQuery.toLowerCase()}%`]);
 
     // Count images
     const imageCount = await queryAll(env, `
       SELECT COUNT(*) as count
       FROM media m
-      WHERE (LOWER(m.original_filename) LIKE ? OR LOWER(m.description) LIKE ?)
+      WHERE LOWER(m.original_filename) LIKE ?
       AND m.mime_type LIKE 'image/%'
-    `, [`%${searchQuery.toLowerCase()}%`, `%${searchQuery.toLowerCase()}%`]);
+    `, [`%${searchQuery.toLowerCase()}%`]);
 
     // Count videos
     const videoCount = await queryAll(env, `
       SELECT COUNT(*) as count
       FROM media m
-      WHERE (LOWER(m.original_filename) LIKE ? OR LOWER(m.description) LIKE ?)
+      WHERE LOWER(m.original_filename) LIKE ?
       AND m.mime_type LIKE 'video/%'
-    `, [`%${searchQuery.toLowerCase()}%`, `%${searchQuery.toLowerCase()}%`]);
+    `, [`%${searchQuery.toLowerCase()}%`]);
 
     return [
       { type: 'all', count: (articleCount[0]?.count || 0) + (mediaCount[0]?.count || 0) },
