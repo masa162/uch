@@ -113,10 +113,6 @@ const routes: Record<string, (req: Request, env: Env) => Promise<Response> | Res
       }
     });
   },
-  "GET /api/articles": async (req, env) => {
-    const response = await handleMemories(req, env);
-    return addCorsHeaders(response);
-  }, // エイリアス
   "GET /api/articles/search": (req, env) => handleMemories(req, env), // 検索用エイリアス（qパラメータ対応）
   "OPTIONS /api/search": (req, env) => {
     return new Response(null, {
@@ -154,6 +150,20 @@ const routes: Record<string, (req: Request, env: Env) => Promise<Response> | Res
   "GET /api/tags": async (req, env) => {
     const mod = await import("./routes/articles");
     return mod.getTags(req, env);
+  },
+  "GET /api/articles": async (req, env) => {
+    const url = new URL(req.url);
+    const tagParam = url.searchParams.get('tag');
+
+    if (tagParam) {
+      // タグフィルタリング
+      const mod = await import("./routes/articles");
+      return mod.getArticlesByTag(req, env);
+    } else {
+      // 通常の記事一覧 (既存の検索機能を利用)
+      const mod = await import("./routes/search");
+      return mod.handleUnifiedSearch(req, env);
+    }
   },
   "OPTIONS /api/media": (req, env) => {
     return new Response(null, {

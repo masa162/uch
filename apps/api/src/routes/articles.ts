@@ -488,9 +488,116 @@ export async function getTags(req: Request, env: Env) {
     });
   } catch (error: any) {
     console.error('タグ一覧取得エラー:', error);
-    return new Response(JSON.stringify({ 
+    return new Response(JSON.stringify({
       error: "タグ一覧の取得に失敗しました",
-      details: error.message 
+      details: error.message
+    }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+}
+
+export async function getArticlesByTag(req: Request, env: Env) {
+  try {
+    const url = new URL(req.url);
+    const tagParam = url.searchParams.get('tag');
+    const page = parseInt(url.searchParams.get('page') || '1', 10);
+    const limit = Math.min(parseInt(url.searchParams.get('limit') || '20', 10), 100);
+
+    if (!tagParam) {
+      return new Response(JSON.stringify({
+        error: "タグパラメータが必要です"
+      }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    const offset = (page - 1) * limit;
+
+    // タグ名をデコード
+    const tagName = decodeURIComponent(tagParam);
+
+    console.log('Getting articles by tag:', tagName, 'page:', page, 'limit:', limit);
+
+    // タグ付き記事を取得するクエリ
+    const query = `
+      SELECT
+        m.*,
+        u.name as user_name,
+        u.email as user_email,
+        (SELECT GROUP_CONCAT(t2.name) FROM tags t2 JOIN memory_tags mt2 ON t2.id = mt2.tag_id WHERE mt2.memory_id = m.id) as tags_concat
+      FROM memories m
+      LEFT JOIN users u ON m.user_id = u.id
+      JOIN memory_tags mt ON m.id = mt.memory_id
+      JOIN tags t ON mt.tag_id = t.id
+      WHERE t.name = ?
+      ORDER BY m.created_at DESC
+      LIMIT ? OFFSET ?
+    `;
+
+    const articles = await queryAll(env, query, [tagName, limit, offset]);
+
+    // 総数を取得
+    const countQuery = `
+      SELECT COUNT(DISTINCT m.id) as total
+      FROM memories m
+      JOIN memory_tags mt ON m.id = mt.memory_id
+      JOIN tags t ON mt.tag_id = t.id
+      WHERE t.name = ?
+    `;
+    const countResult = await queryAll(env, countQuery, [tagName]);
+    const total = countResult[0]?.total || 0;
+
+    // レスポンス形式を統一
+    const formattedArticles = articles.map((article: any) => {
+      const tags = article.tags_concat ? article.tags_concat.split(',') : [];
+
+      return {
+        id: article.id.toString(),
+        articleId: article.article_id || article.id.toString(),
+        title: article.title,
+        slug: article.article_id || article.id.toString(),
+        description: article.content ? article.content.substring(0, 150) + '...' : null,
+        content: article.content || '',
+        pubDate: article.created_at,
+        heroImageUrl: null,
+        tags: tags,
+        isPublished: true,
+        createdAt: article.created_at,
+        updatedAt: article.updated_at,
+        author: {
+          name: article.user_name || 'システム',
+          email: article.user_email || null,
+          displayName: article.user_name || 'システム'
+        }
+      };
+    });
+
+    const response = {
+      articles: formattedArticles,
+      pagination: {
+        page,
+        limit,
+        total,
+        hasMore: (page * limit) < total
+      },
+      tag: {
+        name: tagName,
+        count: total
+      }
+    };
+
+    return new Response(JSON.stringify(response), {
+      headers: { "Content-Type": "application/json" },
+    });
+
+  } catch (error: any) {
+    console.error('タグ別記事取得エラー:', error);
+    return new Response(JSON.stringify({
+      error: "タグ別記事の取得に失敗しました",
+      details: error.message
     }), {
       status: 500,
       headers: { "Content-Type": "application/json" },

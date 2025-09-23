@@ -60,7 +60,7 @@ export default function Sidebar({ onNavigate }: SidebarProps = {}) {
   }
 
   const handleTagClick = (tagName: string) => {
-    router.push(`/search?q=${encodeURIComponent(tagName)}`)
+    router.push(`/tag/${encodeURIComponent(tagName)}`)
     onNavigate?.()
   }
 

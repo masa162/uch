@@ -26,7 +26,12 @@
       "Bash(cat:*)",
       "Bash(chmod:*)",
       "Bash(ssh-add:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(npm run lint)",
+      "Bash(wrangler deploy:*)",
+      "Bash(wrangler tail:*)",
+      "WebSearch",
+      "Read(//Users/nakayamamasayuki/Documents/GitHub/**)"
     ],
     "deny": [],
     "ask": []
