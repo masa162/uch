@@ -154,16 +154,22 @@ const routes: Record<string, (req: Request, env: Env) => Promise<Response> | Res
   "GET /api/articles": async (req, env) => {
     const url = new URL(req.url);
     const tagParam = url.searchParams.get('tag');
+    const searchQuery = url.searchParams.get('q');
 
     if (tagParam) {
       // タグフィルタリング
       const mod = await import("./routes/articles");
       return mod.getArticlesByTag(req, env);
-    } else {
-      // 通常の記事一覧 (既存の検索機能を利用)
+    }
+
+    if (searchQuery && searchQuery.trim().length > 0) {
+      // 検索キーワードが指定されている場合は統一検索APIを利用
       const mod = await import("./routes/search");
       return mod.handleUnifiedSearch(req, env);
     }
+
+    // キーワード指定がない通常の一覧は既存のmemories実装を利用
+    return handleMemories(req, env);
   },
   "OPTIONS /api/media": (req, env) => {
     return new Response(null, {
