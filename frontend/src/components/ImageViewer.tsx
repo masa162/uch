@@ -51,6 +51,7 @@ export default function ImageViewer({
   const [isZoomed, setIsZoomed] = useState(false)
   const [imageErrorCounts, setImageErrorCounts] = useState<Record<number, number>>({})
   const isActiveVideoRef = useRef(false)
+  const DEBUG_GESTURES = process.env.NEXT_PUBLIC_GALLERY_DEBUG === 'true'
 
   const getEffectiveWidth = () => {
     if (viewport.width > 1) return viewport.width
@@ -153,6 +154,38 @@ export default function ImageViewer({
   }, [])
 
   useEffect(() => {
+    if (!DEBUG_GESTURES) return
+    const node = containerRef.current
+    if (!node) return
+
+    const listener = (event: Event) => {
+      if (!DEBUG_GESTURES) return
+      if (event instanceof TouchEvent) {
+        const touch = event.changedTouches[0]
+        console.log('[GalleryDebug] touch-event', {
+          type: event.type,
+          touches: event.touches.length,
+          changed: event.changedTouches.length,
+          x: touch?.clientX,
+          y: touch?.clientY,
+          timeStamp: event.timeStamp,
+          activeIndex
+        })
+      } else {
+        console.log('[GalleryDebug] event', { type: event.type, timeStamp: event.timeStamp, activeIndex })
+      }
+    }
+
+    const options: AddEventListenerOptions = { passive: false }
+    const types: Array<keyof GlobalEventHandlersEventMap> = ['touchstart', 'touchmove', 'touchend', 'touchcancel']
+    types.forEach(type => node.addEventListener(type, listener, options))
+
+    return () => {
+      types.forEach(type => node.removeEventListener(type, listener, options))
+    }
+  }, [DEBUG_GESTURES, activeIndex])
+
+  useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         onClose()
@@ -230,6 +263,13 @@ export default function ImageViewer({
         if (isActiveVideoRef.current) return
         event.preventDefault()
         applyZoom(nextScale, { x: origin[0], y: origin[1] })
+        if (DEBUG_GESTURES) {
+          console.log('[GalleryDebug] pinch', {
+            nextScale,
+            origin,
+            activeIndex
+          })
+        }
       },
       onWheel: ({ event, ctrlKey }) => {
         if (!ctrlKey || isActiveVideoRef.current) return
@@ -237,6 +277,14 @@ export default function ImageViewer({
         const delta = (-event.deltaY / 800) || 0
         const targetScale = zoomStateRef.current.scale + delta
         applyZoom(targetScale, { x: event.clientX, y: event.clientY })
+        if (DEBUG_GESTURES) {
+          console.log('[GalleryDebug] wheel', {
+            targetScale,
+            ctrlKey,
+            delta,
+            activeIndex
+          })
+        }
       }
     },
     {
