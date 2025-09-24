@@ -3,9 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import UploadWidget from '@/components/UploadWidget'
 import AuthenticatedLayout from '@/components/AuthenticatedLayout'
-import ImageViewer from '@/components/ImageViewer'
 import POCImageViewer from '@/components/POC_NewImageViewer'
-import NewImageViewer from '@/components/NewImageViewer'
 import SwiperImageViewer from '@/components/SwiperImageViewer'
 import VirtualGrid from '@/components/gallery/VirtualGrid'
 import VirtualList from '@/components/gallery/VirtualList'
@@ -48,15 +46,11 @@ export default function GalleryPage() {
 
   // Feature Flags for testing different ImageViewer versions
   // ?poc=true - Use POC version (react-zoom-pan-pinch based)
-  // ?swipe=true - Use experimental swipe version (@use-gesture based)
-  // ?original=true - Use original ImageViewer
   const usePOCImageViewer = typeof window !== 'undefined' && window.location.search.includes('poc=true')
-  const useNewImageViewer = typeof window !== 'undefined' && window.location.search.includes('swipe=true')
-  const useOriginalViewer = typeof window !== 'undefined' && window.location.search.includes('original=true')
 
   // Swiper.js版をデフォルト体験に昇格（2025-09-23）
   // デフォルトは Swiper.js版（LINE風 + ズーム機能完備）を使用
-  const shouldUseSwiperAsDefault = !usePOCImageViewer && !useNewImageViewer && !useOriginalViewer
+  const shouldUseSwiperAsDefault = !usePOCImageViewer
 
   const resolveMediaUrl = (rawUrl: string | null) => {
     if (!rawUrl) return ''
@@ -392,17 +386,13 @@ export default function GalleryPage() {
             <span className="font-semibold">現在のViewer:</span>
             <span className="px-2 py-1 bg-blue-100 rounded">
               {shouldUseSwiperAsDefault ? 'Swiper.js (Default - 100点!)' :
-               useNewImageViewer ? 'SwipeNavigation (@use-gesture)' :
                usePOCImageViewer ? 'POC (react-zoom-pan-pinch)' :
-               useOriginalViewer ? 'Original' :
                'Swiper.js (Default)'}
             </span>
             <span className="text-gray-600">|</span>
             <span>試すには:</span>
             <a href="/gallery" className="px-2 py-1 bg-green-100 hover:bg-green-200 rounded transition-colors">Default (Swiper)</a>
             <a href="?poc=true" className="px-2 py-1 bg-purple-100 hover:bg-purple-200 rounded transition-colors">?poc=true</a>
-            <a href="?swipe=true" className="px-2 py-1 bg-yellow-100 hover:bg-yellow-200 rounded transition-colors">?swipe=true</a>
-            <a href="?original=true" className="px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded transition-colors">?original=true</a>
           </div>
         </div>
       )}
@@ -636,26 +626,8 @@ export default function GalleryPage() {
           onNavigate={setViewerIndex}
           resolveMediaUrl={resolveMediaUrl}
         />
-      ) : useNewImageViewer ? (
-        <NewImageViewer
-          image={viewerImage && items.length > viewerIndex ? items[viewerIndex] : null}
-          images={items}
-          currentIndex={viewerIndex}
-          onClose={() => setViewerImage(null)}
-          onNavigate={setViewerIndex}
-          resolveMediaUrl={resolveMediaUrl}
-        />
       ) : usePOCImageViewer ? (
         <POCImageViewer
-          image={viewerImage && items.length > viewerIndex ? items[viewerIndex] : null}
-          images={items}
-          currentIndex={viewerIndex}
-          onClose={() => setViewerImage(null)}
-          onNavigate={setViewerIndex}
-          resolveMediaUrl={resolveMediaUrl}
-        />
-      ) : useOriginalViewer ? (
-        <ImageViewer
           image={viewerImage && items.length > viewerIndex ? items[viewerIndex] : null}
           images={items}
           currentIndex={viewerIndex}
