@@ -1,22 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'standalone',
+  output: 'export',
+  trailingSlash: true,
   reactStrictMode: true,
   
-  async rewrites() {
-    // Proxy API endpoints to the API server
-    const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.uchinokiroku.com'
-    return [
-      {
-        source: '/api/auth/:path*',
-        destination: `${apiBase}/api/auth/:path*`,
-      },
-      {
-        source: '/api/:path*',
-        destination: `${apiBase}/api/:path*`,
-      },
-    ]
-  },
+  // Note: rewrites are not supported in export mode
   
   images: {
     remotePatterns: [
