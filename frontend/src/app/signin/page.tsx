@@ -341,20 +341,6 @@ function SignInView() {
               </button>
             </div>
 
-            <div className="divider">または</div>
-
-            <div className="text-center">
-              <p className="text-sm text-base-content/70 mb-4">
-                あいことばをお持ちの方はこちら
-              </p>
-              <button
-                onClick={() => router.push('/')}
-                className="btn btn-ghost w-full"
-              >
-                🏠 あいことばで入室
-              </button>
-            </div>
-
             <div className="text-center text-xs text-base-content/50">
               <p>サインインすることで、</p>
               <p>家族の思い出を安全に共有できます 💝</p>
