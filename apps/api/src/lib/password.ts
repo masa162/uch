@@ -3,14 +3,12 @@ import bcrypt from 'bcryptjs';
 const SALT_ROUNDS = 10;
 
 export function validatePasswordStrength(password: string): { ok: boolean; message?: string } {
-  if (!password || password.length < 8) {
-    return { ok: false, message: 'パスワードは8文字以上でお願いします。' };
+  if (!password || password.trim().length === 0) {
+    return { ok: false, message: 'あいことばを入力してくださいね 😊' };
   }
 
-  if (!/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) {
-    return { ok: false, message: '英字と数字をどちらも含めてください。' };
-  }
-
+  // 高齢者向け設計：1文字以上あればOK
+  // 「11」「aa」「はなこ」「アムロ」など、覚えやすいものなら何でも可能
   return { ok: true };
 }
 

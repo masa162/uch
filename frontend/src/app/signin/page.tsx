@@ -80,8 +80,8 @@ function SignInView() {
   }
 
   const handleEmailLogin = async () => {
-    if (!emailLoginForm.email || !emailLoginForm.password) {
-      setError('メールアドレスとあいことばを入力してください。')
+    if (!emailLoginForm.email || !emailLoginForm.password.trim()) {
+      setError('メールアドレスとあいことばを入力してくださいね 😊')
       return
     }
 
@@ -125,8 +125,8 @@ function SignInView() {
   }
 
   const handleEmailSignup = async () => {
-    if (!emailSignupForm.email || !emailSignupForm.password) {
-      setError('メールアドレスとあたらしいあいことばを入力してください。')
+    if (!emailSignupForm.email || !emailSignupForm.password.trim()) {
+      setError('メールアドレスとあたらしいあいことばを入力してくださいね 😊')
       return
     }
 
@@ -268,7 +268,7 @@ function SignInView() {
                 type="password"
                 value={emailLoginForm.password}
                 onChange={(e) => setEmailLoginForm(prev => ({ ...prev, password: e.target.value }))}
-                placeholder="あいことば"
+                placeholder="あいことば（好きな文字でOK）"
                 className="input input-bordered w-full"
                 autoComplete="current-password"
               />
@@ -315,7 +315,7 @@ function SignInView() {
                 type="password"
                 value={emailSignupForm.password}
                 onChange={(e) => setEmailSignupForm(prev => ({ ...prev, password: e.target.value }))}
-                placeholder="あたらしい あいことば"
+                placeholder="あたらしい あいことば（覚えやすいもので）"
                 className="input input-bordered w-full"
                 autoComplete="new-password"
               />
