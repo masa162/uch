@@ -294,7 +294,7 @@ export async function createSessionCookie(
     "Path=/",
     "HttpOnly",
     "Secure",
-    "SameSite=Lax",
+    "SameSite=None",
   ];
   
   // 本番のみ Cookie Domain を付与

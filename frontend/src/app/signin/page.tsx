@@ -112,7 +112,9 @@ function SignInView() {
       setInfo(data?.message || 'ようこそ。おかえりなさい 🏠')
 
       if (typeof window !== 'undefined') {
-        window.location.href = '/?auth=success'
+        setEmailLoginForm({ email: '', password: '' })
+        await new Promise(resolve => setTimeout(resolve, 300))
+        router.replace('/?auth=success')
       }
     } catch (err) {
       console.error('Email login error', err)
@@ -156,7 +158,9 @@ function SignInView() {
       setInfo(data?.message || '登録が完了しました 💝')
 
       if (typeof window !== 'undefined') {
-        window.location.href = '/?auth=success'
+        setEmailSignupForm({ name: '', email: '', password: '' })
+        await new Promise(resolve => setTimeout(resolve, 300))
+        router.replace('/?auth=success')
       }
     } catch (err) {
       console.error('Email signup error', err)
