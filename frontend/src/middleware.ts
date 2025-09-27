@@ -2,7 +2,16 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 // 認証が不要なパス
-const publicPaths = ['/landing', '/api', '/_next', '/images', '/favicon.ico', '/site.webmanifest']
+const publicPaths = [
+  '/landing',
+  '/signin',
+  '/reset-password',
+  '/api',
+  '/_next',
+  '/images',
+  '/favicon.ico',
+  '/site.webmanifest',
+]
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
