@@ -12,22 +12,22 @@ type AuthenticatedLayoutProps = {
 };
 
 export default function AuthenticatedLayout({ children }: AuthenticatedLayoutProps) {
-  const { user, loading } = useAuth()
+  const { user, authLoading } = useAuth()
   const router = useRouter()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   useEffect(() => {
-    if (loading) return // ローディング中は何もしない
-    
+    if (authLoading) return // ローディング中は何もしない
+
     // ユーザーがない場合のみランディング画面にリダイレクト
     if (!user) {
       router.push('/landing')
       return
     }
-  }, [loading, router, user])
+  }, [authLoading, router, user])
 
   // 認証されていない場合は何も表示しない（セキュリティ強化）
-  if (!loading && !user) {
+  if (!authLoading && !user) {
     return (
       <div className="min-h-screen bg-base-200 flex items-center justify-center">
         <div className="text-center">
@@ -39,7 +39,7 @@ export default function AuthenticatedLayout({ children }: AuthenticatedLayoutPro
   }
 
   // ローディング中の場合はローディング画面を表示
-  if (loading) {
+  if (authLoading) {
     return (
       <div className="min-h-screen bg-base-200 flex items-center justify-center">
         <div className="text-center">

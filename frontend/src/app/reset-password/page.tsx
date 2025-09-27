@@ -158,7 +158,7 @@ function ResetPasswordContent() {
                 <label className="form-control">
                   <span className="label-text">あたらしいパスワード</span>
                   <input
-                    type="password"
+                    type="text"
                     className="input input-bordered"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -168,7 +168,7 @@ function ResetPasswordContent() {
                 <label className="form-control">
                   <span className="label-text">パスワードの確認</span>
                   <input
-                    type="password"
+                    type="text"
                     className="input input-bordered"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}

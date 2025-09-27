@@ -97,19 +97,19 @@ export async function handleEmailLogin(req: Request, env: Env) {
     const password = payload.password?.trim() ?? '';
 
     if (!email || !password) {
-      return jsonResponse({ ok: false, message: 'メールアドレスとあいことばを入力してください。' }, { status: 400 });
+      return jsonResponse({ ok: false, message: 'メールアドレスとパスワードを入力してください。' }, { status: 400 });
     }
 
     const user = await getUserByEmail(env.DB, email);
 
     if (!user || !user.password_hash || user.email_login_enabled !== 1) {
-      return jsonResponse({ ok: false, message: 'メールアドレスまたはあいことばが違うようです。' }, { status: 401 });
+      return jsonResponse({ ok: false, message: 'メールアドレスまたはパスワードが違うようです。' }, { status: 401 });
     }
 
     const valid = await verifyPassword(password, user.password_hash);
 
     if (!valid) {
-      return jsonResponse({ ok: false, message: 'メールアドレスまたはあいことばが違うようです。' }, { status: 401 });
+      return jsonResponse({ ok: false, message: 'メールアドレスまたはパスワードが違うようです。' }, { status: 401 });
     }
 
     const cookie = await createSessionCookie(
@@ -175,7 +175,7 @@ export async function handleEmailResetConfirm(req: Request, env: Env) {
     const password = payload.password?.trim() ?? '';
 
     if (!token || !password) {
-      return jsonResponse({ ok: false, message: 'トークンと新しいあいことばを入力してください。' }, { status: 400 });
+      return jsonResponse({ ok: false, message: 'トークンと新しいパスワードを入力してください。' }, { status: 400 });
     }
 
     const passwordCheck = validatePasswordStrength(password);
@@ -209,7 +209,7 @@ export async function handleEmailResetConfirm(req: Request, env: Env) {
     await touchUserLastLogin(env.DB, user.id);
 
     return jsonResponse(
-      { ok: true, message: 'あたらしいあいことばを設定しました。' },
+      { ok: true, message: 'あたらしいパスワードを設定しました。' },
       {
         headers: {
           'Set-Cookie': cookie,

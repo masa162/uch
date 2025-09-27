@@ -27,7 +27,7 @@ interface Article {
 }
 
 export default function HomePage() {
-  const { user, checkNameSetup } = useAuth();
+  const { user, checkNameSetup, authLoading } = useAuth();
   const router = useRouter();
   const [recentArticles, setRecentArticles] = useState<Article[]>([])
   const [loading, setLoading] = useState(true)
@@ -36,11 +36,11 @@ export default function HomePage() {
 
   // 未認証ユーザーをランディングページにリダイレクト
   useEffect(() => {
-    if (!loading && !user) {
+    if (!authLoading && !user) {
       router.push('/landing')
       return
     }
-  }, [loading, user, router])
+  }, [authLoading, user, router])
 
   useEffect(() => {
     const fetchRecentArticles = async () => {

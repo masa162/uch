@@ -114,7 +114,8 @@ function SignInView() {
       if (typeof window !== 'undefined') {
         setEmailLoginForm({ email: '', password: '' })
         await new Promise(resolve => setTimeout(resolve, 300))
-        router.replace('/?auth=success')
+        // 直接メインページに遷移するよう変更
+        router.replace('/')
       }
     } catch (err) {
       console.error('Email login error', err)
@@ -265,7 +266,7 @@ function SignInView() {
                 autoComplete="email"
               />
               <input
-                type="password"
+                type="text"
                 value={emailLoginForm.password}
                 onChange={(e) => setEmailLoginForm(prev => ({ ...prev, password: e.target.value }))}
                 placeholder="あなたのパスワード"
@@ -312,7 +313,7 @@ function SignInView() {
                 autoComplete="email"
               />
               <input
-                type="password"
+                type="text"
                 value={emailSignupForm.password}
                 onChange={(e) => setEmailSignupForm(prev => ({ ...prev, password: e.target.value }))}
                 placeholder="あたらしいパスワード（覚えやすいもので）"

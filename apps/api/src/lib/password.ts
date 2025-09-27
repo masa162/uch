@@ -4,7 +4,7 @@ const SALT_ROUNDS = 10;
 
 export function validatePasswordStrength(password: string): { ok: boolean; message?: string } {
   if (!password || password.trim().length === 0) {
-    return { ok: false, message: 'あいことばを入力してくださいね 😊' };
+    return { ok: false, message: 'パスワードを入力してくださいね 😊' };
   }
 
   // 高齢者向け設計：1文字以上あればOK
