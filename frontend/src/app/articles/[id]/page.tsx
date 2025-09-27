@@ -144,11 +144,6 @@ function HLSVideoPlayer({ src, poster, media }: { src: string; poster?: string; 
   )
 }
 
-// Skip static generation for dynamic routes in export mode
-export async function generateStaticParams() {
-  return []
-}
-
 export default function ArticleDetailPage() {
   const params = useParams<{ id: string }>()
   const router = useRouter()

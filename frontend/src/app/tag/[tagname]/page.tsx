@@ -21,11 +21,6 @@ interface ArticlesByTagResponse {
   }
 }
 
-// Skip static generation for dynamic routes in export mode
-export async function generateStaticParams() {
-  return []
-}
-
 export default function TagPage() {
   const params = useParams()
   const searchParams = useSearchParams()

@@ -18,6 +18,23 @@ const nextConfig = {
       },
     ],
   },
+
+  // Skip building dynamic routes during static export
+  exportPathMap: async function (defaultPathMap, { dev, dir, outDir, distDir, buildId }) {
+    // Return only static paths, skip dynamic routes
+    return {
+      '/': { page: '/' },
+      '/landing': { page: '/landing' },
+      '/signin': { page: '/signin' },
+      '/reset-password': { page: '/reset-password' },
+      '/articles': { page: '/articles' },
+      '/articles/new': { page: '/articles/new' },
+      '/search': { page: '/search' },
+      '/profile': { page: '/profile' },
+      '/gallery': { page: '/gallery' },
+      // Dynamic routes will be handled client-side
+    }
+  },
   
   webpack: (config) => {
     config.watchOptions = {
