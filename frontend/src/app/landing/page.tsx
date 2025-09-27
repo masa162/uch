@@ -73,10 +73,9 @@ export default function LandingPage() {
           <img
             src="/images/ogp/ogp.png"
             alt="うちのきろく"
-            className="mx-auto w-32 h-32 rounded-2xl shadow-lg mb-4"
+            className="mx-auto max-w-xs h-auto rounded-2xl shadow-lg mb-6"
           />
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">うちのきろく</h1>
-          <p className="text-gray-600">家族の大切な思い出を、やさしく残す場所</p>
+          <p className="text-gray-600 text-lg">家族の大切な思い出を、やさしく残す場所</p>
         </div>
 
         {!showAuth ? (
