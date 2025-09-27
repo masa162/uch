@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useParams, useSearchParams } from 'next/navigation'
+import { useParams, useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import AuthenticatedLayout from '@/components/AuthenticatedLayout'
 import ArticleCard from '@/components/ArticleCard'
@@ -21,9 +21,15 @@ interface ArticlesByTagResponse {
   }
 }
 
+// Skip static generation for dynamic routes in export mode
+export async function generateStaticParams() {
+  return []
+}
+
 export default function TagPage() {
   const params = useParams()
   const searchParams = useSearchParams()
+  const router = useRouter()
   const tagName = decodeURIComponent(params.tagname as string)
   const page = parseInt(searchParams.get('page') || '1', 10)
 
@@ -152,10 +158,9 @@ export default function TagPage() {
                   currentPage={pagination.page}
                   totalPages={Math.ceil(pagination.total / pagination.limit)}
                   onPageChange={(newPage) => {
-                    const url = new URL(window.location.href)
-                    url.searchParams.set('page', newPage.toString())
-                    window.history.pushState({}, '', url.toString())
-                    window.location.reload()
+                    const currentParams = new URLSearchParams(searchParams.toString())
+                    currentParams.set('page', newPage.toString())
+                    router.push(`/tag/${encodeURIComponent(tagName)}?${currentParams.toString()}`)
                   }}
                 />
               </div>

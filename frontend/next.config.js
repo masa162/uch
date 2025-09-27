@@ -3,10 +3,12 @@ const nextConfig = {
   output: 'export',
   trailingSlash: true,
   reactStrictMode: true,
-  
+
   // Note: rewrites are not supported in export mode
-  
+
+  // Disable image optimization for static export
   images: {
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: 'https',

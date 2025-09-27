@@ -25,6 +25,11 @@ type Article = {
   media?: MediaItem[]
 }
 
+// Skip static generation for dynamic routes in export mode
+export async function generateStaticParams() {
+  return []
+}
+
 export default function EditArticlePage() {
   const params = useParams<{ id: string }>()
   const id = params?.id

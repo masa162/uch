@@ -37,12 +37,19 @@ type Article = {
 // HLS Video Player Component with hls.js
 function HLSVideoPlayer({ src, poster, media }: { src: string; poster?: string; media: MediaItem }) {
   const videoRef = useRef<HTMLVideoElement>(null)
+  const [isClient, setIsClient] = useState(false)
 
   useEffect(() => {
+    setIsClient(true)
+  }, [])
+
+  useEffect(() => {
+    if (!isClient) return
+
     let hls: any = null
 
     const initializePlayer = async () => {
-      if (!videoRef.current) return
+      if (!videoRef.current || typeof window === 'undefined') return
 
       const video = videoRef.current
 
@@ -53,45 +60,49 @@ function HLSVideoPlayer({ src, poster, media }: { src: string; poster?: string; 
         return
       }
 
-      // For other browsers, use hls.js
-      const Hls = (await import('hls.js')).default
+      // For other browsers, use hls.js - only in browser environment
+      try {
+        const Hls = (await import('hls.js')).default
 
-      if (Hls.isSupported()) {
-        console.log('🎬 hls.js使用でHLS再生開始')
-        hls = new Hls({
-          debug: false,
-          enableWorker: true,
-          lowLatencyMode: false,
-        })
+        if (Hls.isSupported()) {
+          console.log('🎬 hls.js使用でHLS再生開始')
+          hls = new Hls({
+            debug: false,
+            enableWorker: true,
+            lowLatencyMode: false,
+          })
 
-        hls.loadSource(src)
-        hls.attachMedia(video)
+          hls.loadSource(src)
+          hls.attachMedia(video)
 
-        hls.on(Hls.Events.MANIFEST_PARSED, () => {
-          console.log('🎬 HLSマニフェスト解析完了')
-        })
+          hls.on(Hls.Events.MANIFEST_PARSED, () => {
+            console.log('🎬 HLSマニフェスト解析完了')
+          })
 
-        hls.on(Hls.Events.ERROR, (event: any, data: any) => {
-          console.error('🎬 HLSエラー:', data)
-          if (data.fatal) {
-            switch (data.type) {
-              case Hls.ErrorTypes.NETWORK_ERROR:
-                console.log('🎬 ネットワークエラー、リトライ中...')
-                hls.startLoad()
-                break
-              case Hls.ErrorTypes.MEDIA_ERROR:
-                console.log('🎬 メディアエラー、リカバリ中...')
-                hls.recoverMediaError()
-                break
-              default:
-                console.log('🎬 回復不可能なエラー')
-                hls.destroy()
-                break
+          hls.on(Hls.Events.ERROR, (event: any, data: any) => {
+            console.error('🎬 HLSエラー:', data)
+            if (data.fatal) {
+              switch (data.type) {
+                case Hls.ErrorTypes.NETWORK_ERROR:
+                  console.log('🎬 ネットワークエラー、リトライ中...')
+                  hls.startLoad()
+                  break
+                case Hls.ErrorTypes.MEDIA_ERROR:
+                  console.log('🎬 メディアエラー、リカバリ中...')
+                  hls.recoverMediaError()
+                  break
+                default:
+                  console.log('🎬 回復不可能なエラー')
+                  hls.destroy()
+                  break
+              }
             }
-          }
-        })
-      } else {
-        console.error('🎬 HLSサポートなし')
+          })
+        } else {
+          console.error('🎬 HLSサポートなし')
+        }
+      } catch (error) {
+        console.error('🎬 hls.js読み込みエラー:', error)
       }
     }
 
@@ -102,7 +113,7 @@ function HLSVideoPlayer({ src, poster, media }: { src: string; poster?: string; 
         hls.destroy()
       }
     }
-  }, [src])
+  }, [src, isClient])
 
   return (
     <>
@@ -131,6 +142,11 @@ function HLSVideoPlayer({ src, poster, media }: { src: string; poster?: string; 
       */}
     </>
   )
+}
+
+// Skip static generation for dynamic routes in export mode
+export async function generateStaticParams() {
+  return []
 }
 
 export default function ArticleDetailPage() {
