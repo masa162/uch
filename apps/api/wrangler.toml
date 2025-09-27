@@ -26,6 +26,11 @@ LINE_REDIRECT_URI = "https://api.uchinokiroku.com/auth/line/callback"
 # GOOGLE_CLIENT_SECRET = "your-google-client-secret"
 GOOGLE_REDIRECT_URI = "https://api.uchinokiroku.com/auth/google/callback"
 
+# メール送信関連（Resendなどを想定）
+# EMAIL_FROM = "うちのきろく <no-reply@uchinokiroku.com>"
+# EMAIL_RESET_URL_BASE = "https://uchinokiroku.com/reset-password"
+# RESEND_API_KEY は Secrets で設定
+
 # 環境変数はCloudflare Dashboardでのみ管理
 # 開発環境では .dev.vars を使用
 

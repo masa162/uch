@@ -15,6 +15,12 @@ export interface User {
   email?: string;
   name?: string;
   picture_url?: string;
+  email_login_enabled: number;
+  email_verified: number;
+  password_hash?: string | null;
+  last_login_at?: string | null;
+  verification_token?: string | null;
+  verification_expires_at?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -142,6 +148,126 @@ export async function getUserById(
   } catch (error) {
     console.error('ユーザー取得エラー:', error);
     throw new Error('ユーザー情報の取得に失敗しました');
+  }
+}
+
+/**
+ * メールアドレスでユーザーを検索
+ */
+export async function getUserByEmail(
+  db: D1Database,
+  email: string
+): Promise<User | null> {
+  try {
+    const user = await db
+      .prepare(`
+        SELECT * FROM users
+        WHERE email = ?
+        ORDER BY CASE WHEN provider = 'email' THEN 0 ELSE 1 END,
+                 created_at DESC
+        LIMIT 1
+      `)
+      .bind(email)
+      .first<User>();
+
+    return user || null;
+  } catch (error) {
+    console.error('ユーザー取得エラー(email):', error);
+    throw new Error('ユーザー情報の取得に失敗しました');
+  }
+}
+
+/**
+ * メールログイン用ユーザーを作成
+ */
+export async function createEmailUser(
+  db: D1Database,
+  data: { email: string; passwordHash: string; name?: string | null }
+): Promise<User> {
+  try {
+    const id = ulid();
+    const newUser = await db
+      .prepare(`
+        INSERT INTO users (
+          id,
+          provider,
+          provider_user_id,
+          email,
+          name,
+          password_hash,
+          email_login_enabled,
+          email_verified
+        )
+        VALUES (?, 'email', ?, ?, ?, ?, 1, 1)
+        RETURNING *
+      `)
+      .bind(
+        id,
+        data.email,
+        data.email,
+        data.name || null,
+        data.passwordHash
+      )
+      .first<User>();
+
+    if (!newUser) {
+      throw new Error('メールユーザーの作成に失敗しました');
+    }
+
+    return newUser;
+  } catch (error) {
+    console.error('メールユーザー作成エラー:', error);
+    throw new Error('メールアドレスでの登録に失敗しました');
+  }
+}
+
+/**
+ * 既存ユーザーにパスワードを設定（メールログイン有効化）
+ */
+export async function setUserPassword(
+  db: D1Database,
+  userId: string,
+  passwordHash: string,
+  email?: string | null
+): Promise<void> {
+  try {
+    await db
+      .prepare(`
+        UPDATE users
+        SET password_hash = ?,
+            email_login_enabled = 1,
+            email_verified = 1,
+            email = CASE WHEN ? IS NOT NULL THEN ? ELSE email END,
+            updated_at = strftime('%Y-%m-%dT%H:%M:%fZ','now')
+        WHERE id = ?
+      `)
+      .bind(passwordHash, email || null, email || null, userId)
+      .run();
+  } catch (error) {
+    console.error('パスワード設定エラー:', error);
+    throw new Error('パスワードの更新に失敗しました');
+  }
+}
+
+/**
+ * 最終ログイン日時を更新
+ */
+export async function touchUserLastLogin(
+  db: D1Database,
+  userId: string
+): Promise<void> {
+  try {
+    await db
+      .prepare(`
+        UPDATE users
+        SET last_login_at = strftime('%Y-%m-%dT%H:%M:%fZ','now'),
+            updated_at = strftime('%Y-%m-%dT%H:%M:%fZ','now')
+        WHERE id = ?
+      `)
+      .bind(userId)
+      .run();
+  } catch (error) {
+    console.error('最終ログイン更新エラー:', error);
   }
 }
 

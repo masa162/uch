@@ -7,6 +7,7 @@
 1. **ユーザーIDの移行**: `INTEGER AUTOINCREMENT` → `TEXT (ULID/UUID)`
 2. **認証API追加**: `GET /auth/me` と `POST /auth/logout`
 3. **Cookie Domain設定**: 本番環境のみ `.uchinokiroku.com` を付与
+4. **メールログイン対応**: パスワードカラム追加、リセット用テーブル新設
 
 ## 変更内容
 
@@ -16,6 +17,19 @@
 - 既存の `users` テーブルを `users_old` に退避
 - 新しい `users` テーブルを `TEXT` 主キーで作成
 - 既存データを仮IDで移行（アプリケーション層でULID再発行推奨）
+
+#### 追加: メールログイン対応 (2025-09-27)
+
+- **マイグレーションファイル**: `migrations/20250927_email_login.sql`
+- `users` テーブルに以下カラムを追加:
+  - `email_login_enabled INTEGER NOT NULL DEFAULT 0`
+  - `email_verified INTEGER NOT NULL DEFAULT 0`
+  - `password_hash TEXT`
+  - `last_login_at TEXT`
+  - `verification_token TEXT`
+  - `verification_expires_at TEXT`
+- `password_reset_tokens` テーブルを新規作成し、ユーザーごとのリセットトークンを管理
+- 新しいインデックス: `idx_users_email_login`, `idx_password_reset_tokens_user_id`, `idx_password_reset_tokens_expires_at`
 
 ### 2. 新しいファイル
 

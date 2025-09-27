@@ -7,9 +7,15 @@ import { useAuth } from '@/contexts/AuthContext'
 function SignInView() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [info, setInfo] = useState('')
+  const [emailLoginForm, setEmailLoginForm] = useState({ email: '', password: '' })
+  const [emailSignupForm, setEmailSignupForm] = useState({ name: '', email: '', password: '' })
+  const [emailLoading, setEmailLoading] = useState(false)
+  const [signupLoading, setSignupLoading] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
   const { user, loading: authLoading } = useAuth()
+  const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.uchinokiroku.com'
 
   // エラーメッセージの表示
   useEffect(() => {
@@ -49,7 +55,6 @@ function SignInView() {
     try {
       setLoading(true)
       setError('')
-      const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.uchinokiroku.com'
       if (typeof window !== 'undefined') {
         window.location.href = `${apiBase}/auth/google/start`
       }
@@ -64,7 +69,6 @@ function SignInView() {
     try {
       setLoading(true)
       setError('')
-      const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.uchinokiroku.com'
       if (typeof window !== 'undefined') {
         window.location.href = `${apiBase}/auth/line/start`
       }
@@ -72,6 +76,93 @@ function SignInView() {
       setError('LINEサインインに失敗しました。もう一度お試しください。')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleEmailLogin = async () => {
+    if (!emailLoginForm.email || !emailLoginForm.password) {
+      setError('メールアドレスとあいことばを入力してください。')
+      return
+    }
+
+    try {
+      setEmailLoading(true)
+      setError('')
+      setInfo('')
+
+      const response = await fetch(`${apiBase}/auth/email/login`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: emailLoginForm.email,
+          password: emailLoginForm.password,
+        }),
+      })
+
+      const data = await response.json().catch(() => ({})) as { message?: string }
+
+      if (!response.ok) {
+        setError(data?.message || 'メールでのログインに失敗しました。')
+        return
+      }
+
+      setInfo(data?.message || 'ようこそ。おかえりなさい 🏠')
+
+      if (typeof window !== 'undefined') {
+        window.location.href = '/?auth=success'
+      }
+    } catch (err) {
+      console.error('Email login error', err)
+      setError('メールでのログインに失敗しました。もう一度お試しください。')
+    } finally {
+      setEmailLoading(false)
+    }
+  }
+
+  const handleEmailSignup = async () => {
+    if (!emailSignupForm.email || !emailSignupForm.password) {
+      setError('メールアドレスとあたらしいあいことばを入力してください。')
+      return
+    }
+
+    try {
+      setSignupLoading(true)
+      setError('')
+      setInfo('')
+
+      const response = await fetch(`${apiBase}/auth/email/signup`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: emailSignupForm.name,
+          email: emailSignupForm.email,
+          password: emailSignupForm.password,
+        }),
+      })
+
+      const data = await response.json().catch(() => ({})) as { message?: string }
+
+      if (!response.ok) {
+        setError(data?.message || 'メールでの登録に失敗しました。')
+        return
+      }
+
+      setInfo(data?.message || '登録が完了しました 💝')
+
+      if (typeof window !== 'undefined') {
+        window.location.href = '/?auth=success'
+      }
+    } catch (err) {
+      console.error('Email signup error', err)
+      setError('メールでの登録に失敗しました。もう一度お試しください。')
+    } finally {
+      setSignupLoading(false)
     }
   }
 
@@ -93,6 +184,12 @@ function SignInView() {
             {error && (
               <div className="alert alert-error">
                 <span>⚠️ {error}</span>
+              </div>
+            )}
+
+            {info && (
+              <div className="alert alert-success">
+                <span>🌱 {info}</span>
               </div>
             )}
 
@@ -152,16 +249,94 @@ function SignInView() {
               </button>
             </div>
 
+            <div className="divider">メールでログイン</div>
+
+            <div className="space-y-3">
+              <input
+                type="email"
+                value={emailLoginForm.email}
+                onChange={(e) => setEmailLoginForm(prev => ({ ...prev, email: e.target.value }))}
+                placeholder="メールアドレス"
+                className="input input-bordered w-full"
+                autoComplete="email"
+              />
+              <input
+                type="password"
+                value={emailLoginForm.password}
+                onChange={(e) => setEmailLoginForm(prev => ({ ...prev, password: e.target.value }))}
+                placeholder="あいことば"
+                className="input input-bordered w-full"
+                autoComplete="current-password"
+              />
+              <button
+                onClick={handleEmailLogin}
+                disabled={emailLoading}
+                className="btn btn-primary w-full"
+              >
+                {emailLoading ? (
+                  <span className="loading loading-spinner loading-sm"></span>
+                ) : (
+                  'メールでログイン'
+                )}
+              </button>
+              <button
+                type="button"
+                className="btn btn-link text-sm"
+                onClick={() => router.push('/reset-password')}
+              >
+                あいことばをわすれた方はこちら
+              </button>
+            </div>
+
+            <div className="divider">メールで新規登録</div>
+
+            <div className="space-y-3">
+              <input
+                type="text"
+                value={emailSignupForm.name}
+                onChange={(e) => setEmailSignupForm(prev => ({ ...prev, name: e.target.value }))}
+                placeholder="おなまえ (任意)"
+                className="input input-bordered w-full"
+                autoComplete="name"
+              />
+              <input
+                type="email"
+                value={emailSignupForm.email}
+                onChange={(e) => setEmailSignupForm(prev => ({ ...prev, email: e.target.value }))}
+                placeholder="メールアドレス"
+                className="input input-bordered w-full"
+                autoComplete="email"
+              />
+              <input
+                type="password"
+                value={emailSignupForm.password}
+                onChange={(e) => setEmailSignupForm(prev => ({ ...prev, password: e.target.value }))}
+                placeholder="あたらしい あいことば"
+                className="input input-bordered w-full"
+                autoComplete="new-password"
+              />
+              <button
+                onClick={handleEmailSignup}
+                disabled={signupLoading}
+                className="btn btn-secondary w-full"
+              >
+                {signupLoading ? (
+                  <span className="loading loading-spinner loading-sm"></span>
+                ) : (
+                  'メールで登録する'
+                )}
+              </button>
+            </div>
+
             <div className="divider">または</div>
 
-            {/* パスワード認証 */}
             <div className="text-center">
               <p className="text-sm text-base-content/70 mb-4">
                 あいことばをお持ちの方はこちら
               </p>
               <button
                 onClick={() => router.push('/')}
-                className="btn btn-primary w-full h-12"
+                className="btn btn-ghost w-full"
               >
                 🏠 あいことばで入室
               </button>

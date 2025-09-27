@@ -2,6 +2,12 @@ import { handleHealth } from "./routes/health";
 import { handleMemories } from "./routes/memories";
 import { googleStart, handleGoogleAuthCallback } from "./routes/auth/google";
 import { handleLineAuthStart, handleLineAuthCallback } from "./routes/auth/line";
+import {
+  handleEmailLogin,
+  handleEmailResetConfirm,
+  handleEmailResetRequest,
+  handleEmailSignup,
+} from "./routes/auth/email";
 import { migrate } from "./routes/migrate";
 import { test } from "./routes/test";
 import { readSessionCookie } from "./lib/session"; // Added import for debug endpoint
@@ -21,20 +27,65 @@ export interface Env {
   LINE_REDIRECT_URI: string;
   // COOKIE_DOMAIN は本番だけ（ダッシュボード Vars/Secrets）
   COOKIE_DOMAIN?: string;
+  RESEND_API_KEY?: string;
+  EMAIL_FROM?: string;
+  EMAIL_RESET_URL_BASE?: string;
+  EMAIL_BCC_FOR_AUDIT?: string;
 }
 
-// 開発環境用のCORSヘッダーを追加する関数
-function addCorsHeaders(response: Response): Response {
+function resolveAllowedOrigin(req: Request, env: Env): string {
+  const origin = req.headers.get("Origin") || "";
+  const allowed = new Set<string>();
+
+  const frontend = env.FRONTEND_URL?.replace(/\/$/, "");
+  if (frontend) {
+    allowed.add(frontend);
+  }
+
+  allowed.add("http://localhost:3000");
+  allowed.add("http://localhost:3001");
+
+  if (origin) {
+    const normalizedOrigin = origin.replace(/\/$/, "");
+    if (allowed.has(normalizedOrigin)) {
+      return normalizedOrigin;
+    }
+
+    if (normalizedOrigin.endsWith(".pages.dev")) {
+      return normalizedOrigin;
+    }
+  }
+
+  return frontend || "http://localhost:3001";
+}
+
+// 開発/本番に応じたCORSヘッダーを付与
+function addCorsHeaders(response: Response, req: Request, env: Env): Response {
   const newResponse = new Response(response.body, {
     status: response.status,
     statusText: response.statusText,
     headers: response.headers,
   });
 
-  newResponse.headers.set("Access-Control-Allow-Origin", "http://localhost:3001");
+  const allowOrigin = resolveAllowedOrigin(req, env);
+  newResponse.headers.set("Access-Control-Allow-Origin", allowOrigin);
   newResponse.headers.set("Access-Control-Allow-Credentials", "true");
 
   return newResponse;
+}
+
+function createPreflightResponse(req: Request, env: Env, methods: string): Response {
+  const headers = new Headers();
+  headers.set("Access-Control-Allow-Origin", resolveAllowedOrigin(req, env));
+  headers.set("Access-Control-Allow-Methods", methods);
+  headers.set("Access-Control-Allow-Headers", "Content-Type");
+  headers.set("Access-Control-Allow-Credentials", "true");
+  headers.set("Access-Control-Max-Age", "86400");
+
+  return new Response(null, {
+    status: 200,
+    headers,
+  });
 }
 
 const routes: Record<string, (req: Request, env: Env) => Promise<Response> | Response> = {
@@ -59,18 +110,7 @@ const routes: Record<string, (req: Request, env: Env) => Promise<Response> | Res
       headers: { "Content-Type": "application/json" },
     });
   },
-  "OPTIONS /api/dev-login": (req, env) => {
-    return new Response(null, {
-      status: 200,
-      headers: {
-        "Access-Control-Allow-Origin": "http://localhost:3001",
-        "Access-Control-Allow-Methods": "POST, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type",
-        "Access-Control-Allow-Credentials": "true",
-        "Access-Control-Max-Age": "86400"
-      }
-    });
-  },
+  "OPTIONS /api/dev-login": (req, env) => createPreflightResponse(req, env, "POST, OPTIONS"),
   "POST /api/dev-login": async (req, env) => {
     // 開発環境でのみ使用するテストセッション作成
     const { createSessionCookie } = await import("./lib/session");
@@ -92,48 +132,26 @@ const routes: Record<string, (req: Request, env: Env) => Promise<Response> | Res
     }), {
       headers: {
         "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "http://localhost:3001",
-        "Access-Control-Allow-Credentials": "true"
       },
     });
 
     response.headers.set("Set-Cookie", sessionToken);
-    return response;
+    return addCorsHeaders(response, req, env);
   },
   "POST /api/migrate": (req, env) => migrate(req, env),
   "GET /memories": (req, env) => handleMemories(req, env),
-  "OPTIONS /api/articles": (req, env) => {
-    return new Response(null, {
-      status: 200,
-      headers: {
-        "Access-Control-Allow-Origin": "http://localhost:3001",
-        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type",
-        "Access-Control-Allow-Credentials": "true"
-      }
-    });
-  },
+  "OPTIONS /api/articles": (req, env) => createPreflightResponse(req, env, "GET, POST, OPTIONS"),
   "GET /api/articles/search": (req, env) => handleMemories(req, env), // 検索用エイリアス（qパラメータ対応）
-  "OPTIONS /api/search": (req, env) => {
-    return new Response(null, {
-      status: 200,
-      headers: {
-        "Access-Control-Allow-Origin": "http://localhost:3001",
-        "Access-Control-Allow-Methods": "GET, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type",
-        "Access-Control-Allow-Credentials": "true"
-      }
-    });
-  },
+  "OPTIONS /api/search": (req, env) => createPreflightResponse(req, env, "GET, OPTIONS"),
   "GET /api/search": async (req, env) => {
     const mod = await import("./routes/search");
     const response = await mod.handleUnifiedSearch(req, env);
-    return addCorsHeaders(response);
+    return addCorsHeaders(response, req, env);
   },
   "POST /api/articles": async (req, env) => {
     const mod = await import("./routes/articles");
     const response = await mod.createArticle(req, env);
-    return addCorsHeaders(response);
+    return addCorsHeaders(response, req, env);
   },
   "GET /api/articles/[id]": async (req, env) => {
     const mod = await import("./routes/articles");
@@ -171,46 +189,46 @@ const routes: Record<string, (req: Request, env: Env) => Promise<Response> | Res
     // キーワード指定がない通常の一覧は既存のmemories実装を利用
     return handleMemories(req, env);
   },
-  "OPTIONS /api/media": (req, env) => {
-    return new Response(null, {
-      status: 200,
-      headers: {
-        "Access-Control-Allow-Origin": "http://localhost:3001",
-        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type",
-        "Access-Control-Allow-Credentials": "true"
-      }
-    });
-  },
+  "OPTIONS /api/media": (req, env) => createPreflightResponse(req, env, "GET, POST, OPTIONS"),
   "GET /api/media": async (req, env) => {
     const mod = await import("./routes/media");
     const response = await mod.getMedia(req, env);
-    return addCorsHeaders(response);
+    return addCorsHeaders(response, req, env);
   },
   "GET /api/media-debug": async (req, env) => {
     const mod = await import("./routes/media");
     const response = await mod.getMediaDebugInfo(req, env);
-    return addCorsHeaders(response);
+    return addCorsHeaders(response, req, env);
   },
   "GET /auth/google/start": (req, env) => googleStart(req, env),
   "GET /auth/google/callback": (req, env) => handleGoogleAuthCallback(req, env),
   "GET /auth/line/start": (req, env) => handleLineAuthStart(req, env),
   "GET /auth/line/callback": (req, env) => handleLineAuthCallback(req, env),
-  "OPTIONS /auth/me": (req, env) => {
-    return new Response(null, {
-      status: 200,
-      headers: {
-        "Access-Control-Allow-Origin": "http://localhost:3001",
-        "Access-Control-Allow-Methods": "GET, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type",
-        "Access-Control-Allow-Credentials": "true"
-      }
-    });
+  "OPTIONS /auth/email/signup": (req, env) => createPreflightResponse(req, env, "POST, OPTIONS"),
+  "POST /auth/email/signup": async (req, env) => {
+    const response = await handleEmailSignup(req, env);
+    return addCorsHeaders(response, req, env);
   },
+  "OPTIONS /auth/email/login": (req, env) => createPreflightResponse(req, env, "POST, OPTIONS"),
+  "POST /auth/email/login": async (req, env) => {
+    const response = await handleEmailLogin(req, env);
+    return addCorsHeaders(response, req, env);
+  },
+  "OPTIONS /auth/email/reset-request": (req, env) => createPreflightResponse(req, env, "POST, OPTIONS"),
+  "POST /auth/email/reset-request": async (req, env) => {
+    const response = await handleEmailResetRequest(req, env);
+    return addCorsHeaders(response, req, env);
+  },
+  "OPTIONS /auth/email/reset-confirm": (req, env) => createPreflightResponse(req, env, "POST, OPTIONS"),
+  "POST /auth/email/reset-confirm": async (req, env) => {
+    const response = await handleEmailResetConfirm(req, env);
+    return addCorsHeaders(response, req, env);
+  },
+  "OPTIONS /auth/me": (req, env) => createPreflightResponse(req, env, "GET, OPTIONS"),
   "GET /auth/me": async (req, env) => {
     const mod = await import("./routes/auth/me");
     const response = await mod.authMe(req, env);
-    return addCorsHeaders(response);
+    return addCorsHeaders(response, req, env);
   },
   // メディア関連のルート（重複削除済み）
   "POST /api/media/generate-upload-url": async (req, env) => {
