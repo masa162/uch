@@ -37,7 +37,11 @@ export default function LandingPage() {
   }
 
   const handleEmailAuth = () => {
-    router.push('/signin')
+    if (typeof window !== 'undefined') {
+      window.location.href = '/signin'
+    } else {
+      router.push('/signin')
+    }
   }
 
   const handleDevLogin = async () => {
