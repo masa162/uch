@@ -1,5 +1,8 @@
 'use client'
 
+// Force dynamic rendering to avoid SSR issues with hls.js
+export const dynamic = 'force-dynamic'
+
 import { useEffect, useState, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import AuthenticatedLayout from '@/components/AuthenticatedLayout'
@@ -38,18 +41,29 @@ type Article = {
 function HLSVideoPlayer({ src, poster, media }: { src: string; poster?: string; media: MediaItem }) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [isClient, setIsClient] = useState(false)
+  const [isReady, setIsReady] = useState(false)
 
   useEffect(() => {
-    setIsClient(true)
+    // Strict client-side environment check
+    if (typeof window !== 'undefined' && typeof document !== 'undefined' && typeof navigator !== 'undefined') {
+      setIsClient(true)
+      setIsReady(true)
+    }
   }, [])
 
   useEffect(() => {
-    if (!isClient) return
+    if (!isClient || !isReady) return
 
     let hls: any = null
 
     const initializePlayer = async () => {
-      if (!videoRef.current || typeof window === 'undefined') return
+      // Additional safety checks for browser environment
+      if (!videoRef.current ||
+          typeof window === 'undefined' ||
+          typeof document === 'undefined' ||
+          typeof navigator === 'undefined') {
+        return
+      }
 
       const video = videoRef.current
 
@@ -113,7 +127,16 @@ function HLSVideoPlayer({ src, poster, media }: { src: string; poster?: string; 
         hls.destroy()
       }
     }
-  }, [src, isClient])
+  }, [src, isClient, isReady])
+
+  // Only render video when client-side environment is confirmed
+  if (!isClient || !isReady) {
+    return (
+      <div className="w-full h-96 bg-gray-200 flex items-center justify-center">
+        <span className="text-gray-500">動画を読み込み中...</span>
+      </div>
+    )
+  }
 
   return (
     <>
@@ -133,13 +156,6 @@ function HLSVideoPlayer({ src, poster, media }: { src: string; poster?: string; 
           console.log('🎬 動画再生可能')
         }}
       />
-      {/* デバッグ情報は本番では非表示
-      <div className="text-xs text-gray-500 mt-2">
-        動画ファイル: {media.original_filename} ({media.mime_type})
-        <br />
-        Cloudflare Stream HLS: {src}
-      </div>
-      */}
     </>
   )
 }
