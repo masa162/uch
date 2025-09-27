@@ -81,7 +81,7 @@ function SignInView() {
 
   const handleEmailLogin = async () => {
     if (!emailLoginForm.email || !emailLoginForm.password.trim()) {
-      setError('メールアドレスとあいことばを入力してくださいね 😊')
+      setError('メールアドレスとパスワードを入力してくださいね 😊')
       return
     }
 
@@ -126,7 +126,7 @@ function SignInView() {
 
   const handleEmailSignup = async () => {
     if (!emailSignupForm.email || !emailSignupForm.password.trim()) {
-      setError('メールアドレスとあたらしいあいことばを入力してくださいね 😊')
+      setError('メールアドレスとあたらしいパスワードを入力してくださいね 😊')
       return
     }
 
@@ -268,7 +268,7 @@ function SignInView() {
                 type="password"
                 value={emailLoginForm.password}
                 onChange={(e) => setEmailLoginForm(prev => ({ ...prev, password: e.target.value }))}
-                placeholder="あいことば（好きな文字でOK）"
+                placeholder="あなたのパスワード"
                 className="input input-bordered w-full"
                 autoComplete="current-password"
               />
@@ -288,7 +288,7 @@ function SignInView() {
                 className="btn btn-link text-sm"
                 onClick={() => router.push('/reset-password')}
               >
-                あいことばをわすれた方はこちら
+                あなたのパスワードをわすれた方はこちら
               </button>
             </div>
 
@@ -315,7 +315,7 @@ function SignInView() {
                 type="password"
                 value={emailSignupForm.password}
                 onChange={(e) => setEmailSignupForm(prev => ({ ...prev, password: e.target.value }))}
-                placeholder="あたらしい あいことば（覚えやすいもので）"
+                placeholder="あたらしいパスワード（覚えやすいもので）"
                 className="input input-bordered w-full"
                 autoComplete="new-password"
               />

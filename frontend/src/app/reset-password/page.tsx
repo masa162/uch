@@ -55,11 +55,11 @@ function ResetPasswordContent() {
 
   const handleConfirm = async () => {
     if (password.length === 0) {
-      setError('あたらしいあいことばを入力してください。')
+      setError('あたらしいパスワードを入力してください。')
       return
     }
     if (password !== confirmPassword) {
-      setError('あいことばが一致していないようです。')
+      setError('パスワードが一致していないようです。')
       return
     }
 
@@ -80,11 +80,11 @@ function ResetPasswordContent() {
       const data = await response.json().catch(() => ({})) as { message?: string }
 
       if (!response.ok) {
-        setError(data?.message || 'あいことばの再設定に失敗しました。再度お試しください。')
+        setError(data?.message || 'パスワードの再設定に失敗しました。再度お試しください。')
         return
       }
 
-      setMessage(data?.message || 'あたらしいあいことばを設定しました。')
+      setMessage(data?.message || 'あたらしいパスワードを設定しました。')
       setPassword('')
       setConfirmPassword('')
 
@@ -95,7 +95,7 @@ function ResetPasswordContent() {
       }
     } catch (err) {
       console.error('reset-confirm error', err)
-      setError('あいことばの再設定に失敗しました。再度お試しください。')
+      setError('パスワードの再設定に失敗しました。再度お試しください。')
     } finally {
       setLoading(false)
     }
@@ -107,11 +107,11 @@ function ResetPasswordContent() {
     <div className="min-h-screen bg-base-200 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold text-primary">🔑 あいことばサポート</h1>
+          <h1 className="text-3xl font-bold text-primary">🔑 あなたのパスワードサポート</h1>
           <p className="text-base-content/70">
             {mode === 'request'
-              ? 'ご登録のメールアドレス宛に、あたらしいあいことばを作る手順をお送りします。'
-              : 'メールに記載されたトークンを確認しました。あたらしいあいことばを作りましょう。'}
+              ? 'ご登録のメールアドレス宛に、あたらしいパスワードを作る手順をお送りします。'
+              : 'メールに記載されたトークンを確認しました。あたらしいパスワードを作りましょう。'}
           </p>
         </div>
 
@@ -153,10 +153,10 @@ function ResetPasswordContent() {
             ) : (
               <div className="space-y-4">
                 <div className="alert alert-info text-sm">
-                  <span>メールに記載されたリンクからアクセスしています。あたらしいあいことばを入力してくださいね。</span>
+                  <span>メールに記載されたリンクからアクセスしています。あたらしいパスワードを入力してくださいね。</span>
                 </div>
                 <label className="form-control">
-                  <span className="label-text">あたらしい あいことば</span>
+                  <span className="label-text">あたらしいパスワード</span>
                   <input
                     type="password"
                     className="input input-bordered"
@@ -166,7 +166,7 @@ function ResetPasswordContent() {
                   />
                 </label>
                 <label className="form-control">
-                  <span className="label-text">あいことばの確認</span>
+                  <span className="label-text">パスワードの確認</span>
                   <input
                     type="password"
                     className="input input-bordered"
@@ -180,7 +180,7 @@ function ResetPasswordContent() {
                   disabled={loading}
                   className="btn btn-primary w-full"
                 >
-                  {loading ? <span className="loading loading-spinner loading-sm"></span> : 'あいことばを更新する'}
+                  {loading ? <span className="loading loading-spinner loading-sm"></span> : 'パスワードを更新する'}
                 </button>
               </div>
             )}
