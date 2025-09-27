@@ -1,9 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 
-export default function ResetPasswordPage() {
+function ResetPasswordContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const token = searchParams?.get('token') ?? ''
@@ -198,5 +198,22 @@ export default function ResetPasswordPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense
+      fallback={(
+        <div className="min-h-screen bg-base-200 flex items-center justify-center">
+          <div className="card bg-base-100 shadow-xl p-6 text-center space-y-2">
+            <span className="loading loading-spinner loading-lg" />
+            <p className="text-base-content/70">読み込み中です…</p>
+          </div>
+        </div>
+      )}
+    >
+      <ResetPasswordContent />
+    </Suspense>
   )
 }
