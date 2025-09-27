@@ -33,14 +33,26 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showNameSetup, setShowNameSetup] = useState(false)
+  const [allowRedirect, setAllowRedirect] = useState(false)
 
-  // 未認証ユーザーをランディングページにリダイレクト
+  // 初回ロード後に少し待ってからリダイレクトを許可（認証状態の安定化を待つ）
   useEffect(() => {
-    if (!authLoading && !user) {
+    const timer = setTimeout(() => {
+      console.log('Allowing redirect after auth state stabilization')
+      setAllowRedirect(true)
+    }, 2000) // 2秒待機
+
+    return () => clearTimeout(timer)
+  }, [])
+
+  // 未認証ユーザーをランディングページにリダイレクト（allowRedirect後のみ）
+  useEffect(() => {
+    if (!authLoading && !user && allowRedirect) {
+      console.log('Redirecting to landing page: user not authenticated')
       router.push('/landing')
       return
     }
-  }, [authLoading, user, router])
+  }, [authLoading, user, allowRedirect, router])
 
   useEffect(() => {
     const fetchRecentArticles = async () => {
@@ -91,6 +103,18 @@ export default function HomePage() {
     })
   }
 
+
+  // 認証状態確定まではローディング表示
+  if (authLoading || (!user && !allowRedirect)) {
+    return (
+      <div className="min-h-screen bg-base-200 flex items-center justify-center">
+        <div className="text-center">
+          <div className="loading loading-spinner loading-lg mb-4"></div>
+          <p className="text-base-content/70">認証状態を確認中...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <AuthenticatedLayout>

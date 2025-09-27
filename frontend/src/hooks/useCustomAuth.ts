@@ -203,6 +203,13 @@ export function useCustomAuth() {
     }
   }, [checkSession])
 
+  // 認証状態の強制更新（メール認証後等に使用）
+  const forceRefreshAuth = useCallback(async () => {
+    console.log('Force refreshing auth state...')
+    setAuthState(prev => ({ ...prev, loading: true }))
+    await checkSession()
+  }, [checkSession])
+
   return {
     user: authState.user,
     loading: authState.loading,
@@ -211,6 +218,7 @@ export function useCustomAuth() {
     setPasswordValidated,
     signOut,
     checkSession,
+    forceRefreshAuth,
     checkNameSetup
   }
 }

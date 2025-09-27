@@ -14,7 +14,7 @@ function SignInView() {
   const [signupLoading, setSignupLoading] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { user, loading: authLoading } = useAuth()
+  const { user, loading: authLoading, forceRefreshAuth } = useAuth()
   const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.uchinokiroku.com'
 
   // エラーメッセージの表示
@@ -113,9 +113,17 @@ function SignInView() {
 
       if (typeof window !== 'undefined') {
         setEmailLoginForm({ email: '', password: '' })
-        await new Promise(resolve => setTimeout(resolve, 300))
-        // 直接メインページに遷移するよう変更
-        router.replace('/')
+        await new Promise(resolve => setTimeout(resolve, 500))
+
+        // 認証状態を確実に更新してからページ遷移
+        console.log('Email login successful, refreshing auth state...')
+        await forceRefreshAuth()
+
+        // 少し待ってから遷移（認証状態の更新を確実にするため）
+        setTimeout(() => {
+          console.log('Redirecting to main page after email login')
+          router.replace('/')
+        }, 1000)
       }
     } catch (err) {
       console.error('Email login error', err)

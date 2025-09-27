@@ -19,6 +19,8 @@ interface AuthContextType {
   isPasswordValidated: boolean
   setPasswordValidated: (validated: boolean) => void
   signOut: () => void
+  checkSession: () => Promise<void>
+  forceRefreshAuth: () => Promise<void>
   checkNameSetup: () => Promise<boolean>
 }
 
