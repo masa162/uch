@@ -141,7 +141,7 @@ export async function getMedia(req: Request, env: Env) {
         created_at
       FROM media
       WHERE ${whereClause}
-      ORDER BY created_at DESC
+      ORDER BY datetime(COALESCE(updated_at, created_at)) DESC
       LIMIT ? OFFSET ?
     `, queryParams);
 
@@ -149,7 +149,11 @@ export async function getMedia(req: Request, env: Env) {
     console.log('getMedia: Media items:', media);
 
     return new Response(JSON.stringify(media), {
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "Cache-Control": "no-store, no-cache, must-revalidate",
+        "Pragma": "no-cache"
+      },
     });
 
   } catch (error: any) {

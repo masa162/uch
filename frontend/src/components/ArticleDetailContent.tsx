@@ -234,7 +234,7 @@ export default function ArticleDetailContent() {
                         )}
                       </div>
                       <div className="flex-grow">
-                        <h3 className="font-medium mb-2">{item.original_filename}</h3>
+                        <h3 className="font-medium mb-2">{item.original_filename.replace(/\.[^/.]+$/, "")}</h3>
                         <div className="text-sm text-base-content/70 mb-4">
                           <span className="mr-4">📁 {item.mime_type}</span>
                           <span className="mr-4">📊 {(item.file_size / 1024 / 1024).toFixed(2)} MB</span>
@@ -249,7 +249,7 @@ export default function ArticleDetailContent() {
                         {item.mime_type.startsWith('image/') && (
                           <img
                             src={getMediaDisplayUrl(item)}
-                            alt={item.original_filename}
+                            alt={item.original_filename.replace(/\.[^/.]+$/, "")}
                             className="max-w-full h-auto rounded border"
                           />
                         )}
