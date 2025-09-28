@@ -35,6 +35,8 @@ export default function EditArticleContent() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([])
+  const [hasMoreMedia, setHasMoreMedia] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
   const [selectedMediaIds, setSelectedMediaIds] = useState<number[]>([])
   const [showMediaSelector, setShowMediaSelector] = useState(false)
 
@@ -72,15 +74,20 @@ export default function EditArticleContent() {
   }, [id])
 
   // メディア一覧を取得
-  const fetchMediaItems = async () => {
+  const fetchMediaItems = async (offset = 0) => {
     try {
       const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.uchinokiroku.com'
-      const res = await fetch(`${apiBase}/api/media?limit=50`, {
+      const res = await fetch(`${apiBase}/api/media?limit=50&offset=${offset}`, {
         credentials: 'include',
       })
       if (res.ok) {
         const data = await res.json() as MediaItem[]
-        setMediaItems(data)
+        if (offset === 0) {
+          setMediaItems(data)
+        } else {
+          setMediaItems((prev) => [...prev, ...data])
+        }
+        setHasMoreMedia(data.length === 50)
       }
     } catch (error) {
       console.error('メディア取得エラー:', error)
@@ -265,6 +272,26 @@ export default function EditArticleContent() {
                   {mediaItems.length === 0 && (
                     <div className="text-center text-gray-500 py-4">
                       メディアがありません。上のボタンからアップロードしてください。
+                    </div>
+                  )}
+                  {mediaItems.length > 0 && hasMoreMedia && (
+                    <div className="flex justify-center mt-4">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setLoadingMore(true)
+                          fetchMediaItems(mediaItems.length).finally(() => setLoadingMore(false))
+                        }}
+                        className="btn btn-sm btn-outline"
+                        disabled={loadingMore}
+                      >
+                        {loadingMore ? '読み込み中...' : 'さらに読み込む'}
+                      </button>
+                    </div>
+                  )}
+                  {mediaItems.length > 0 && !hasMoreMedia && (
+                    <div className="text-center text-gray-500 py-3 text-sm">
+                      すべてのメディアを読み込み済みです。
                     </div>
                   )}
                 </div>
