@@ -85,6 +85,13 @@ export default function GalleryPage() {
     if (item.thumbnail_url) {
       return resolveMediaUrl(item.thumbnail_url)
     }
+
+    // APIから返された file_url を優先使用
+    if (item.file_url) {
+      return resolveMediaUrl(item.file_url)
+    }
+
+    // フォールバック: file_url がない場合のみ ID ベース
     return `${apiBase}/api/media/${item.id}/image`
   }
   const [items, setItems] = useState<MediaItem[]>([])

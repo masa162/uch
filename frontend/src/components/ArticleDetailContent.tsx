@@ -129,18 +129,34 @@ export default function ArticleDetailContent() {
 
   const getMediaDisplayUrl = (item: MediaItem) => {
     const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.uchinokiroku.com'
-    if (item.mime_type.startsWith('video/') && item.file_url.endsWith('.m3u8')) {
-      return item.file_url
+
+    // APIから返された file_url を優先使用
+    if (item.file_url) {
+      // 絶対URLの場合はそのまま
+      if (item.file_url.startsWith('http')) {
+        return item.file_url
+      }
+      // 相対URLの場合はベースURLを追加
+      return `${apiBase}${item.file_url}`
     }
+
+    // フォールバック: file_url がない場合のみ ID ベース
     return `${apiBase}/api/media/${item.id}/image`
   }
 
   const getMediaThumbnailUrl = (item: MediaItem) => {
     const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.uchinokiroku.com'
+
+    // thumbnail_url が明示的に設定されている場合
     if (item.thumbnail_url) {
-      return item.thumbnail_url
+      if (item.thumbnail_url.startsWith('http')) {
+        return item.thumbnail_url
+      }
+      return `${apiBase}${item.thumbnail_url}`
     }
-    return `${apiBase}/api/media/${item.id}/image`
+
+    // フォールバック: メインファイルのURLを使用
+    return getMediaDisplayUrl(item)
   }
 
   return (
