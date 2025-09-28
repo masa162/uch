@@ -255,65 +255,36 @@ export default function ArticleDetailContent() {
               <div className="grid gap-6">
                 {article.media.map((item, index) => {
                   const label = getMediaLabel(item, index)
-                  const fileSizeText = formatFileSize(item.file_size)
-                  const extension = item.original_filename?.split('.').pop()?.toUpperCase() ??
-                    item.mime_type.split('/').pop()?.toUpperCase() ?? ''
 
                   return (
                     <div key={item.id} className="border border-base-300 rounded-lg p-4">
-                      <div className="flex items-start gap-4">
-                        <div className="flex-shrink-0">
-                          {item.mime_type.startsWith('image/') ? (
-                            <span className="text-2xl">🖼️</span>
-                          ) : item.mime_type.startsWith('video/') ? (
-                            <span className="text-2xl">🎬</span>
-                          ) : (
-                            <span className="text-2xl">📄</span>
-                          )}
-                        </div>
-                        <div className="flex-grow">
-                          <h3 className="font-medium mb-2">{label}</h3>
-                          <div className="text-sm text-base-content/70 mb-4 flex flex-wrap gap-x-4 gap-y-1">
-                            <span>📁 {extension || item.mime_type}</span>
-                            <span className="text-base-content/60">{item.mime_type}</span>
-                            {fileSizeText && <span>📊 {fileSizeText}</span>}
-                            {item.width && item.height && (
-                              <span>📐 {item.width}×{item.height}</span>
-                            )}
-                            {item.duration && (
-                              <span>⏱️ {Math.floor(item.duration / 60)}:{(item.duration % 60).toString().padStart(2, '0')}</span>
-                            )}
-                          </div>
+                      {item.mime_type.startsWith('image/') && (
+                        <img
+                          src={getMediaDisplayUrl(item)}
+                          alt={`${label}のプレビュー`}
+                          className="max-w-full h-auto rounded border"
+                        />
+                      )}
 
-                          {item.mime_type.startsWith('image/') && (
-                            <img
+                      {item.mime_type.startsWith('video/') && (
+                        <div className="video-container">
+                          {item.file_url.endsWith('.m3u8') ? (
+                            <HLSVideoPlayer
+                              src={item.file_url}
+                              poster={getMediaThumbnailUrl(item)}
+                              media={item}
+                            />
+                          ) : (
+                            <video
                               src={getMediaDisplayUrl(item)}
-                              alt={`${label}のプレビュー`}
-                              className="max-w-full h-auto rounded border"
+                              controls
+                              poster={getMediaThumbnailUrl(item)}
+                              className="w-full h-auto object-contain max-h-96"
+                              preload="metadata"
                             />
                           )}
-
-                          {item.mime_type.startsWith('video/') && (
-                            <div className="video-container">
-                              {item.file_url.endsWith('.m3u8') ? (
-                                <HLSVideoPlayer
-                                  src={item.file_url}
-                                  poster={getMediaThumbnailUrl(item)}
-                                  media={item}
-                                />
-                              ) : (
-                                <video
-                                  src={getMediaDisplayUrl(item)}
-                                  controls
-                                  poster={getMediaThumbnailUrl(item)}
-                                  className="w-full h-auto object-contain max-h-96"
-                                  preload="metadata"
-                                />
-                              )}
-                            </div>
-                          )}
                         </div>
-                      </div>
+                      )}
                     </div>
                   )
                 })}
