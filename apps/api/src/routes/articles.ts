@@ -17,9 +17,6 @@ export async function createArticle(req: Request, env: Env) {
     const canonicalUserId = getCanonicalUserId(session.sub);
     const userIdVariants = getUserIdVariants(canonicalUserId);
 
-    const canonicalUserId = getCanonicalUserId(session.sub);
-    const userIdVariants = getUserIdVariants(canonicalUserId);
-
     const body = await req.json();
 
     console.log('🔥 createArticle: Raw request body:', JSON.stringify(body));

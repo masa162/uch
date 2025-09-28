@@ -676,7 +676,6 @@ export async function signVideoUpload(req: Request, env: Env) {
       return new Response(JSON.stringify({ error: "認証が必要です" }), { status: 401, headers: { "Content-Type": "application/json" } });
     }
     const canonicalUserId = getCanonicalUserId(session.sub);
-    const canonicalUserId = getCanonicalUserId(session.sub);
 
     const accountId = (env as any).STREAM_ACCOUNT_ID || (env as any).STREAM_ACCOUNT || '';
     const token = (env as any).STREAM_TOKEN || '';
