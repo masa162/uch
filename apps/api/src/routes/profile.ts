@@ -1,5 +1,6 @@
 import { queryOne, execute } from "../lib/db";
 import { verifySession } from "../lib/session";
+import { getCanonicalUserId, getUserIdVariants } from "../lib/user-ids";
 import type { Env } from "../index";
 
 /**
@@ -18,11 +19,17 @@ export async function getProfile(req: Request, env: Env): Promise<Response> {
       });
     }
 
+    const canonicalUserId = getCanonicalUserId(session.sub);
+    const userIdVariants = getUserIdVariants(canonicalUserId);
+
     // ユーザー情報を取得
+    const placeholders = userIdVariants.map(() => '?').join(', ');
     const user = await queryOne(env, `
       SELECT id, provider, email, name, picture_url, created_at, updated_at 
-      FROM users WHERE id = ?
-    `, [session.sub]);
+      FROM users WHERE id IN (${placeholders})
+      ORDER BY CASE id WHEN ? THEN 0 ELSE 1 END
+      LIMIT 1
+    `, [...userIdVariants, canonicalUserId]);
 
     if (!user) {
       return new Response(JSON.stringify({ 
@@ -97,13 +104,16 @@ export async function updateProfile(req: Request, env: Env): Promise<Response> {
       });
     }
 
+    const canonicalUserId = getCanonicalUserId(session.sub);
+    const userIdVariants = getUserIdVariants(canonicalUserId);
+
     // ユーザー名を更新
-    console.log('Updating profile for user:', session.sub, 'with name:', name);
+    console.log('Updating profile for user:', canonicalUserId, 'with name:', name);
     const result = await execute(env, `
       UPDATE users 
       SET name = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%fZ','now')
-      WHERE id = ?
-    `, [name.trim(), session.sub]);
+      WHERE id IN (${userIdVariants.map(() => '?').join(', ')})
+    `, [name.trim(), ...userIdVariants]);
 
     console.log('Profile update result:', result);
 
@@ -114,8 +124,10 @@ export async function updateProfile(req: Request, env: Env): Promise<Response> {
     // 更新されたユーザー情報を取得
     const updatedUser = await queryOne(env, `
       SELECT id, provider, email, name, picture_url, created_at, updated_at 
-      FROM users WHERE id = ?
-    `, [session.sub]);
+      FROM users WHERE id IN (${userIdVariants.map(() => '?').join(', ')})
+      ORDER BY CASE id WHEN ? THEN 0 ELSE 1 END
+      LIMIT 1
+    `, [...userIdVariants, canonicalUserId]);
 
     if (!updatedUser) {
       throw new Error('更新後のユーザー情報の取得に失敗しました');

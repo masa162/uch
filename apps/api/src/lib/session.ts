@@ -1,4 +1,5 @@
 import { signJWT, verifyJWT, type JWTPayload } from './oauth';
+import { getCanonicalUserId, isLegacyUserId } from './user-ids';
 
 /**
  * セッション管理ライブラリ
@@ -251,8 +252,18 @@ export async function readSessionCookie(
     email: payload.email
   });
 
+  const originalSub = payload.sub ?? "";
+  const canonicalSub = getCanonicalUserId(originalSub);
+
+  if (isLegacyUserId(originalSub)) {
+    console.log('readSessionCookie: mapped legacy user id to canonical', {
+      original: originalSub,
+      canonical: canonicalSub,
+    });
+  }
+
   return {
-    sub: payload.sub,
+    sub: canonicalSub,
     name: payload.name,
     email: payload.email
   };
@@ -266,8 +277,17 @@ export async function createSessionCookie(
   env: { SESSION_SECRET: string; COOKIE_DOMAIN?: string; SESSION_MAX_AGE_SEC?: string }
 ): Promise<string> {
   const maxAge = parseInt(env.SESSION_MAX_AGE_SEC || "2592000", 10);
+  const canonicalUserId = getCanonicalUserId(user.id);
+
+  if (isLegacyUserId(user.id)) {
+    console.log('createSessionCookie: mapping legacy user id to canonical', {
+      original: user.id,
+      canonical: canonicalUserId,
+    });
+  }
+
   const sessionData: SessionData = {
-    userId: user.id,
+    userId: canonicalUserId,
     provider: '', // この関数では使用しない
     providerUserId: '', // この関数では使用しない
     email: user.email,
@@ -276,7 +296,7 @@ export async function createSessionCookie(
 
   const now = Math.floor(Date.now() / 1000);
   const payload: JWTPayload = {
-    sub: user.id,
+    sub: canonicalUserId,
     provider: '',
     provider_user_id: '',
     email: user.email,

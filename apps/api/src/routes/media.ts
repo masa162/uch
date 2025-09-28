@@ -1,5 +1,6 @@
 import { queryAll, execute } from "../lib/db";
 import { readSessionCookie } from "../lib/session";
+import { getCanonicalUserId, getUserIdVariants } from "../lib/user-ids";
 import type { Env } from "../index";
 
 // デバッグ用: 認証なしでメディア総数を取得
@@ -80,6 +81,9 @@ export async function getMedia(req: Request, env: Env) {
       });
     }
 
+    const canonicalUserId = getCanonicalUserId(session.sub);
+    const userIdVariants = getUserIdVariants(canonicalUserId);
+
     const url = new URL(req.url);
     const offset = parseInt(url.searchParams.get('offset') || '0');
     const limit = parseInt(url.searchParams.get('limit') || '24');
@@ -91,8 +95,9 @@ export async function getMedia(req: Request, env: Env) {
     const dateTo = url.searchParams.get('dateTo');
 
     // 動的SQLクエリとパラメータを構築
-    let whereConditions = ['user_id = ?'];
-    let queryParams: any[] = [session.sub];
+    const userPlaceholders = userIdVariants.map(() => '?').join(', ');
+    let whereConditions = [`user_id IN (${userPlaceholders})`];
+    let queryParams: any[] = [...userIdVariants];
 
     // MIMEタイプフィルター
     if (mimeTypeFilter) {
@@ -122,7 +127,7 @@ export async function getMedia(req: Request, env: Env) {
     const whereClause = whereConditions.join(' AND ');
 
     // メディア一覧を取得
-    console.log('getMedia: Querying media for user_id:', session.sub, 'with filters:', {
+    console.log('getMedia: Querying media for user variants:', userIdVariants, 'with filters:', {
       offset, limit, mimeTypeFilter, searchKeyword, dateFrom, dateTo
     });
 
@@ -179,6 +184,7 @@ export async function generateUploadUrl(req: Request, env: Env) {
       });
     }
 
+    const canonicalUserId = getCanonicalUserId(session.sub);
     const body = await req.json();
     const { filename, mimeType, fileSize } = body;
 
@@ -193,7 +199,7 @@ export async function generateUploadUrl(req: Request, env: Env) {
 
     // R2 用のオブジェクトキーを生成（ユーザーID/タイムスタンプ_元ファイル名）
     const timestamp = Date.now();
-    const uniqueFilename = `${session.sub}/${timestamp}_${filename}`;
+    const uniqueFilename = `${canonicalUserId}/${timestamp}_${filename}`;
 
     // まずは Workers 経由アップロードエンドポイントを返す（署名URL直PUTは後続）
     const uploadUrl = `https://api.uchinokiroku.com/api/media/upload-r2`;
@@ -202,7 +208,7 @@ export async function generateUploadUrl(req: Request, env: Env) {
       uploadUrl,
       filename: uniqueFilename,
       fields: {
-        userId: session.sub,
+        userId: canonicalUserId,
         originalFilename: filename,
         mimeType,
         fileSize,
@@ -239,6 +245,7 @@ export async function uploadDirect(req: Request, env: Env) {
       });
     }
 
+    const canonicalUserId = getCanonicalUserId(session.sub);
     const formData = await req.formData();
     const file = formData.get('file') as File;
     const originalFilename = formData.get('originalFilename') as string;
@@ -264,7 +271,7 @@ export async function uploadDirect(req: Request, env: Env) {
     const fileSize = file.size;
     const mimeType = file.type;
     const timestamp = Date.now();
-    const filename = `${session.sub}/${timestamp}_${originalFilename || file.name}`;
+    const filename = `${canonicalUserId}/${timestamp}_${originalFilename || file.name}`;
 
     // ファイルサイズチェック
     console.log('File size check:', fileSize);
@@ -329,7 +336,7 @@ export async function uploadDirect(req: Request, env: Env) {
         created_at, updated_at
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
     `, [
-      session.sub, filename, originalFilename || file.name, mimeType, fileSize,
+      canonicalUserId, filename, originalFilename || file.name, mimeType, fileSize,
       fileUrl, thumbnailUrl, width, height, duration, base64Content
     ]);
 
@@ -384,12 +391,16 @@ export async function getMediaFile(req: Request, env: Env, mediaId: string) {
     }
 
     // メディア情報を取得
-    console.log('Querying media with id:', mediaId, 'user_id:', session.sub);
+    const canonicalUserId = getCanonicalUserId(session.sub);
+    const userIdVariants = getUserIdVariants(canonicalUserId);
+
+    console.log('Querying media with id:', mediaId, 'user_id variants:', userIdVariants);
+    const userPlaceholders = userIdVariants.map(() => '?').join(', ');
     const media = await queryAll(env, `
       SELECT file_content, mime_type, original_filename, filename
       FROM media 
-      WHERE id = ? AND user_id = ?
-    `, [mediaId, session.sub]);
+      WHERE id = ? AND user_id IN (${userPlaceholders})
+    `, [mediaId, ...userIdVariants]);
     
     console.log('Media query result:', media);
 
@@ -478,13 +489,16 @@ export async function getMediaByFilename(req: Request, env: Env, filenamePath: s
     }
 
     // filename は DB 上は userId/xxxxx_original の形で保存している
+    const canonicalUserId = getCanonicalUserId(session.sub);
+    const userIdVariants = getUserIdVariants(canonicalUserId);
     const filename = decodeURIComponent(filenamePath);
+    const userPlaceholders = userIdVariants.map(() => '?').join(', ');
     const rows = await queryAll(env, `
       SELECT file_content, mime_type, original_filename
       FROM media
-      WHERE filename = ? AND user_id = ?
+      WHERE filename = ? AND user_id IN (${userPlaceholders})
       LIMIT 1
-    `, [filename, session.sub]);
+    `, [filename, ...userIdVariants]);
 
     if (rows.length === 0) {
       return new Response(JSON.stringify({ error: "メディアが見つかりません" }), {
@@ -548,9 +562,12 @@ export async function deleteMedia(req: Request, env: Env, mediaId: string) {
     }
 
     // メディアが存在し、ユーザーが所有しているか確認
+    const canonicalUserId = getCanonicalUserId(session.sub);
+    const userIdVariants = getUserIdVariants(canonicalUserId);
+    const userPlaceholders = userIdVariants.map(() => '?').join(', ');
     const media = await queryAll(env, `
-      SELECT id FROM media WHERE id = ? AND user_id = ?
-    `, [mediaId, session.sub]);
+      SELECT id FROM media WHERE id = ? AND user_id IN (${userPlaceholders})
+    `, [mediaId, ...userIdVariants]);
 
     if (media.length === 0) {
       return new Response(JSON.stringify({ 
@@ -563,8 +580,8 @@ export async function deleteMedia(req: Request, env: Env, mediaId: string) {
 
     // メディアを削除
     await execute(env, `
-      DELETE FROM media WHERE id = ? AND user_id = ?
-    `, [mediaId, session.sub]);
+      DELETE FROM media WHERE id = ? AND user_id IN (${userPlaceholders})
+    `, [mediaId, ...userIdVariants]);
 
     return new Response(JSON.stringify({ 
       message: "メディアが削除されました" 
@@ -601,6 +618,7 @@ export async function uploadToR2(req: Request, env: Env) {
       });
     }
 
+    const canonicalUserId = getCanonicalUserId(session.sub);
     const form = await req.formData();
     const file = form.get('file') as File | null;
     const providedKey = (form.get('key') as string) || '';
@@ -614,7 +632,7 @@ export async function uploadToR2(req: Request, env: Env) {
     }
 
     // キーを確定
-    const key = providedKey || `${session.sub}/${Date.now()}_${originalFilename}`;
+    const key = providedKey || `${canonicalUserId}/${Date.now()}_${originalFilename}`;
 
     // R2 に保存（ストリーミング）
     await (env as any).R2_BUCKET.put(key, file.stream(), {
@@ -633,7 +651,7 @@ export async function uploadToR2(req: Request, env: Env) {
         created_at, updated_at
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
     `, [
-      session.sub, key, originalFilename, file.type || 'application/octet-stream', file.size,
+      canonicalUserId, key, originalFilename, file.type || 'application/octet-stream', file.size,
       fileUrl, null, null, null, null, null
     ]);
 
@@ -657,6 +675,8 @@ export async function signVideoUpload(req: Request, env: Env) {
     if (!session) {
       return new Response(JSON.stringify({ error: "認証が必要です" }), { status: 401, headers: { "Content-Type": "application/json" } });
     }
+    const canonicalUserId = getCanonicalUserId(session.sub);
+    const canonicalUserId = getCanonicalUserId(session.sub);
 
     const accountId = (env as any).STREAM_ACCOUNT_ID || (env as any).STREAM_ACCOUNT || '';
     const token = (env as any).STREAM_TOKEN || '';
@@ -677,7 +697,7 @@ export async function signVideoUpload(req: Request, env: Env) {
     // ローカル開発時の直アクセス許可（任意）
     allowedOrigins.push('localhost:3000');
     const body: Record<string, any> = { 
-      creator: session.sub,
+      creator: canonicalUserId,
       maxDurationSeconds: maxDuration,
     };
     if (allowedOrigins.length > 0) body.allowedOrigins = allowedOrigins;
@@ -722,7 +742,7 @@ export async function registerVideo(req: Request, env: Env) {
         created_at, updated_at
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
     `, [
-      session.sub, uid, originalFilename || uid, mimeType || 'video/mp4', fileSize || 0,
+      canonicalUserId, uid, originalFilename || uid, mimeType || 'video/mp4', fileSize || 0,
       hls, thumb, null, null, null, null
     ]);
     const mediaId = result.meta.last_row_id;

@@ -1,5 +1,6 @@
 import { queryOne, queryAll, execute } from "../lib/db";
 import { verifySession } from "../lib/session";
+import { getCanonicalUserId, getUserIdVariants } from "../lib/user-ids";
 import type { Env } from "../index";
 
 export async function createArticle(req: Request, env: Env) {
@@ -12,6 +13,12 @@ export async function createArticle(req: Request, env: Env) {
         headers: { "Content-Type": "application/json" },
       });
     }
+
+    const canonicalUserId = getCanonicalUserId(session.sub);
+    const userIdVariants = getUserIdVariants(canonicalUserId);
+
+    const canonicalUserId = getCanonicalUserId(session.sub);
+    const userIdVariants = getUserIdVariants(canonicalUserId);
 
     const body = await req.json();
 
@@ -73,11 +80,11 @@ export async function createArticle(req: Request, env: Env) {
     }
 
     // 記事をデータベースに保存
-    console.log('Creating article with data:', { title, content, userId: session.sub, articleId: finalArticleId });
+    console.log('Creating article with data:', { title, content, userId: canonicalUserId, articleId: finalArticleId, userIdVariants });
     const result = await execute(env, `
       INSERT INTO memories (title, content, user_id, article_id, created_at, updated_at)
       VALUES (?, ?, ?, ?, datetime('now'), datetime('now'))
-    `, [title, content, session.sub, finalArticleId]);
+    `, [title, content, canonicalUserId, finalArticleId]);
     console.log('Article creation result:', result);
 
     const dbArticleId = result.meta.last_row_id;
@@ -89,9 +96,10 @@ export async function createArticle(req: Request, env: Env) {
         try {
           console.log('Checking media:', mediaId, 'for user:', session.sub);
           // メディアが存在し、ユーザーが所有しているか確認
+          const placeholders = userIdVariants.map(() => '?').join(', ');
           const mediaCheck = await queryAll(env, `
-            SELECT id FROM media WHERE id = ? AND user_id = ?
-          `, [mediaId, session.sub]);
+            SELECT id FROM media WHERE id = ? AND user_id IN (${placeholders})
+          `, [mediaId, ...userIdVariants]);
 
           console.log('Media check result:', mediaCheck);
           if (mediaCheck.length > 0) {
@@ -346,9 +354,10 @@ export async function updateArticle(req: Request, env: Env) {
         for (const mediaId of mediaIds) {
           try {
             // メディアが存在し、ユーザーが所有しているか確認
+            const placeholders = userIdVariants.map(() => '?').join(', ');
             const mediaCheck = await queryAll(env, `
-              SELECT id FROM media WHERE id = ? AND user_id = ?
-            `, [mediaId, session.sub]);
+              SELECT id FROM media WHERE id = ? AND user_id IN (${placeholders})
+            `, [mediaId, ...userIdVariants]);
             
             if (mediaCheck.length > 0) {
               await execute(env, `

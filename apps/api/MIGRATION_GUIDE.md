@@ -31,6 +31,16 @@
 - `password_reset_tokens` テーブルを新規作成し、ユーザーごとのリセットトークンを管理
 - 新しいインデックス: `idx_users_email_login`, `idx_password_reset_tokens_user_id`, `idx_password_reset_tokens_expires_at`
 
+#### 追加: メディア所有者ID統一 (2025-09-28)
+
+- **マイグレーションファイル**: `migrations/20250928_canonicalize_media.sql`
+- `media` / `memories` テーブルの `user_id` を `06CN9Z2T33E70TH22BSCQ3ZP` に統一し、保存済みの `filename` / `file_url` / `thumbnail_url` に含まれる旧ID (`06CMPYXAYCN0R78VV438VX37`) を一括置換
+- 実行例:
+  ```bash
+  wrangler d1 execute uch-db --file migrations/20250928_canonicalize_media.sql
+  ```
+- R2 バケット `uch-media` 上に残る `06CMPYXAYCN0R78VV438VX37/` ディレクトリ配下のオブジェクトは、コピー後に削除してください（`wrangler r2 object copy` / `wrangler r2 object delete` を利用）
+
 ### 2. 新しいファイル
 
 - `src/lib/id.ts`: ULID生成ユーティリティ
