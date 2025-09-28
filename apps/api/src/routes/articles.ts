@@ -17,9 +17,6 @@ export async function createArticle(req: Request, env: Env) {
     const canonicalUserId = session.sub;
     const userIdVariants = getUserIdVariants(session.originalSub ?? canonicalUserId);
 
-    const canonicalUserId = session.sub;
-    const userIdVariants = getUserIdVariants(session.originalSub ?? canonicalUserId);
-
     const body = await req.json();
 
     console.log('🔥 createArticle: Raw request body:', JSON.stringify(body));
@@ -299,6 +296,9 @@ export async function updateArticle(req: Request, env: Env) {
         headers: { "Content-Type": "application/json" },
       });
     }
+
+    const canonicalUserId = session.sub;
+    const userIdVariants = getUserIdVariants(session.originalSub ?? canonicalUserId);
 
     const url = new URL(req.url);
     const idParam = decodeURIComponent(url.pathname.split('/').pop() || '');
