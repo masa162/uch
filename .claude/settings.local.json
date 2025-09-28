@@ -31,7 +31,17 @@
       "Bash(wrangler deploy:*)",
       "Bash(wrangler tail:*)",
       "WebSearch",
-      "Read(//Users/nakayamamasayuki/Documents/GitHub/**)"
+      "Read(//Users/nakayamamasayuki/Documents/GitHub/**)",
+      "Bash(tree:*)",
+      "Bash(timeout 30s npm run build)",
+      "WebFetch(domain:uchinokiroku.com)",
+      "Bash(gh run list:*)",
+      "Read(//Users/nakayamamasayuki/Documents/**)",
+      "Bash(wrangler d1 execute:*)",
+      "Bash(npx tsc:*)",
+      "Bash(wrangler r2 object list:*)",
+      "Bash(wrangler r2:*)",
+      "Bash(wrangler:*)"
     ],
     "deny": [],
     "ask": []
