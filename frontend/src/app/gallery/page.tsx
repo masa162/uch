@@ -125,6 +125,14 @@ export default function GalleryPage() {
       itemsLength: items.length
     })
 
+    // 認証デバッグ情報を追加
+    console.log('🔐 Authentication debug info:', {
+      apiBase,
+      cookies: document.cookie,
+      userAgent: navigator.userAgent,
+      timestamp: new Date().toISOString()
+    })
+
     if (isFetching.current) {
       console.log('❌ fetchMore early return - already fetching')
       return
@@ -166,6 +174,7 @@ export default function GalleryPage() {
 
       const res = await fetch(apiUrl, { credentials: 'include' })
       console.log('📡 API response status:', res.status)
+      console.log('📡 API response headers:', Object.fromEntries(res.headers.entries()))
 
       if (!res.ok) {
         const errorText = await res.text()
