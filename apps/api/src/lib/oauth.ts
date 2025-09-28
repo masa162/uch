@@ -47,12 +47,13 @@ export function base64UrlDecode(input: string): string {
 
 // JWTペイロードの型定義
 export interface JWTPayload {
-  sub: string; // ユーザーID
+  sub: string; // 共有ユーザーID（マスター）
   provider: string; // 'google' or 'line'
   provider_user_id: string;
   email?: string;
   name?: string;
   picture_url?: string;
+  real_user_id?: string; // 本来のユーザーID
   iat: number; // 発行時刻
   exp: number; // 有効期限
 }

@@ -104,7 +104,7 @@ const routes: Record<string, (req: Request, env: Env) => Promise<Response> | Res
     return new Response(JSON.stringify({
       message: "Debug endpoint reached!",
       timestamp: new Date().toISOString(),
-      session: session ? { sub: session.sub, exp: session.exp } : null,
+      session: session ? { sub: session.sub, originalSub: session.originalSub, name: session.name, email: session.email } : null,
       headers: Object.fromEntries(req.headers.entries())
     }), {
       headers: { "Content-Type": "application/json" },

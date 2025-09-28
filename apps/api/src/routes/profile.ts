@@ -19,17 +19,13 @@ export async function getProfile(req: Request, env: Env): Promise<Response> {
       });
     }
 
-    const canonicalUserId = getCanonicalUserId(session.sub);
-    const userIdVariants = getUserIdVariants(canonicalUserId);
+    const originalUserId = session.originalSub ?? session.sub;
 
-    // ユーザー情報を取得
-    const placeholders = userIdVariants.map(() => '?').join(', ');
     const user = await queryOne(env, `
       SELECT id, provider, email, name, picture_url, created_at, updated_at 
-      FROM users WHERE id IN (${placeholders})
-      ORDER BY CASE id WHEN ? THEN 0 ELSE 1 END
+      FROM users WHERE id = ?
       LIMIT 1
-    `, [...userIdVariants, canonicalUserId]);
+    `, [originalUserId]);
 
     if (!user) {
       return new Response(JSON.stringify({ 
@@ -104,16 +100,14 @@ export async function updateProfile(req: Request, env: Env): Promise<Response> {
       });
     }
 
-    const canonicalUserId = getCanonicalUserId(session.sub);
-    const userIdVariants = getUserIdVariants(canonicalUserId);
+    const originalUserId = session.originalSub ?? session.sub;
 
-    // ユーザー名を更新
-    console.log('Updating profile for user:', canonicalUserId, 'with name:', name);
+    console.log('Updating profile for user:', originalUserId, 'with name:', name);
     const result = await execute(env, `
       UPDATE users 
       SET name = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%fZ','now')
-      WHERE id IN (${userIdVariants.map(() => '?').join(', ')})
-    `, [name.trim(), ...userIdVariants]);
+      WHERE id = ?
+    `, [name.trim(), originalUserId]);
 
     console.log('Profile update result:', result);
 
@@ -124,10 +118,9 @@ export async function updateProfile(req: Request, env: Env): Promise<Response> {
     // 更新されたユーザー情報を取得
     const updatedUser = await queryOne(env, `
       SELECT id, provider, email, name, picture_url, created_at, updated_at 
-      FROM users WHERE id IN (${userIdVariants.map(() => '?').join(', ')})
-      ORDER BY CASE id WHEN ? THEN 0 ELSE 1 END
+      FROM users WHERE id = ?
       LIMIT 1
-    `, [...userIdVariants, canonicalUserId]);
+    `, [originalUserId]);
 
     if (!updatedUser) {
       throw new Error('更新後のユーザー情報の取得に失敗しました');

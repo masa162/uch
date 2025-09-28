@@ -1,6 +1,6 @@
 import { queryAll, execute } from "../lib/db";
 import { readSessionCookie } from "../lib/session";
-import { getCanonicalUserId, getUserIdVariants } from "../lib/user-ids";
+import { getUserIdVariants } from "../lib/user-ids";
 import type { Env } from "../index";
 
 // デバッグ用: 認証なしでメディア総数を取得
@@ -81,8 +81,8 @@ export async function getMedia(req: Request, env: Env) {
       });
     }
 
-    const canonicalUserId = getCanonicalUserId(session.sub);
-    const userIdVariants = getUserIdVariants(canonicalUserId);
+    const canonicalUserId = session.sub;
+    const userIdVariants = getUserIdVariants(session.originalSub ?? canonicalUserId);
 
     const url = new URL(req.url);
     const offset = parseInt(url.searchParams.get('offset') || '0');
@@ -184,7 +184,7 @@ export async function generateUploadUrl(req: Request, env: Env) {
       });
     }
 
-    const canonicalUserId = getCanonicalUserId(session.sub);
+    const canonicalUserId = session.sub;
     const body = await req.json();
     const { filename, mimeType, fileSize } = body;
 
@@ -245,7 +245,7 @@ export async function uploadDirect(req: Request, env: Env) {
       });
     }
 
-    const canonicalUserId = getCanonicalUserId(session.sub);
+    const canonicalUserId = session.sub;
     const formData = await req.formData();
     const file = formData.get('file') as File;
     const originalFilename = formData.get('originalFilename') as string;
@@ -391,8 +391,8 @@ export async function getMediaFile(req: Request, env: Env, mediaId: string) {
     }
 
     // メディア情報を取得
-    const canonicalUserId = getCanonicalUserId(session.sub);
-    const userIdVariants = getUserIdVariants(canonicalUserId);
+    const canonicalUserId = session.sub;
+    const userIdVariants = getUserIdVariants(session.originalSub ?? canonicalUserId);
 
     console.log('Querying media with id:', mediaId, 'user_id variants:', userIdVariants);
     const userPlaceholders = userIdVariants.map(() => '?').join(', ');
@@ -489,8 +489,8 @@ export async function getMediaByFilename(req: Request, env: Env, filenamePath: s
     }
 
     // filename は DB 上は userId/xxxxx_original の形で保存している
-    const canonicalUserId = getCanonicalUserId(session.sub);
-    const userIdVariants = getUserIdVariants(canonicalUserId);
+    const canonicalUserId = session.sub;
+    const userIdVariants = getUserIdVariants(session.originalSub ?? canonicalUserId);
     const filename = decodeURIComponent(filenamePath);
     const userPlaceholders = userIdVariants.map(() => '?').join(', ');
     const rows = await queryAll(env, `
@@ -562,8 +562,8 @@ export async function deleteMedia(req: Request, env: Env, mediaId: string) {
     }
 
     // メディアが存在し、ユーザーが所有しているか確認
-    const canonicalUserId = getCanonicalUserId(session.sub);
-    const userIdVariants = getUserIdVariants(canonicalUserId);
+    const canonicalUserId = session.sub;
+    const userIdVariants = getUserIdVariants(session.originalSub ?? canonicalUserId);
     const userPlaceholders = userIdVariants.map(() => '?').join(', ');
     const media = await queryAll(env, `
       SELECT id FROM media WHERE id = ? AND user_id IN (${userPlaceholders})
@@ -618,7 +618,7 @@ export async function uploadToR2(req: Request, env: Env) {
       });
     }
 
-    const canonicalUserId = getCanonicalUserId(session.sub);
+    const canonicalUserId = session.sub;
     const form = await req.formData();
     const file = form.get('file') as File | null;
     const providedKey = (form.get('key') as string) || '';
@@ -675,7 +675,7 @@ export async function signVideoUpload(req: Request, env: Env) {
     if (!session) {
       return new Response(JSON.stringify({ error: "認証が必要です" }), { status: 401, headers: { "Content-Type": "application/json" } });
     }
-    const canonicalUserId = getCanonicalUserId(session.sub);
+    const canonicalUserId = session.sub;
 
     const accountId = (env as any).STREAM_ACCOUNT_ID || (env as any).STREAM_ACCOUNT || '';
     const token = (env as any).STREAM_TOKEN || '';

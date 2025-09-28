@@ -1,6 +1,6 @@
 import { queryOne, queryAll, execute } from "../lib/db";
 import { verifySession } from "../lib/session";
-import { getCanonicalUserId, getUserIdVariants } from "../lib/user-ids";
+import { getUserIdVariants } from "../lib/user-ids";
 import type { Env } from "../index";
 
 export async function createArticle(req: Request, env: Env) {
@@ -14,8 +14,11 @@ export async function createArticle(req: Request, env: Env) {
       });
     }
 
-    const canonicalUserId = getCanonicalUserId(session.sub);
-    const userIdVariants = getUserIdVariants(canonicalUserId);
+    const canonicalUserId = session.sub;
+    const userIdVariants = getUserIdVariants(session.originalSub ?? canonicalUserId);
+
+    const canonicalUserId = session.sub;
+    const userIdVariants = getUserIdVariants(session.originalSub ?? canonicalUserId);
 
     const body = await req.json();
 

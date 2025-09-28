@@ -38,6 +38,7 @@ export async function authMe(req: Request, env: Env) {
     ok: true, 
     user: { 
       id: session.sub, 
+      originalId: session.originalSub, 
       name: session.name, 
       email: session.email 
     }
